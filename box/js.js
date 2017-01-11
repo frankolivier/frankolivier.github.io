@@ -12,6 +12,8 @@ var textureCoordsBuffer;
 var vrDisplay = null;
 var frameData = null;
 
+//TODO remove texture coord stuff
+
 //const numberOfFramesToSample = 1200;
 //var frameTimes = [numberOfFramesToSample];
 
