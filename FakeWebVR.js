@@ -128,10 +128,25 @@ if (typeof VRDisplay === 'undefined') {
 
             __inputCanvas = layers[0].source; ///TODO verify
 
-            __previewWindow = window.open("", "MsgWindow", "width=1200,height=600"); //TODO right size
-            __previewWindow.document.write("<canvas id='previewcanvas' width=1200 height=600>");
-            
+            //var previewHTML = 
+
+            let html = '<!DOCTYPE html>'+
+                    '<html lang="en">'+
+                    '<head>'+
+                        '<meta charset="utf-8">'+
+                        '<title>Preview</title>'+
+                    '</head>'+
+                    '<body>'+
+                        '<canvas id="previewcanvas" width=1200 height=600></canvas>'+
+                    '</body>'+
+                    '</html>';
+
+            __previewWindow = window.open('', '', 'width=1200,height=600'); //TODO right size
+            __previewWindow.document.write(html);
+
             __previewCanvas = __previewWindow.document.getElementById('previewcanvas'); //TODO don't use id?
+
+            console.log(__previewCanvas);
 
             //__previewCanvas = document.getElementById('testcanvas'); //TODO don't use id?
             __previewContext = __previewCanvas.getContext('2d');
