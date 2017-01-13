@@ -127,9 +127,7 @@ if (typeof VRDisplay === 'undefined') {
             __log('VRDisplay.requestPresent()');
 
             __inputCanvas = layers[0].source; ///TODO verify
-
-            //var previewHTML = 
-
+/*
             let html = '<!DOCTYPE html>'+
                     '<html lang="en">'+
                     '<head>'+
@@ -146,11 +144,9 @@ if (typeof VRDisplay === 'undefined') {
 
             __previewCanvas = __previewWindow.document.getElementById('previewcanvas'); //TODO don't use id?
 
-            console.log(__previewCanvas);
-
             //__previewCanvas = document.getElementById('testcanvas'); //TODO don't use id?
             __previewContext = __previewCanvas.getContext('2d');
-
+*/
             return new Promise(function (resolve, reject) {
                 resolve();
             });

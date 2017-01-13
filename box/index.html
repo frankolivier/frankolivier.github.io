@@ -10,15 +10,23 @@
 
 
   <style>
-canvas {
-  width: calc(100% + 16px);
-  margin-left: -8px;
-  margin-right: -8px;
+
+body {
+  background-color:black;
+  width:100%;
+  height:100%;
+  overflow:none;
+  margin-left:0px;
+  margin-right:0px;
 }
 
-h2, button {
-  margin-top: 1em;
-  margin-bottom: 0em;
+canvas {
+  width: 100%;
+  
+}
+
+button {
+  margin: 1em;
 }
 
 </style>
@@ -63,11 +71,11 @@ uniform sampler2D uSampler;
 
 void main(void) {
 
-  float steps = 20.0;
+  highp float steps = 20.0;
 
-  float x = floor(vTextureCoord.x * steps) / steps;
-  float y = floor(vTextureCoord.y * steps) / steps;
-  float z = floor(vTextureCoord.z * steps) / steps;
+  highp float x = floor(vTextureCoord.x * steps) / steps;
+  highp float y = floor(vTextureCoord.y * steps) / steps;
+  highp float z = floor(vTextureCoord.z * steps) / steps;
 
   gl_FragColor = vec4(x, y, z, 1.0);  
 
@@ -75,9 +83,6 @@ void main(void) {
 
 </script>
 
-<canvas id='testcanvas'>
-
-</canvas>
 
 </body>
 
