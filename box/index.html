@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width">
   <title>Simple WebVR Test</title>
 
   <link href="..\global.css" rel="stylesheet">
@@ -56,12 +57,12 @@ attribute vec2 aTextureCoord;
 uniform mat4 uMVMatrix;
 uniform mat4 uPMatrix;
 
-varying highp vec3 vTextureCoord;
+varying highp vec3 color;
 
 void main(void) {
   gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-  vTextureCoord = vec3((aVertexPosition.x + 1.0) / 1.999, (aVertexPosition.y + 1.0) / 1.999, (aVertexPosition.z + 1.0) / 1.999); //, vec2(, ); //; //aTextureCoord;
-  //1.999 because 2.0 gets precision noise
+  color = vec3((aVertexPosition.x + 1.0) / 1.999, (aVertexPosition.y + 1.0) / 1.999, (aVertexPosition.z + 1.0) / 1.999);
+   //1.999 because 2.0 had noise on X GPU
 }
 
 </script>
@@ -70,9 +71,8 @@ void main(void) {
 
 <!-- fragment shader -->
 <script id="fragment-shader" type="x-shader/x-fragment">
-//TODO rename vTextureCoord to color
 
-varying highp vec3 vTextureCoord;
+varying highp vec3 color;
 
 uniform sampler2D uSampler;
 
@@ -80,9 +80,9 @@ void main(void) {
 
   highp float steps = 20.0;
 
-  highp float x = floor(vTextureCoord.x * steps) / steps;
-  highp float y = floor(vTextureCoord.y * steps) / steps;
-  highp float z = floor(vTextureCoord.z * steps) / steps;
+  highp float x = floor(color.x * steps) / steps;
+  highp float y = floor(color.y * steps) / steps;
+  highp float z = floor(color.z * steps) / steps;
 
   gl_FragColor = vec4(x, y, z, 1.0);  
 
