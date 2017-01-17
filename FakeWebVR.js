@@ -3,8 +3,14 @@
 
 // Polyfills the WebVR API if the browser doesn't support it
 // Also emulated a HMD with fake data (if the browser doesn't support WebVR, or if WebVR is supported, and no HMD is attached)
+"use strict";
 
 if (typeof VRDisplay === 'undefined') {
+
+    // pointers to the original objects
+    let __getVRDisplays;
+    let __VRFrameData;
+    let __VRDisplay;
 
     if ('getVRDisplays' in navigator) __getVRDisplays = navigator.getVRDisplays();
     if ('VRFrameData' in window) __VRFrameData = window.VRFrameData;
@@ -18,7 +24,8 @@ if (typeof VRDisplay === 'undefined') {
 
     var __logMessageCount = 0;
     function __log(message) {
-        if (__logMessageCount < 100) {
+        if (__logMessageCount < 400) 
+        {
             console.log(message);
         }
         __logMessageCount++;
@@ -43,7 +50,12 @@ if (typeof VRDisplay === 'undefined') {
             get: function () {
                 __log(objectReference.constructor.name + '.' + name + ' ' + value);
                 return value;
+            },
+            set: function () {
+                __log(objectReference.constructor.name + '.' + name + ' ' + value + ' SET');
+                return value;
             }
+
         });
     }
 
@@ -51,10 +63,24 @@ if (typeof VRDisplay === 'undefined') {
         __addProperty(thisReference, name, value);
     }
 
+    var VRPose = function () { //TODO Fill
+        addProperty(this, 'timeStamp', null);
+        addProperty(this, 'position', getRandom3DVector());
+        addProperty(this, 'linearVelocity', null);
+        addProperty(this, 'linearAcceleration', null);
+        addProperty(this, 'orientation', getRandomQuaternion());
+        addProperty(this, 'angularVelocity', null);
+        addProperty(this, 'angularAcceleration', null);
+    }
+
+    let __pose = new VRPose();
     var VRFrameData = function () {
         __log('VRFrameData constructor');
 
         //TODO Log data from real API
+
+        //TODO
+        addProperty(this, 'pose', __pose);
 
         this.leftProjectionMatrix = [0.757, 0.000, 0.000, 0.000, 0.000, 0.681, 0.000, 0.000, -0.056, -0.002, -1.000, -1.000, 0.000, 0.000, -0.020, 0.000];
         this.leftViewMatrix = [0.938, -0.191, -0.288, 0.000, 0.215, 0.975, 0.052, 0.000, 0.271, -0.111, 0.956, 0.000, 0.667, -0.028, -0.361, 1.000];
@@ -81,12 +107,12 @@ if (typeof VRDisplay === 'undefined') {
         addProperty(this, 'maxLayers', 1);
     }
 
-    function random()
-    {
+    function random() {
         return Math.random();
     }
 
     function getRandomQuaternion() {
+        //return new Float32Array([0, 0, 0, 1]);
         return new Float32Array([random(), random(), random(), 1]);
     }
 
@@ -94,15 +120,7 @@ if (typeof VRDisplay === 'undefined') {
         return new Float32Array([random(), random(), random()]);
     }
 
-    var VRPose = function () { //TODO Fill
-        addProperty(this, 'timeStamp', null);
-        addProperty(this, 'position', getRandom3DVector());
-        addProperty(this, 'linearVelocity', null);
-        addProperty(this, 'linearAcceleration', null);
-        addProperty(this, 'orientation', getRandomQuaternion());
-        addProperty(this, 'angularVelocity', null);
-        addProperty(this, 'angularAcceleration', null);
-    }
+
 
     var VREyeParameters = function () {
         //TODO readonly attribute Float32Array offset;
@@ -115,15 +133,21 @@ if (typeof VRDisplay === 'undefined') {
 
     var VRDisplay = function () {
 
+        let __isPresenting = false;
+
+        function isPresenting(){
+            return true;
+        }
+
         addProperty(this, 'depthFar', 1000);
         addProperty(this, 'depthNear', 0.100)
         addProperty(this, 'displayId', 1);
         addProperty(this, 'displayName', 'FakeHMD');
         addProperty(this, 'isConnected', true);
-        addProperty(this, 'isPresenting', false);
+        addProperty(this, 'isPresenting', isPresenting());
         addProperty(this, 'layers', null);
 
-        this.requestPresent = function ( layers ) {
+        this.requestPresent = function (layers) {
             __log('VRDisplay.requestPresent()');
 
             __inputCanvas = layers[0].source; ///TODO verify
@@ -139,11 +163,27 @@ if (typeof VRDisplay === 'undefined') {
                     '</body>'+
                     '</html>';
 
-            __previewWindow = window.open('', '', 'width=1200,height=600'); //TODO right size
-            __previewWindow.document.write(html);
+                __previewWindow = window.open('', '', 'width=1200,height=600'); //TODO right size
+                __previewWindow.document.write(html);
 
-            __previewCanvas = __previewWindow.document.getElementById('previewcanvas'); //TODO don't use id?
+                __previewCanvas = __previewWindow.document.getElementById('previewcanvas'); //TODO don't use id?
 
+                console.log(typeof __previewCanvas);
+
+<<<<<<< Updated upstream
+=======
+                //__previewCanvas = document.getElementById('testcanvas'); //TODO don't use id?
+                __previewContext = __previewCanvas.getContext('2d');
+
+            }
+
+            __isPresenting = true;
+
+            console.log("SETTING __isPresenting TO TRUE");
+
+            __logMessageCount = -10000;
+
+>>>>>>> Stashed changes
             //__previewCanvas = document.getElementById('testcanvas'); //TODO don't use id?
             __previewContext = __previewCanvas.getContext('2d');
 */
@@ -157,8 +197,9 @@ if (typeof VRDisplay === 'undefined') {
             __log('VRDisplay.requestAnimationFrame()');
 
             if (__previewContext) __previewContext.drawImage(__inputCanvas, 0, 0);
-                        
-            window.requestAnimationFrame(callback);
+
+            //window.requestAnimationFrame(callback);
+            setTimeout(callback, 250);
         }
 
         // Pose data recorded from a real head-mounted display
@@ -1367,57 +1408,36 @@ if (typeof VRDisplay === 'undefined') {
         var viewMatrixDataIndex = 0;
 
         this.getFrameData = function (vrFrameData) {
-            __log('VRDisplay.getFrameData');
+            __log('VRDisplay.getFrameData()');
             vrFrameData.leftViewMatrix = viewMatrixData[viewMatrixDataIndex];
             vrFrameData.rightViewMatrix = viewMatrixData[viewMatrixDataIndex];
-
+            
             viewMatrixDataIndex++;
             viewMatrixDataIndex %= viewMatrixData.length; // wrap
         }
 
         this.submitFrame = function () {
-            __log('VRDisplay.submitFrame');
+            __log('VRDisplay.submitFrame()');
         }
 
 
-        //var __pose = new VRPose();
         this.getPose = function () {
             __log('VRDisplay.getPose()');
-            return new VRPose(); // __pose;
+            return __pose;
         }
 
         this.resetPose = function () {
-            __log('VRDisplay.resetPose');
+            __log('VRDisplay.resetPose()');
         }
 
         this.getEyeParameters = function (whichEye) {
             return new VREyeParameters(); //todo verify VREyeParameters
         }
 
-        //this.capabilities = {//function () {
-        //__log('VRDisplay.capabilities'); //todo log better
-        //return VRDisplayCapabilities;
-
-        //todo don't use a new object on each call 
+        //TODO don't use a new object on each call 
         addProperty(this, 'stageParameters', new VRStageParameters());
         addProperty(this, 'capabilities', new VRDisplayCapabilities());
 
-
-        /*
-            this.stageParameters = function () {
-                __log('VRDisplay.stageParameters'); //todo improve logging
-                return VRStageParameters;
-            }
-        */
-
-
-    }
-
-    var FakeWebVR = new function () {
-
-        this.getVRDisplay = function () {
-            return new VRDisplay;
-        }
     }
 
 }
