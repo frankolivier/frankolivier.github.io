@@ -1392,16 +1392,28 @@ if (typeof VRDisplay === 'undefined') {
         {
             console.log(e.keyCode);
 
+            let delta = 0.1;
+
             switch (e.keyCode)
             {
+                case 97: //a   
+                    __x += delta;
+                    break;
+                case 100: //d   
+                    __x -= delta;
+                    break;
+                case 119: //w
+                    __z += delta;
+                    break;
+                case 115: //s
+                    __z -= delta;
+                    break;
                 case 113: //q
-                    __z -= 0.1;
-                    console.log('up ' + __z);
-                break;
+                    __y += delta;
+                    break;
                 case 101: //e
-                    __z += 0.1;
-                    console.log('down ' + __z);
-                break;
+                    __y -= delta;
+                    break;
 
             }
         }
