@@ -1339,17 +1339,17 @@ if (typeof VRDisplay === 'undefined') {
     var VRStageParameters = function () {
 
         addProperty(this, 'sittingToStandingTransform', new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]));
-        addProperty(this, 'sizeX', 6);
-        addProperty(this, 'sizeZ', 6);
+        addProperty(this, 'sizeX', 1); //TODO Check return type!
+        addProperty(this, 'sizeZ', 1); //TODO Check return type!
 
         return this; // For feature detection?
     }
 
     var VRDisplayCapabilities = function () {
-        addProperty(this, 'canPresent', true);
-        addProperty(this, 'hasExternalDisplay', true);
         addProperty(this, 'hasOrientation', true);
         addProperty(this, 'hasPosition', true);
+        addProperty(this, 'hasExternalDisplay', true);
+        addProperty(this, 'canPresent', true);
         addProperty(this, 'maxLayers', 1);
     }
 
@@ -1373,13 +1373,20 @@ if (typeof VRDisplay === 'undefined') {
             return true;
         }
 
-        addProperty(this, 'depthFar', 1000);
-        addProperty(this, 'depthNear', 0.100)
+
         addProperty(this, 'displayId', 1);
         addProperty(this, 'displayName', 'FakeHMD');
         addProperty(this, 'isConnected', true);
         addProperty(this, 'isPresenting', isPresenting());
-        addProperty(this, 'layers', null);
+
+        //TODO don't use a new object on each call 
+        addProperty(this, 'capabilities', new VRDisplayCapabilities());
+        addProperty(this, 'stageParameters', new VRStageParameters());
+
+
+
+        addProperty(this, 'depthNear', 0.100)
+        addProperty(this, 'depthFar', 1000);
 
         function canvasMouseMove(e)
         {
@@ -1519,9 +1526,6 @@ if (typeof VRDisplay === 'undefined') {
             return new VREyeParameters(); //todo verify VREyeParameters
         }
 
-        //TODO don't use a new object on each call 
-        addProperty(this, 'stageParameters', new VRStageParameters());
-        addProperty(this, 'capabilities', new VRDisplayCapabilities());
 
     }
 
