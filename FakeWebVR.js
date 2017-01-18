@@ -1,9 +1,11 @@
+"use strict";
+
+
 // Shim for the WebVR 1.1 API
 // https://w3c.github.io/webvr/
 
 // Polyfills the WebVR API if the browser doesn't support it
 // Also emulated a HMD with fake data (if the browser doesn't support WebVR, or if WebVR is supported, and no HMD is attached)
-"use strict";
 
 if (typeof VRDisplay === 'undefined') {
 
@@ -24,9 +26,11 @@ if (typeof VRDisplay === 'undefined') {
 
     var __logMessageCount = 0;
     function __log(message) {
-        if (__logMessageCount < 400) 
-        {
+        if (__logMessageCount < 200) {
             console.log(message);
+        }
+        else {
+            //debugger;
         }
         __logMessageCount++;
     }
@@ -44,16 +48,46 @@ if (typeof VRDisplay === 'undefined') {
         });
     }
 
-    this.__addProperty = function (objectReference, name, value) {
-        Object.defineProperty(objectReference, name, {
-            enumerable: true,
-            get: function () {
+    function random() {
+        return Math.random();
+    }
+
+    function getRandomQuaternion() {
+        return new Float32Array([0, 0, 0, 1]);
+        //return new Float32Array([random(), random(), random(), 1]);
+    }
+
+    function getRandom3DVector() {
+        return new Float32Array([random(), random(), random()]);
+        //return new Float32Array([1, 0, 0]);
+    }
+
+
+    this.__addProperty = function (objectReference, name, inputValue) {
+
+        let getterFunction = null;
+
+        if (typeof inputValue == 'function') {
+            getterFunction = function () {
+                let value = inputValue.call();
                 __log(objectReference.constructor.name + '.' + name + ' ' + value);
                 return value;
-            },
-            set: function () {
-                __log(objectReference.constructor.name + '.' + name + ' ' + value + ' SET');
+            };
+        }
+        else {
+            getterFunction = function () {
+                let value = inputValue;
+                __log(objectReference.constructor.name + '.' + name + ' ' + value);
                 return value;
+            };
+        }
+
+        Object.defineProperty(objectReference, name, {
+            enumerable: true,
+            get: getterFunction,
+            set: function () {
+                __log(objectReference.constructor.name + '.' + name + ' ' + inputValue + ' SET');
+                return inputValue;
             }
 
         });
@@ -65,10 +99,10 @@ if (typeof VRDisplay === 'undefined') {
 
     var VRPose = function () { //TODO Fill
         addProperty(this, 'timeStamp', null);
-        addProperty(this, 'position', getRandom3DVector());
+        addProperty(this, 'position', getRandom3DVector);
         addProperty(this, 'linearVelocity', null);
         addProperty(this, 'linearAcceleration', null);
-        addProperty(this, 'orientation', getRandomQuaternion());
+        addProperty(this, 'orientation', getRandomQuaternion);
         addProperty(this, 'angularVelocity', null);
         addProperty(this, 'angularAcceleration', null);
     }
@@ -107,18 +141,6 @@ if (typeof VRDisplay === 'undefined') {
         addProperty(this, 'maxLayers', 1);
     }
 
-    function random() {
-        return Math.random();
-    }
-
-    function getRandomQuaternion() {
-        //return new Float32Array([0, 0, 0, 1]);
-        return new Float32Array([random(), random(), random(), 1]);
-    }
-
-    function getRandom3DVector() {
-        return new Float32Array([random(), random(), random()]);
-    }
 
 
 
@@ -135,7 +157,7 @@ if (typeof VRDisplay === 'undefined') {
 
         let __isPresenting = false;
 
-        function isPresenting(){
+        function isPresenting() {
             return true;
         }
 
@@ -151,42 +173,42 @@ if (typeof VRDisplay === 'undefined') {
             __log('VRDisplay.requestPresent()');
 
             __inputCanvas = layers[0].source; ///TODO verify
-/*
-            let html = '<!DOCTYPE html>'+
-                    '<html lang="en">'+
-                    '<head>'+
-                        '<meta charset="utf-8">'+
-                        '<title>Preview</title>'+
-                    '</head>'+
-                    '<body>'+
-                        '<canvas id="previewcanvas" width=1200 height=600></canvas>'+
-                    '</body>'+
-                    '</html>';
-
-                __previewWindow = window.open('', '', 'width=1200,height=600'); //TODO right size
-                __previewWindow.document.write(html);
-
-                __previewCanvas = __previewWindow.document.getElementById('previewcanvas'); //TODO don't use id?
-
-                console.log(typeof __previewCanvas);
-
-<<<<<<< Updated upstream
-=======
-                //__previewCanvas = document.getElementById('testcanvas'); //TODO don't use id?
-                __previewContext = __previewCanvas.getContext('2d');
-
-            }
-
-            __isPresenting = true;
-
-            console.log("SETTING __isPresenting TO TRUE");
-
-            __logMessageCount = -10000;
-
->>>>>>> Stashed changes
-            //__previewCanvas = document.getElementById('testcanvas'); //TODO don't use id?
-            __previewContext = __previewCanvas.getContext('2d');
-*/
+            /*
+                        let html = '<!DOCTYPE html>'+
+                                '<html lang="en">'+
+                                '<head>'+
+                                    '<meta charset="utf-8">'+
+                                    '<title>Preview</title>'+
+                                '</head>'+
+                                '<body>'+
+                                    '<canvas id="previewcanvas" width=1200 height=600></canvas>'+
+                                '</body>'+
+                                '</html>';
+            
+                            __previewWindow = window.open('', '', 'width=1200,height=600'); //TODO right size
+                            __previewWindow.document.write(html);
+            
+                            __previewCanvas = __previewWindow.document.getElementById('previewcanvas'); //TODO don't use id?
+            
+                            console.log(typeof __previewCanvas);
+            
+            <<<<<<< Updated upstream
+            =======
+                            //__previewCanvas = document.getElementById('testcanvas'); //TODO don't use id?
+                            __previewContext = __previewCanvas.getContext('2d');
+            
+                        }
+            
+                        __isPresenting = true;
+            
+                        console.log("SETTING __isPresenting TO TRUE");
+            
+                        __logMessageCount = -10000;
+            
+            >>>>>>> Stashed changes
+                        //__previewCanvas = document.getElementById('testcanvas'); //TODO don't use id?
+                        __previewContext = __previewCanvas.getContext('2d');
+            */
             return new Promise(function (resolve, reject) {
                 resolve();
             });
@@ -1411,7 +1433,7 @@ if (typeof VRDisplay === 'undefined') {
             __log('VRDisplay.getFrameData()');
             vrFrameData.leftViewMatrix = viewMatrixData[viewMatrixDataIndex];
             vrFrameData.rightViewMatrix = viewMatrixData[viewMatrixDataIndex];
-            
+
             viewMatrixDataIndex++;
             viewMatrixDataIndex %= viewMatrixData.length; // wrap
         }
