@@ -28,7 +28,7 @@ if (typeof VRDisplay === 'undefined') {
     var viewMatrixData = [
         [-0.42, -0.91, -0.01, 0, 0.83, -0.39, 0.39, 0, -0.36, 0.16, 0.92, 0, 0, 0, 0.1, 1],
         [-0.42, -0.91, -0.01, 0, 0.83, -0.39, 0.39, 0, -0.36, 0.16, 0.92, 0, 0, 0.1, 0, 1],
-    [-0.42, -0.91, -0.01, 0, 0.83, -0.39, 0.39, 0, -0.36, 0.16, 0.92, 0, 0.1, 0, 0, 1],
+        [-0.42, -0.91, -0.01, 0, 0.83, -0.39, 0.39, 0, -0.36, 0.16, 0.92, 0, 0.1, 0, 0, 1],
         [-0.42, -0.91, -0.01, 0, 0.83, -0.39, 0.39, 0, -0.36, 0.16, 0.92, 0, 0.01, 0, 0, 1],
         [-0.42, -0.91, 0, 0, 0.83, -0.39, 0.39, 0, -0.36, 0.16, 0.92, 0, 0.01, 0, 0, 1],
         [-0.42, -0.91, 0, 0, 0.83, -0.39, 0.39, 0, -0.36, 0.16, 0.92, 0, 0, 0, 0, 1],
@@ -1229,6 +1229,10 @@ if (typeof VRDisplay === 'undefined') {
     ];
     var viewMatrixDataIndex = 0;
 
+    var __x = 0; // where the eye is in space
+    var __y = 0;
+    var __z = 0;
+    
 
     var __logMessageCount = 0;
     function __log(message) {
@@ -1265,7 +1269,8 @@ if (typeof VRDisplay === 'undefined') {
         //return new Float32Array([random(), random(), random()]);
 
         var data = viewMatrixData[viewMatrixDataIndex];
-        return new Float32Array([data[12], data[13], data[14]]);
+        //return new Float32Array([data[12], data[13], data[14]]);
+        return new Float32Array(__x, __y, __z);
         //return new Float32Array([1, 0, 0]);
     }
 
@@ -1376,10 +1381,45 @@ if (typeof VRDisplay === 'undefined') {
         addProperty(this, 'isPresenting', isPresenting());
         addProperty(this, 'layers', null);
 
+        function canvasMouseMove(e)
+        {
+            //console.log(e.clientX + " " + e.clientY);
+        }
+
+
+
+        function canvasKeyHandler(e)
+        {
+            console.log(e.keyCode);
+
+            switch (e.keyCode)
+            {
+                case 113: //q
+                    __z -= 0.1;
+                    console.log('up ' + __z);
+                break;
+                case 101: //e
+                    __z += 0.1;
+                    console.log('down ' + __z);
+                break;
+
+            }
+        }
+
+        function addInputHandlers(canvas)
+        {
+            canvas.addEventListener("mousemove", canvasMouseMove);
+            document.addEventListener("keypress", canvasKeyHandler); //todo the canvas isn't focusable, so we have to do this on the doc?
+        }
+
+
         this.requestPresent = function (layers) {
             __log('VRDisplay.requestPresent()');
 
             __inputCanvas = layers[0].source; ///TODO verify
+
+            addInputHandlers(__inputCanvas);
+
             /*
                         let html = '<!DOCTYPE html>'+
                                 '<html lang="en">'+
@@ -1436,6 +1476,10 @@ if (typeof VRDisplay === 'undefined') {
             __log('VRDisplay.getFrameData()');
             vrFrameData.leftViewMatrix = viewMatrixData[viewMatrixDataIndex];
             vrFrameData.rightViewMatrix = viewMatrixData[viewMatrixDataIndex];
+
+            vrFrameData.leftViewMatrix[12] = __x;
+            vrFrameData.leftViewMatrix[13] = __y;
+            vrFrameData.leftViewMatrix[14] = __z;
         }
 
         this.submitFrame = function () {
