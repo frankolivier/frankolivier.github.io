@@ -1229,10 +1229,11 @@ if (typeof VRDisplay === 'undefined') {
     ];
     var viewMatrixDataIndex = 0;
 
-    var __x = 0; // where the eye is in space
-    var __y = 0;
-    var __z = 0;
-    
+    var __x = 0.1; // where the eye is in space
+    var __y = 0.2;
+    var __z = 0.3;
+
+    let __isPresenting = false;
 
     var __logMessageCount = 0;
     function __log(message) {
@@ -1259,18 +1260,27 @@ if (typeof VRDisplay === 'undefined') {
     }
 
     function getOrientation() {
-        //return new Float32Array([0, 0, 0, 1]);
-        var data = viewMatrixData[viewMatrixDataIndex];
-        return new Float32Array([data[9], data[10], data[11], 1]);
-        //return new Float32Array([random(), random(), random(), 1]);
+        let value = null;
+
+        if (__isPresenting == true) {
+            var data = viewMatrixData[viewMatrixDataIndex];
+            value = new Float32Array([data[9], data[10], data[11], 1]);
+        }
+
+        return value;
     }
 
     function getPosition() {
         //return new Float32Array([random(), random(), random()]);
 
-        var data = viewMatrixData[viewMatrixDataIndex];
+        //var data = viewMatrixData[viewMatrixDataIndex];
         //return new Float32Array([data[12], data[13], data[14]]);
-        return new Float32Array(__x, __y, __z);
+
+        let value = null;
+
+        if (__isPresenting == true) value = new Float32Array([__x, __y, __z]);
+
+        return value;
         //return new Float32Array([1, 0, 0]);
     }
 
@@ -1310,7 +1320,6 @@ if (typeof VRDisplay === 'undefined') {
     }
 
     var VRPose = function () { //TODO Fill
-        addProperty(this, 'timeStamp', null);
         addProperty(this, 'position', getPosition);
         addProperty(this, 'linearVelocity', null);
         addProperty(this, 'linearAcceleration', null);
@@ -1325,13 +1334,16 @@ if (typeof VRDisplay === 'undefined') {
 
         //TODO Log data from real API
 
-        //TODO
-        addProperty(this, 'pose', __pose);
 
-        this.leftProjectionMatrix = [0.757, 0.000, 0.000, 0.000, 0.000, 0.681, 0.000, 0.000, -0.056, -0.002, -1.000, -1.000, 0.000, 0.000, -0.020, 0.000];
-        this.leftViewMatrix = [0.938, -0.191, -0.288, 0.000, 0.215, 0.975, 0.052, 0.000, 0.271, -0.111, 0.956, 0.000, 0.667, -0.028, -0.361, 1.000];
-        this.rightProjectionMatrix = [0.757, 0.000, 0.000, 0.000, 0.000, 0.682, 0.000, 0.000, 0.056, 0.005, -1.000, -1.000, 0.000, 0.000, -0.020, 0.000];
-        this.rightViewMatrix = [0.938, -0.191, -0.288, 0.000, 0.215, 0.975, 0.052, 0.000, 0.271, -0.111, 0.956, 0.000, 0.603, -0.028, -0.361, 1.000];
+        //TODO
+        addProperty(this, 'timestamp', null);   //TODO mark deprecated
+
+        this.leftProjectionMatrix = new Float32Array([0.757, 0.000, 0.000, 0.000, 0.000, 0.681, 0.000, 0.000, -0.056, -0.002, -1.000, -1.000, 0.000, 0.000, -0.020, 0.000]);
+        this.leftViewMatrix = new Float32Array([0.938, -0.191, -0.288, 0.000, 0.215, 0.975, 0.052, 0.000, 0.271, -0.111, 0.956, 0.000, 0.667, -0.028, -0.361, 1.000]);
+        this.rightProjectionMatrix = new Float32Array([0.757, 0.000, 0.000, 0.000, 0.000, 0.682, 0.000, 0.000, 0.056, 0.005, -1.000, -1.000, 0.000, 0.000, -0.020, 0.000]);
+        this.rightViewMatrix = new Float32Array([0.938, -0.191, -0.288, 0.000, 0.215, 0.975, 0.052, 0.000, 0.271, -0.111, 0.956, 0.000, 0.603, -0.028, -0.361, 1.000]);
+
+        addProperty(this, 'pose', __pose);
     }
 
 
@@ -1353,13 +1365,23 @@ if (typeof VRDisplay === 'undefined') {
         addProperty(this, 'maxLayers', 1);
     }
 
+    var VRFieldOfView = function()
+    {
+        //TODO mark as deprecated?
+        addProperty(this, 'upDegrees', 51);
+        addProperty(this, 'downDegrees', 52);
+        addProperty(this, 'leftDegrees', 53);
+        addProperty(this, 'rightDegrees', 54);
+    }
 
-
-
-    var VREyeParameters = function () {
+    var VREyeParameters = function (whichEye) {
         //TODO readonly attribute Float32Array offset;
 
         //TODO[SameObject] readonly attribute VRFieldOfView fieldOfView;
+
+        addProperty(this, 'offset', new Float32Array([0, 0, 0]));
+
+        addProperty(this, 'fieldOfView', new VRFieldOfView());
 
         addProperty(this, 'renderWidth', 600);
         addProperty(this, 'renderHeight', 600);
@@ -1367,17 +1389,15 @@ if (typeof VRDisplay === 'undefined') {
 
     var VRDisplay = function () {
 
-        let __isPresenting = false;
-
         function isPresenting() {
-            return true;
+            return __isPresenting;
         }
 
 
         addProperty(this, 'displayId', 1);
         addProperty(this, 'displayName', 'FakeHMD');
         addProperty(this, 'isConnected', true);
-        addProperty(this, 'isPresenting', isPresenting());
+        addProperty(this, 'isPresenting', isPresenting);
 
         //TODO don't use a new object on each call 
         addProperty(this, 'capabilities', new VRDisplayCapabilities());
@@ -1388,21 +1408,19 @@ if (typeof VRDisplay === 'undefined') {
         addProperty(this, 'depthNear', 0.100)
         addProperty(this, 'depthFar', 1000);
 
-        function canvasMouseMove(e)
-        {
+        function canvasMouseMove(e) {
             //console.log(e.clientX + " " + e.clientY);
         }
 
 
 
-        function canvasKeyHandler(e)
-        {
-            console.log(e.keyCode);
+        function canvasKeyHandler(e) {
+            let code = e.keyCode;
+            if (code == 0) code = e.charCode; // Firefox workaround
 
             let delta = 0.1;
 
-            switch (e.keyCode)
-            {
+            switch (code) {
                 case 97: //a   
                     __x += delta;
                     break;
@@ -1425,8 +1443,7 @@ if (typeof VRDisplay === 'undefined') {
             }
         }
 
-        function addInputHandlers(canvas)
-        {
+        function addInputHandlers(canvas) {
             canvas.addEventListener("mousemove", canvasMouseMove);
             document.addEventListener("keypress", canvasKeyHandler); //todo the canvas isn't focusable, so we have to do this on the doc?
         }
@@ -1475,6 +1492,9 @@ if (typeof VRDisplay === 'undefined') {
                         //__previewCanvas = document.getElementById('testcanvas'); //TODO don't use id?
                         __previewContext = __previewCanvas.getContext('2d');
             */
+
+            __isPresenting = true;
+
             return new Promise(function (resolve, reject) {
                 resolve();
             });
@@ -1493,12 +1513,19 @@ if (typeof VRDisplay === 'undefined') {
 
         this.getFrameData = function (vrFrameData) {
             __log('VRDisplay.getFrameData()');
-            vrFrameData.leftViewMatrix = viewMatrixData[viewMatrixDataIndex];
-            vrFrameData.rightViewMatrix = viewMatrixData[viewMatrixDataIndex];
 
-            vrFrameData.leftViewMatrix[12] = __x;
-            vrFrameData.leftViewMatrix[13] = __y;
-            vrFrameData.leftViewMatrix[14] = __z;
+            var data = viewMatrixData[viewMatrixDataIndex];
+
+            // set the camera position
+            data[12] = __x;
+            data[13] = __y;
+            data[14] = __z;
+
+            vrFrameData.leftViewMatrix = new Float32Array(data);
+            vrFrameData.rightViewMatrix = new Float32Array(data);
+
+            //todo remove console.log(__x + ' ' + __y + ' ' + __z + ' ' + sourceData[12] + ' ' + sourceData[13] + ' ' + sourceData[14]);
+
         }
 
         this.submitFrame = function () {
@@ -1523,7 +1550,7 @@ if (typeof VRDisplay === 'undefined') {
         }
 
         this.getEyeParameters = function (whichEye) {
-            return new VREyeParameters(); //todo verify VREyeParameters
+            return new VREyeParameters(whichEye); //todo verify VREyeParameters
         }
 
 
