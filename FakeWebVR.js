@@ -1365,8 +1365,7 @@ if (typeof VRDisplay === 'undefined') {
         addProperty(this, 'maxLayers', 1);
     }
 
-    var VRFieldOfView = function()
-    {
+    var VRFieldOfView = function () {
         //TODO mark as deprecated?
         addProperty(this, 'upDegrees', 51);
         addProperty(this, 'downDegrees', 52);
@@ -1456,42 +1455,28 @@ if (typeof VRDisplay === 'undefined') {
 
             addInputHandlers(__inputCanvas);
 
-            /*
-                        let html = '<!DOCTYPE html>'+
-                                '<html lang="en">'+
-                                '<head>'+
-                                    '<meta charset="utf-8">'+
-                                    '<title>Preview</title>'+
-                                '</head>'+
-                                '<body>'+
-                                    '<canvas id="previewcanvas" width=1200 height=600></canvas>'+
-                                '</body>'+
-                                '</html>';
-            
-                            __previewWindow = window.open('', '', 'width=1200,height=600'); //TODO right size
-                            __previewWindow.document.write(html);
-            
-                            __previewCanvas = __previewWindow.document.getElementById('previewcanvas'); //TODO don't use id?
-            
-                            console.log(typeof __previewCanvas);
-            
-            <<<<<<< Updated upstream
-            =======
-                            //__previewCanvas = document.getElementById('testcanvas'); //TODO don't use id?
-                            __previewContext = __previewCanvas.getContext('2d');
-            
-                        }
-            
-                        __isPresenting = true;
-            
-                        console.log("SETTING __isPresenting TO TRUE");
-            
-                        __logMessageCount = -10000;
-            
-            >>>>>>> Stashed changes
-                        //__previewCanvas = document.getElementById('testcanvas'); //TODO don't use id?
-                        __previewContext = __previewCanvas.getContext('2d');
-            */
+            if (window.location.toString().indexOf('FakeWebVR') > -1)
+            {
+                let html = '<!DOCTYPE html>' +
+                    '<html lang="en">' +
+                    '<head>' +
+                    '<meta charset="utf-8">' +
+                    '<title>Preview</title>' +
+                    '</head>' +
+                    '<body>' +
+                    '<canvas id="previewcanvas" width=1200 height=600></canvas>' +
+                    '</body>' +
+                    '</html>';
+
+                __previewWindow = window.open('', '', 'width=1200,height=600'); //TODO right size
+                __previewWindow.document.write(html);
+
+                __previewCanvas = __previewWindow.document.getElementById('previewcanvas'); //TODO don't use id?
+
+                //__previewCanvas = document.getElementById('testcanvas'); //TODO don't use id?
+                __previewContext = __previewCanvas.getContext('2d');
+            }
+
 
             __isPresenting = true;
 
