@@ -1237,12 +1237,12 @@ if (typeof VRDisplay === 'undefined') {
 
     var __logMessageCount = 0;
     function __log(message) {
-        //if (__logMessageCount < 200) {
+        if (__logMessageCount < 0) {
             console.log(message);
-        //}
-        //else {
+        }
+        else {
             //debugger;
-        //}
+        }
         __logMessageCount++;
     }
 
