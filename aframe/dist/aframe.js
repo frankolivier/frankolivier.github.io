@@ -32795,7 +32795,8 @@ THREE.WebGLRenderer = function ( parameters ) {
 			stencil: _stencil,
 			antialias: _antialias,
 			premultipliedAlpha: _premultipliedAlpha,
-			preserveDrawingBuffer: _preserveDrawingBuffer
+			//preserveDrawingBuffer: _preserveDrawingBuffer
+			preserveDrawingBuffer: true
 		};
 
 		_gl = _context || _canvas.getContext( 'webgl', attributes ) || _canvas.getContext( 'experimental-webgl', attributes );
@@ -56216,6 +56217,8 @@ Util.getScreenHeight = function() {
 };
 
 Util.requestFullscreen = function(element) {
+alert('fs');
+/*
   if (element.requestFullscreen) {
     element.requestFullscreen();
   } else if (element.webkitRequestFullscreen) {
@@ -56227,11 +56230,12 @@ Util.requestFullscreen = function(element) {
   } else {
     return false;
   }
-
+*/
   return true;
 };
 
 Util.exitFullscreen = function() {
+	/*
   if (document.exitFullscreen) {
     document.exitFullscreen();
   } else if (document.webkitExitFullscreen) {
@@ -56243,7 +56247,7 @@ Util.exitFullscreen = function() {
   } else {
     return false;
   }
-
+*/
   return true;
 };
 
@@ -63208,7 +63212,10 @@ module.exports = registerElement('a-scene', {
           // TODO: 07/16 Chromium builds break when `requestFullscreen`ing on a canvas
           // that we are also `requestPresent`ing. Until then, don't fullscreen if headset
           // connected.
-          if (!self.isMobile && !checkHeadsetConnected()) { requestFullscreen(self.canvas); }
+          if (!self.isMobile && !checkHeadsetConnected()) {
+			   alert('fs2');
+			   //requestFullscreen(self.canvas); 
+			}
           self.resize();
         }
 

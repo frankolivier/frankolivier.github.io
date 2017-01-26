@@ -1402,12 +1402,17 @@ if (typeof VRDisplay === 'undefined') {
         addProperty(this, 'rightDegrees', 54);
     }
 
+    function getOffset()
+    {
+        return new Float32Array([0, 0, 0]);
+    }
+
     var VREyeParameters = function (whichEye) {
         //TODO readonly attribute Float32Array offset;
 
         //TODO[SameObject] readonly attribute VRFieldOfView fieldOfView;
 
-        addProperty(this, 'offset', new Float32Array([0, 0, 0]));
+        addProperty(this, 'offset', getOffset);
 
         addProperty(this, 'fieldOfView', new VRFieldOfView());
 
