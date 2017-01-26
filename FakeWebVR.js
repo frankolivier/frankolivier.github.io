@@ -1264,7 +1264,7 @@ if (typeof VRDisplay === 'undefined') {
 
     var __logMessageCount = 0;
     function __log(message) {
-        if (__logMessageCount < 100) {
+        if (__logMessageCount < 1000) {
             console.log(message);
         }
         else {
@@ -1289,7 +1289,8 @@ if (typeof VRDisplay === 'undefined') {
     function getOrientation() {
         let value = null;
 
-        if (__isPresenting == true) {
+        //if (__isPresenting == true) 
+        {
             var data = getViewMatrixData();
             value = new Float32Array([data[9], data[10], data[11], 1]);
         }
@@ -1305,7 +1306,8 @@ if (typeof VRDisplay === 'undefined') {
 
         let value = null;
 
-        if (__isPresenting == true) value = new Float32Array([__x, __y, __z]);
+        //if (__isPresenting == true) 
+        value = new Float32Array([__x, __y, __z]);
 
         return value;
         //return new Float32Array([1, 0, 0]);
@@ -1505,6 +1507,10 @@ if (typeof VRDisplay === 'undefined') {
 
             __isPresenting = true;
 
+            var event = new Event('build');
+            window.dispatchEvent(event); //TODO where shoudl I displatch the event?
+
+
             return new Promise(function (resolve, reject) {
                 resolve();
             });
@@ -1517,7 +1523,7 @@ if (typeof VRDisplay === 'undefined') {
             if (__previewContext) __previewContext.drawImage(__inputCanvas, 0, 0);
 
             //window.requestAnimationFrame(callback);
-            setTimeout(callback, 1000 / 60);
+            setTimeout(callback, 1000 / 10);
         }
 
 
