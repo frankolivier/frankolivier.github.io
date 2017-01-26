@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 
 // Shim for the WebVR 1.1 API
@@ -25,7 +25,7 @@ if (typeof VRDisplay === 'undefined') {
     var __inputCanvas;
 
     // Pose data recorded from a real head-mounted display
-    var viewMatrixData = [
+    var viewMatrixData2 = [
         [-0.42, -0.91, -0.01, 0, 0.83, -0.39, 0.39, 0, -0.36, 0.16, 0.92, 0, 0, 0, 0.1, 1],
         [-0.42, -0.91, -0.01, 0, 0.83, -0.39, 0.39, 0, -0.36, 0.16, 0.92, 0, 0, 0.1, 0, 1],
         [-0.42, -0.91, -0.01, 0, 0.83, -0.39, 0.39, 0, -0.36, 0.16, 0.92, 0, 0.1, 0, 0, 1],
@@ -1227,7 +1227,34 @@ if (typeof VRDisplay === 'undefined') {
         [-0.79, 0, -0.61, 0, -0.08, 0.99, 0.12, 0, 0.61, 0.14, -0.78, 0, 0, 0, 0, 1],
         [-0.79, 0, -0.61, 0, -0.09, 0.99, 0.11, 0, 0.6, 0.14, -0.78, 0, 0, 0, 0, 1]
     ];
-    var viewMatrixDataIndex = 0;
+    var viewMatrixDataIndex2 = 0;
+
+    function getViewMatrixData() {
+
+        var data = viewMatrixData2[viewMatrixDataIndex2];
+
+        // set the camera position
+        data[12] = __x;
+        data[13] = __y;
+        data[14] = __z;
+
+        return data;
+    }
+
+    function tickViewMatrixData() {
+        viewMatrixDataIndex2++;
+        viewMatrixDataIndex2 %= viewMatrixData2.length; // wrap
+    }
+
+
+    function getLeftViewMatrix() {
+        return new Float32Array(getViewMatrixData());
+    }
+
+    function getRightViewMatrix() {
+        return new Float32Array(getViewMatrixData());
+    }
+
 
     var __x = 0.1; // where the eye is in space
     var __y = 0.2;
@@ -1237,7 +1264,7 @@ if (typeof VRDisplay === 'undefined') {
 
     var __logMessageCount = 0;
     function __log(message) {
-        if (__logMessageCount < 0) {
+        if (__logMessageCount < 100) {
             console.log(message);
         }
         else {
@@ -1263,7 +1290,7 @@ if (typeof VRDisplay === 'undefined') {
         let value = null;
 
         if (__isPresenting == true) {
-            var data = viewMatrixData[viewMatrixDataIndex];
+            var data = getViewMatrixData();
             value = new Float32Array([data[9], data[10], data[11], 1]);
         }
 
@@ -1292,14 +1319,14 @@ if (typeof VRDisplay === 'undefined') {
         if (typeof inputValue == 'function') {
             getterFunction = function () {
                 let value = inputValue.call();
-                __log(objectReference.constructor.name + '.' + name + ' ' + value);
+                __log('function ' + objectReference.constructor.name + '.' + name + ' ' + value);
                 return value;
             };
         }
         else {
             getterFunction = function () {
                 let value = inputValue;
-                __log(objectReference.constructor.name + '.' + name + ' ' + value);
+                __log('static ' + objectReference.constructor.name + '.' + name + ' ' + value);
                 return value;
             };
         }
@@ -1338,10 +1365,10 @@ if (typeof VRDisplay === 'undefined') {
         //TODO
         addProperty(this, 'timestamp', null);   //TODO mark deprecated
 
-        this.leftProjectionMatrix = new Float32Array([0.757, 0.000, 0.000, 0.000, 0.000, 0.681, 0.000, 0.000, -0.056, -0.002, -1.000, -1.000, 0.000, 0.000, -0.020, 0.000]);
-        this.leftViewMatrix = new Float32Array([0.938, -0.191, -0.288, 0.000, 0.215, 0.975, 0.052, 0.000, 0.271, -0.111, 0.956, 0.000, 0.667, -0.028, -0.361, 1.000]);
-        this.rightProjectionMatrix = new Float32Array([0.757, 0.000, 0.000, 0.000, 0.000, 0.682, 0.000, 0.000, 0.056, 0.005, -1.000, -1.000, 0.000, 0.000, -0.020, 0.000]);
-        this.rightViewMatrix = new Float32Array([0.938, -0.191, -0.288, 0.000, 0.215, 0.975, 0.052, 0.000, 0.271, -0.111, 0.956, 0.000, 0.603, -0.028, -0.361, 1.000]);
+        addProperty(this, 'leftProjectionMatrix', new Float32Array([0.757, 0.000, 0.000, 0.000, 0.000, 0.681, 0.000, 0.000, -0.056, -0.002, -1.000, -1.000, 0.000, 0.000, -0.020, 0.000]));
+        addProperty(this, 'leftViewMatrix', getLeftViewMatrix);
+        addProperty(this, 'rightProjectionMatrix', new Float32Array([0.757, 0.000, 0.000, 0.000, 0.000, 0.682, 0.000, 0.000, 0.056, 0.005, -1.000, -1.000, 0.000, 0.000, -0.020, 0.000]));
+        addProperty(this, 'rightViewMatrix', getRightViewMatrix);
 
         addProperty(this, 'pose', __pose);
     }
@@ -1455,8 +1482,7 @@ if (typeof VRDisplay === 'undefined') {
 
             addInputHandlers(__inputCanvas);
 
-            if (window.location.toString().indexOf('FakeWebVR') > -1)
-            {
+            if (window.location.toString().indexOf('FakeWebVR') > -1) {
                 let html = '<!DOCTYPE html>' +
                     '<html lang="en">' +
                     '<head>' +
@@ -1476,7 +1502,6 @@ if (typeof VRDisplay === 'undefined') {
                 //__previewCanvas = document.getElementById('testcanvas'); //TODO don't use id?
                 __previewContext = __previewCanvas.getContext('2d');
             }
-
 
             __isPresenting = true;
 
@@ -1498,34 +1523,18 @@ if (typeof VRDisplay === 'undefined') {
 
         this.getFrameData = function (vrFrameData) {
             __log('VRDisplay.getFrameData()');
-
-            var data = viewMatrixData[viewMatrixDataIndex];
-
-            // set the camera position
-            data[12] = __x;
-            data[13] = __y;
-            data[14] = __z;
-
-            vrFrameData.leftViewMatrix = new Float32Array(data);
-            vrFrameData.rightViewMatrix = new Float32Array(data);
-
-            //todo remove console.log(__x + ' ' + __y + ' ' + __z + ' ' + sourceData[12] + ' ' + sourceData[13] + ' ' + sourceData[14]);
-
+            // all the actual work and reporting is done in the VRFrameData getters
         }
 
         this.submitFrame = function () {
             __log('VRDisplay.submitFrame()');
 
-            viewMatrixDataIndex++;
-            viewMatrixDataIndex %= viewMatrixData.length; // wrap
-
+            tickViewMatrixData();
         }
 
 
         this.getPose = function () {
             __log('VRDisplay.getPose()');
-            viewMatrixDataIndex++;
-            viewMatrixDataIndex %= viewMatrixData.length; // wrap
 
             return __pose;
         }
