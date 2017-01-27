@@ -226,6 +226,8 @@ function onVRFrame() {
 	setMat4('uMVMatrix', false, rightVM);
 	drawGeometry();
 
+	console.log('offset = ' + vrDisplay.getEyeParameters('left').offset + ' ' + vrDisplay.getEyeParameters('right').offset);
+	
 
 	// Indicate that we are ready to present the rendered frame to the VRDisplay
 	//bugbug vrDisplay.submitFrame();
