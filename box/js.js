@@ -226,9 +226,6 @@ function onVRFrame() {
 	setMat4('uMVMatrix', false, rightVM);
 	drawGeometry();
 
-	console.log('offset = ' + vrDisplay.getEyeParameters('left').offset + ' ' + vrDisplay.getEyeParameters('right').offset);
-	
-
 	// Indicate that we are ready to present the rendered frame to the VRDisplay
 	//bugbug vrDisplay.submitFrame();
 	vrDisplay.submitFrame();
@@ -241,6 +238,14 @@ function getVRDisplays() {
 		navigator.getVRDisplays().then(function (displays) {
 			if (displays.length > 0) {
 				vrDisplay = displays[0];
+
+				// Pose test
+				var pose = vrDisplay.getPose();
+				console.log(pose);
+				console.log(pose.orientation);
+				console.log(pose.position);
+
+
 			}
 			else {
 				console.log("NO HMD FOUND");
