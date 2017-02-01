@@ -66241,9 +66241,9 @@ function checkHeadsetConnected () {
   var orientation;
   controls.update();
   orientation = dolly.quaternion;
-  if (orientation._x !== 0 || orientation._y !== 0 || orientation._z !== 0) {
+  //if (orientation._x !== 0 || orientation._y !== 0 || orientation._z !== 0) {
     return true;
-  }
+  //}
   return false;
 }
 module.exports.checkHeadsetConnected = checkHeadsetConnected;
