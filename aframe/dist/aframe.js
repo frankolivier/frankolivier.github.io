@@ -66883,13 +66883,15 @@ THREE.VRControls = function ( object, onError ) {
 
 				var pose = vrInput.getPose();
 
-				if ( pose.orientation !== null ) {
+				//BUGBUG if ( pose.orientation !== null ) {
+				if ( pose !== null ) {
 
 					object.quaternion.fromArray( pose.orientation );
 
 				}
 
-				if ( pose.position !== null ) {
+				//if ( pose.position !== null ) {
+				if ( pose !== null ) {
 
 					object.position.fromArray( pose.position );
 
