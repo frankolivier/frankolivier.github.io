@@ -1290,10 +1290,12 @@ if (typeof VRDisplay === 'undefined') {
         let value = null;
 
         //if (__isPresenting == true) 
-        {
-            var data = getViewMatrixData();
-            value = new Float32Array([data[9], data[10], data[11], 1]);
-        }
+        //{
+            //var data = getViewMatrixData();
+            //value = new Float32Array([data[9], data[10], data[11], 1]);
+        //}
+
+        value = new Float32Array([0, 0, 0, 1]); 
 
         return value;
     }
@@ -1307,7 +1309,8 @@ if (typeof VRDisplay === 'undefined') {
         let value = null;
 
         //if (__isPresenting == true) 
-        value = new Float32Array([__x, __y, __z]);
+        //value = new Float32Array([__x, __y, __z]);
+        value = new Float32Array([0, 0, 0]);
 
         return value;
         //return new Float32Array([1, 0, 0]);
