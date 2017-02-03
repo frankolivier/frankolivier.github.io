@@ -228,7 +228,18 @@ function onVRFrame() {
 
 	// Indicate that we are ready to present the rendered frame to the VRDisplay
 	//bugbug vrDisplay.submitFrame();
-	vrDisplay.submitFrame();
+
+	try{
+		vrDisplay.submitFrame();
+		throw new Error("Something bad happened.")
+
+	}
+	catch (e)
+	{
+		console.log(e);
+	}
+
+	
 
 }
 
@@ -274,9 +285,16 @@ function enterVR() {
 		premultipliedAlpha: true
 	});
 
+	/*
 	vrDisplay.requestPresent([{ source: canvas }]).then(function () {
 		init();
 		vrDisplay.requestAnimationFrame(onVRFrame);
 	});
+	*/
+
+		init();
+		vrDisplay.requestAnimationFrame(onVRFrame);
+
+
 
 }
