@@ -249,15 +249,6 @@ function getVRDisplays() {
 		navigator.getVRDisplays().then(function (displays) {
 			if (displays.length > 0) {
 				vrDisplay = displays[0];
-
-				/*
-				// Pose test
-				var pose = vrDisplay.getPose();
-				console.log(pose);
-				console.log(pose.orientation);
-				console.log(pose.position);
-				*/
-
 			}
 			else {
 				console.log("NO HMD FOUND");
@@ -286,15 +277,13 @@ function enterVR() {
 		premultipliedAlpha: true
 	});
 
-	/*
+
 	vrDisplay.requestPresent([{ source: canvas }]).then(function () {
 		init();
 		vrDisplay.requestAnimationFrame(onVRFrame);
 	});
-	*/
 
-		init();
-		vrDisplay.requestAnimationFrame(onVRFrame);
+
 
 
 
