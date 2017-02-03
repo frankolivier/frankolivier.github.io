@@ -250,12 +250,13 @@ function getVRDisplays() {
 			if (displays.length > 0) {
 				vrDisplay = displays[0];
 
+				/*
 				// Pose test
 				var pose = vrDisplay.getPose();
 				console.log(pose);
 				console.log(pose.orientation);
 				console.log(pose.position);
-
+				*/
 
 			}
 			else {
