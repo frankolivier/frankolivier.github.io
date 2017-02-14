@@ -64916,6 +64916,10 @@ window.Promise = window.Promise || _dereq_('promise-polyfill');
 // Check before the polyfill runs
 window.hasNativeWebVRImplementation = !!navigator.getVRDisplays || !!navigator.getVRDevices;
 
+console.log('aframe thinks native WebVR support = ' + window.hasNativeWebVRImplementation);
+
+window.hasNativeWebVRImplementation = true;
+
 window.WebVRConfig = window.WebVRConfig || {
   BUFFER_SCALE: 1,
   CARDBOARD_UI_DISABLED: true,
@@ -66883,15 +66887,18 @@ THREE.VRControls = function ( object, onError ) {
 
 				var pose = vrInput.getPose();
 
-				//BUGBUG if ( pose.orientation !== null ) {
-				if ( pose !== null ) {
+				if ( pose.orientation !== null ) {
+				//if ( pose !== null ) {
+
+					console.log('pose = ' + pose);
+					console.log('pose.orientation = ' + pose.orientation);
 
 					object.quaternion.fromArray( pose.orientation );
 
 				}
 
-				//if ( pose.position !== null ) {
-				if ( pose !== null ) {
+				if ( pose.position !== null ) {
+				//if ( pose !== null ) {
 
 					object.position.fromArray( pose.position );
 

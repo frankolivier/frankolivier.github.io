@@ -1297,6 +1297,13 @@ if (typeof VRDisplay === 'undefined') {
 
         value = new Float32Array([0, 0, 0, 1]); 
 
+        if (__isPresenting == false)
+        {
+            __log('NOT PRESENTING!');
+            value = null;
+        }
+
+
         return value;
     }
 
@@ -1311,6 +1318,19 @@ if (typeof VRDisplay === 'undefined') {
         //if (__isPresenting == true) 
         //value = new Float32Array([__x, __y, __z]);
         value = new Float32Array([0, 0, 0]);
+
+        if (__isPresenting == false)
+        {
+            __log('NOT PRESENTING!');
+            value = null;
+        }
+
+
+        if (__isPresenting == true)
+        {
+            __log('PRESENTING!');
+             value = new Float32Array([Math.random(), Math.random(), Math.random()]);
+        }
 
         return value;
         //return new Float32Array([1, 0, 0]);
@@ -1487,6 +1507,8 @@ if (typeof VRDisplay === 'undefined') {
 
         this.requestPresent = function (layers) {
             __log('VRDisplay.requestPresent()');
+
+            //alert('can haz present?');
 
             __inputCanvas = layers[0].source; ///TODO verify
 

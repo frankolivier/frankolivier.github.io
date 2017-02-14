@@ -229,17 +229,7 @@ function onVRFrame() {
 	// Indicate that we are ready to present the rendered frame to the VRDisplay
 	//bugbug vrDisplay.submitFrame();
 
-	try{
-		vrDisplay.submitFrame();
-		throw new Error("Something bad happened.")
-
-	}
-	catch (e)
-	{
-		console.log(e);
-	}
-
-	
+	vrDisplay.submitFrame();
 
 }
 
