@@ -77193,6 +77193,16 @@ var controls = new THREE.VRControls(dolly);
  * orientation is available
  */
 function checkHeadsetConnected () {
+
+  var vrDisplay = controls.getVRDisplay();
+  if (vrDisplay!==undefined)
+  {
+    if (vrDisplay.isConnected)
+    {
+      return vrDisplay.isConnected;
+    }
+  }
+	
   var orientation;
   controls.update();
   orientation = dolly.quaternion;
@@ -79468,4 +79478,4 @@ module.exports = getWakeLock();
 
 },{"./util.js":176}]},{},[144])(144)
 });
-//# sourceMappingURL=aframe-master.js.map
+
