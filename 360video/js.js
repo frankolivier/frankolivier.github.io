@@ -1,6 +1,6 @@
-﻿'use strict';
+﻿"use strict";
 
-document.addEventListener( "DOMContentLoaded", getVRDisplays, false )
+document.addEventListener( "DOMContentLoaded", getVRDisplays, false ); // initialization
 
 var canvas;
 var gl;
@@ -15,14 +15,13 @@ var videoElement;
 var videoTexture;
 var frameData;
 
-var doVideo = true;
-
 var frameCounter = 0;
 
 var fpsData = "";
 
 var previousVideoUploadTime = null;
 
+const videoFPS = 1000 / 30; // aka 30fps (1000ms / 30 fps)
 
 //const numberOfFramesToSample = 1200;
 //var frameTimes = [numberOfFramesToSample];
@@ -243,18 +242,17 @@ function init() {
 	//gl.bindTexture(gl.TEXTURE_2D, null);
 
 
-	if (true === doVideo) {
-		videoElement = document.getElementById('sourcevideo');
-		gl.bindTexture(gl.TEXTURE_2D, videoTexture);
-		//gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
+	videoElement = document.getElementById('sourcevideo');
+	gl.bindTexture(gl.TEXTURE_2D, videoTexture);
+	//gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
 
-		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, videoTexture);
-		gl.uniform1i(gl.getUniformLocation(program, 'uSampler'), 0);
-		gl.uniform1f(gl.getUniformLocation(program, 'alpha'), 1);
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture(gl.TEXTURE_2D, videoTexture);
+	gl.uniform1i(gl.getUniformLocation(program, 'uSampler'), 0);
+	gl.uniform1f(gl.getUniformLocation(program, 'alpha'), 1);
 
-	}
 
 
 	frameData = new VRFrameData();
@@ -287,24 +285,23 @@ function onVRFrame() {
 
 	var uploaded = false;
 
-	if (true === doVideo) {
-		var thisVideoUploadTime = t0;
 
-		if ((previousVideoUploadTime == null) || (thisVideoUploadTime - previousVideoUploadTime > 33.33333)) // aka 30fps (1000ms / 30 fps)
-		{
-			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, videoElement);
-			//gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 1024, 1024, gl.RGBA, gl.UNSIGNED_BYTE, videoElement);
+	var thisVideoUploadTime = t0;
 
-			//void texImage2D(enum target, int level, enum internalformat, enum format, enum type, Object object)
-			//void texSubImage2D(enum target, int level, int xoffset, int yoffset, long width, long height, enum format, enum type, Object pixels)
+	if ((previousVideoUploadTime == null) || (thisVideoUploadTime - previousVideoUploadTime > videoFPS))
+	{
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, videoElement);
+		//gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 1024, 1024, gl.RGBA, gl.UNSIGNED_BYTE, videoElement);
 
-			previousVideoUploadTime = thisVideoUploadTime;
-			uploaded = true;
-			//fpsData += ('frame upload<br />');
+		//void texImage2D(enum target, int level, enum internalformat, enum format, enum type, Object object)
+		//void texSubImage2D(enum target, int level, int xoffset, int yoffset, long width, long height, enum format, enum type, Object pixels)
 
-		}
+		previousVideoUploadTime = thisVideoUploadTime;
+		uploaded = true;
+		//fpsData += ('frame upload<br />');
 
 	}
+
 
 	var leftPM;
 	var leftVM;
