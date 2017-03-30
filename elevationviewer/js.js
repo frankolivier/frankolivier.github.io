@@ -11,6 +11,12 @@ function onFrame() {
 	ctx.clearRect(0, 0, 100, 100);
     ctx.fillText(frameCounter, 10, 10);
 
+	if (worker.needsWork == true)
+	{
+	    worker.postMessage('Hello World ' + frameCounter); // Send data to our worker.
+		worker.needsWork = false;
+	}
+
 	// Start exit
 	frameCounter++;
 	window.requestAnimationFrame(onFrame);
@@ -18,6 +24,14 @@ function onFrame() {
 
 function main() {
 	ctx = document.getElementById('outputCanvas').getContext('2d');
+
+    worker = new Worker('worker.js');
+	worker.needsWork = true;
+
+	worker.addEventListener('message', function(e) {
+		console.log('Worker said: ', e.data + 'current frame = ' + frameCounter);
+		worker.needsWork = true;
+	}, false);
 
 	onFrame();
 }
