@@ -1,6 +1,6 @@
-﻿"use strict";
+"use strict";
 
-document.addEventListener("DOMContentLoaded", main); // initialization
+document.addEventListener("DOMContentLoaded", init); // initialization
 
 var ctx = null;			// the output canvas to render to
 var frameCounter = 0;	// the frame being rendered in the output canvas
@@ -22,8 +22,17 @@ function onFrame() {
 	window.requestAnimationFrame(onFrame);
 }
 
-function main() {
-	ctx = document.getElementById('outputCanvas').getContext('2d');
+function panningUpdate(point)
+{
+	console.log (point.x + '    ' + point.y);
+}
+
+function init() {
+	var canvas = document.getElementById('outputCanvas');
+	
+	ctx = canvas.getContext('2d');
+
+	Panning.init(canvas, panningUpdate);
 
     worker = new Worker('worker.js');
 	worker.needsWork = true;
