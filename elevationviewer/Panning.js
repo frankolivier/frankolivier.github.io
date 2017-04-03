@@ -34,7 +34,7 @@ var Panning = new function () {
 		var y = currentPoint.y - self.previousPoint.y;
 		self.previousPoint = currentPoint;
 
-		var delta = new Point(x, y);
+		var delta = new Point(-x, -y); // Negative values, as we are panning
 		self.updateFunction(delta);
 
 	}
