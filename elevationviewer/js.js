@@ -1,5 +1,9 @@
 "use strict";
 
+// https://en.wikipedia.org/wiki/Web_Mercator
+
+// bugbug feature detect webgl, fetch, web workers
+
 document.addEventListener("DOMContentLoaded", init); // initialization
 
 var canvas = null;		// the canvas we are rendering the map into
@@ -12,9 +16,53 @@ var worker = null;		// the background worker that'll update the data to draw in 
 var above = new Point(166, 355);	// the point on the map we are currently above
 //var above = new Point(2, 2);	// the point on the map we are currently above
 
+const projectionDimension = 256;	// Web Mercator is 256 x 256 tiles
+
 const tileDimension = 256;	// Tiles are 256 x 256 pixels
 
 var needToRender = true;
+
+var cachedTiles = [];
+
+function getTileId(x, y) {
+	return x + y * tileDimension;
+}
+
+function makeTile(x, y, image) {
+	return {
+		id: getTileId(x, y),
+		x: x,
+		y: y,
+		image: image
+	};
+}
+
+function checkId(tile) {
+	return tile.id == this;
+}
+
+function getTile(x, y) {
+	// bugbug enforce [0 - 256][0 - 256]
+	const id = getTileId(x, y);
+
+	var tile = cachedTiles.find(checkId, id);
+
+	if (tile === undefined) {
+		if (cachedTiles.length < 60) {
+			var tile = makeTile(x, y, null);
+			cachedTiles.push(tile);
+
+			console.log('requesting ' + x + ' ' + y);
+
+		}
+
+		return null;
+	}
+	else {
+		console.log('Found cached tile! cache size = ' + cachedTiles.length);
+		return tile;
+	}
+}
 
 function onFrame() {
 
@@ -47,7 +95,18 @@ function onFrame() {
 
 		for (var y = lowerY; y < lowerY + tileCount; y++) {
 			for (var x = lowerX; x < lowerX + tileCount; x++) {
-				ctx.fillText(x + ' , ' + y, x * tileDimension + (tileDimension / 2), y * tileDimension + (tileDimension / 2));
+
+				var text = '';
+
+				const tile = getTile(x, y);
+				if (null == tile) {
+					text = 'null';
+				}
+				else {
+					text = 'cached?'
+				}
+
+				ctx.fillText(text + ' ' + x + ' , ' + y, x * tileDimension + (tileDimension / 2), y * tileDimension + (tileDimension / 2));
 			}
 
 		}
@@ -73,7 +132,6 @@ function onFrame() {
 	frameCounter++;
 
 	needToRender = false;
-
 	window.requestAnimationFrame(onFrame);
 }
 
@@ -87,7 +145,7 @@ function panningUpdate(point) {
 	above.x += point.x / scale; // minus, as we are panning BUGBUG move to Panning.js?
 	above.y += point.y / scale; // BUGBUG convert point to a true object
 
-	console.log(above.x + '    ' + above.y);
+	//console.log(above.x + '    ' + above.y);
 
 	needToRender = true;
 }
