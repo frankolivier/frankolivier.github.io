@@ -1,6 +1,7 @@
 "use strict";
 
 // https://en.wikipedia.org/wiki/Web_Mercator
+// http://mike.teczno.com/notes/osm-us-terrain-layer/foreground.html
 
 // bugbug feature detect webgl, fetch, web workers
 
@@ -56,6 +57,7 @@ function getTile(x, y) {
 
 			const url = 'https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/' + x + '/' + y + '.png?api_key=mapzen-JcyHAc8'
 
+			//const url = 'http://tile.stamen.com/terrain/10/'+x+'/'+y+'.png'
 			fetch(url)
 				.then(response => response.blob())
 				.then(blob => createImageBitmap(blob))
