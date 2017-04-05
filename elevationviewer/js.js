@@ -54,13 +54,28 @@ function getTile(x, y) {
 
 			console.log('requesting ' + x + ' ' + y);
 
+			const url = 'https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/' + x + '/' + y + '.png?api_key=mapzen-JcyHAc8'
+
+			fetch(url)
+				.then(response => response.blob())
+				.then(blob => createImageBitmap(blob))
+				.then(image => tile.image = image)
+
+
 		}
 
 		return null;
 	}
 	else {
-		console.log('Found cached tile! cache size = ' + cachedTiles.length);
-		return tile;
+		if (null == tile.image) {
+			console.log('Found ...... tile! cache size = ' + cachedTiles.length);
+			return null;
+
+		}
+		else {
+			console.log('Found cached tile! cache size = ' + cachedTiles.length);
+			return tile;
+		}
 	}
 }
 
@@ -93,17 +108,17 @@ function onFrame() {
 		const lowerX = Math.floor(above.x - halfTileCount);
 		const lowerY = Math.floor(above.y - halfTileCount);
 
-		for (var y = lowerY; y < lowerY + tileCount; y++) {
-			for (var x = lowerX; x < lowerX + tileCount; x++) {
+		for (var y = lowerY; y <= lowerY + tileCount; y++) {
+			for (var x = lowerX; x <= lowerX + tileCount; x++) {
 
-				var text = '';
+				var text = 'blank';
 
 				const tile = getTile(x, y);
 				if (null == tile) {
-					text = 'null';
+					text = 'no cached tile';
 				}
 				else {
-					text = 'cached?'
+					ctx.drawImage(tile.image, x * tileDimension, y * tileDimension);
 				}
 
 				ctx.fillText(text + ' ' + x + ' , ' + y, x * tileDimension + (tileDimension / 2), y * tileDimension + (tileDimension / 2));
