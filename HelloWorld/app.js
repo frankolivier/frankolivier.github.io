@@ -52,7 +52,7 @@ function getTile(x, y) {
 	var tile = cachedTiles.find(checkId, id);
 
 	if (tile === undefined) {
-		if (cachedTiles.length > 400) {
+		if (cachedTiles.length > 1000) {
 			cachedTiles.shift();
 		}
 
@@ -127,7 +127,6 @@ function onFrame() {
 				}
 				else {
 					ctx.drawImage(tile.image, x * tileDimension, y * tileDimension);
-
 					/*
 					ctx.save();
 					ctx.beginPath();
