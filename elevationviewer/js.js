@@ -49,33 +49,36 @@ function getTile(x, y) {
 	var tile = cachedTiles.find(checkId, id);
 
 	if (tile === undefined) {
-		if (cachedTiles.length < 60) {
+		if (cachedTiles.length > 100) {
+			cachedTiles.shift();
+		}
+
 			var tile = makeTile(x, y, null);
 			cachedTiles.push(tile);
 
 			console.log('requesting ' + x + ' ' + y);
 
-			const url = 'https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/' + x + '/' + y + '.png?api_key=mapzen-JcyHAc8'
+			//const url = 'https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/' + x + '/' + y + '.png?api_key=mapzen-JcyHAc8'
 
-			//const url = 'http://tile.stamen.com/terrain/10/'+x+'/'+y+'.png'
+			const url = 'http://tile.stamen.com/terrain/10/'+x+'/'+y+'.png'
 			fetch(url)
 				.then(response => response.blob())
 				.then(blob => createImageBitmap(blob))
 				.then(image => tile.image = image)
 
 
-		}
+		
 
 		return null;
 	}
 	else {
 		if (null == tile.image) {
-			console.log('Found ...... tile! cache size = ' + cachedTiles.length);
+			//console.log('Found ...... tile! cache size = ' + cachedTiles.length);
 			return null;
 
 		}
 		else {
-			console.log('Found cached tile! cache size = ' + cachedTiles.length);
+			//console.log('Found cached tile! cache size = ' + cachedTiles.length);
 			return tile;
 		}
 	}
@@ -97,7 +100,7 @@ function onFrame() {
 		ctx.save();
 
 		const tileCount = (canvas.width / tileDimension); // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
-		const halfTileCount = tileCount / 2; // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
+		const halfTileCount = tileCount / 2 + 4; // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
 
 		{
 
@@ -123,7 +126,7 @@ function onFrame() {
 					ctx.drawImage(tile.image, x * tileDimension, y * tileDimension);
 				}
 
-				ctx.fillText(text + ' ' + x + ' , ' + y, x * tileDimension + (tileDimension / 2), y * tileDimension + (tileDimension / 2));
+				//ctx.fillText(text + ' ' + x + ' , ' + y, x * tileDimension + (tileDimension / 2), y * tileDimension + (tileDimension / 2));
 			}
 
 		}
@@ -131,10 +134,11 @@ function onFrame() {
 		ctx.restore();
 
 	}
+
 	ctx.fillText(above.x + ' ' + above.y + ' ' + frameCounter, 10, 10);
 
-	ctx.rect(628, 628, 36, 36);
-	ctx.stroke();
+	//ctx.rect(628, 628, 36, 36);
+	//ctx.stroke();
 
 
 
@@ -167,10 +171,20 @@ function panningUpdate(point) {
 	needToRender = true;
 }
 
+function onWindowResize()
+{
+	canvas.width = window.innerWidth;
+	canvas.height = window.innerHeight;
+
+	console.log(canvas.width + ' <<<>>> ' + canvas.height);
+}
+
 function init() {
 	canvas = document.getElementById('outputCanvas');
-
 	ctx = canvas.getContext('2d');
+
+    window.addEventListener("resize", onWindowResize);
+    onWindowResize();
 
 	Panning.init(canvas, panningUpdate);
 	/*
