@@ -1,7 +1,10 @@
 "use strict";
 
+// bugbug use require
+
 // https://en.wikipedia.org/wiki/Web_Mercator
 // http://mike.teczno.com/notes/osm-us-terrain-layer/foreground.html
+// https://www.mapbox.com/blog/3d-terrain-threejs/
 
 // bugbug feature detect webgl, fetch, web workers
 
@@ -49,7 +52,7 @@ function getTile(x, y) {
 	var tile = cachedTiles.find(checkId, id);
 
 	if (tile === undefined) {
-		if (cachedTiles.length > 100) {
+		if (cachedTiles.length > 400) {
 			cachedTiles.shift();
 		}
 
@@ -90,7 +93,7 @@ function onFrame() {
 
 	//BUGBUG only render if needed
 
-	ctx.clearRect(0, 0, canvas.width, canvas.height, 100);
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
 
 	//above.x = 2;
 	//above.y = 2;
@@ -99,15 +102,15 @@ function onFrame() {
 
 		ctx.save();
 
-		const tileCount = (canvas.width / tileDimension); // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
-		const halfTileCount = tileCount / 2 + 4; // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
+		const tileCount = (canvas.width / tileDimension) + 1; // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
+		const halfTileCount = tileCount / 2; // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
 
 		{
 
 		}
+
 		const translateX = (above.x - halfTileCount) * tileDimension;
 		const translateY = (above.y - halfTileCount) * tileDimension;
-
 		ctx.translate(-translateX, -translateY);
 
 		const lowerX = Math.floor(above.x - halfTileCount);
@@ -124,6 +127,13 @@ function onFrame() {
 				}
 				else {
 					ctx.drawImage(tile.image, x * tileDimension, y * tileDimension);
+
+					ctx.save();
+					ctx.beginPath();
+					ctx.rect(x * tileDimension, y * tileDimension, tileDimension, tileDimension);
+                	ctx.stroke();
+					ctx.restore();
+
 				}
 
 				//ctx.fillText(text + ' ' + x + ' , ' + y, x * tileDimension + (tileDimension / 2), y * tileDimension + (tileDimension / 2));
