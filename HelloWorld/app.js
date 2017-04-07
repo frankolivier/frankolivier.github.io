@@ -39,30 +39,41 @@ function initThree() {
 
 	scene = new THREE.Scene();
 
-	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
+	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
 	camera.position.z = 1000;
 
-	geometry = new THREE.BoxGeometry( 200, 200, 200 );
-	material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
+	geometry = new THREE.PlaneGeometry(1000, 1000, 64, 64);
 
-	mesh = new THREE.Mesh( geometry, material );
-	scene.add( mesh );
+	var vertexShader = "varying vec2 frank; void main()	{ frank = uv; gl_Position =  projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }";
+	var fragmentShader = "varying vec2 frank; void main() { gl_FragColor = vec4(frank, 0.0, 0.5); }";
+
+	
+	
+	var material = new THREE.ShaderMaterial({
+		vertexShader: vertexShader,
+		fragmentShader: fragmentShader
+	});
+
+	//material = new THREE.MeshBasicMaterial( { color: 0x777777, wireframe: true } );
+
+	mesh = new THREE.Mesh(geometry, material);
+	scene.add(mesh);
 
 	renderer = new THREE.WebGLRenderer();
-	renderer.setSize( window.innerWidth / 2, window.innerHeight / 2);
+	renderer.setSize(window.innerWidth / 2, window.innerHeight / 2);
 
-	document.body.appendChild( renderer.domElement );
+	document.body.appendChild(renderer.domElement);
 
 }
 
 function animateThree() {
 
-	requestAnimationFrame( animateThree );
+	requestAnimationFrame(animateThree);
 
 	mesh.rotation.x += 0.01;
 	mesh.rotation.y += 0.02;
 
-	renderer.render( scene, camera );
+	renderer.render(scene, camera);
 
 }
 /// three js
@@ -97,21 +108,21 @@ function getTile(x, y) {
 			cachedTiles.shift();
 		}
 
-			var tile = makeTile(x, y, null);
-			cachedTiles.push(tile);
+		var tile = makeTile(x, y, null);
+		cachedTiles.push(tile);
 
-			console.log('requesting ' + x + ' ' + y);
+		console.log('requesting ' + x + ' ' + y);
 
-			//const url = 'https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/' + x + '/' + y + '.png?api_key=mapzen-JcyHAc8'
+		//const url = 'https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/' + x + '/' + y + '.png?api_key=mapzen-JcyHAc8'
 
-			const url = 'http://tile.stamen.com/terrain/10/'+x+'/'+y+'.png'
-			fetch(url)
-				.then(response => response.blob())
-				.then(blob => createImageBitmap(blob))
-				.then(image => tile.image = image)
+		const url = 'http://tile.stamen.com/terrain/10/' + x + '/' + y + '.png'
+		fetch(url)
+			.then(response => response.blob())
+			.then(blob => createImageBitmap(blob))
+			.then(image => tile.image = image)
 
 
-		
+
 
 		return null;
 	}
@@ -223,8 +234,7 @@ function panningUpdate(point) {
 	needToRender = true;
 }
 
-function onWindowResize()
-{
+function onWindowResize() {
 	canvas.width = window.innerWidth / 2;
 	canvas.height = window.innerHeight / 2;
 
@@ -235,12 +245,12 @@ function init() {
 
 	initThree();
 	animateThree();
-		
+
 	canvas = document.getElementById('outputCanvas');
 	ctx = canvas.getContext('2d');
 
-    window.addEventListener("resize", onWindowResize);
-    onWindowResize();
+	window.addEventListener("resize", onWindowResize);
+	onWindowResize();
 
 	Panning.init(canvas, panningUpdate);
 	/*
