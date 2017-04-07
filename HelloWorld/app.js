@@ -49,7 +49,7 @@ function initThree() {
 	scene.add( mesh );
 
 	renderer = new THREE.WebGLRenderer();
-	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.setSize( window.innerWidth / 2, window.innerHeight / 2);
 
 	document.body.appendChild( renderer.domElement );
 
@@ -225,8 +225,8 @@ function panningUpdate(point) {
 
 function onWindowResize()
 {
-	canvas.width = window.innerWidth;
-	canvas.height = window.innerHeight;
+	canvas.width = window.innerWidth / 2;
+	canvas.height = window.innerHeight / 2;
 
 	console.log(canvas.width + ' <<<>>> ' + canvas.height);
 }
@@ -235,8 +235,7 @@ function init() {
 
 	initThree();
 	animateThree();
-	return;
-	
+		
 	canvas = document.getElementById('outputCanvas');
 	ctx = canvas.getContext('2d');
 
