@@ -10,8 +10,8 @@
 
 document.addEventListener("DOMContentLoaded", init); // initialization
 
-var canvas = null;		// the canvas we are rendering the map into
-var ctx = null;			// the output canvas to render to
+//var terrainCanvas = null;		// the canvas we are rendering the map into
+//var ctx = null;			// the output canvas to render to
 
 var frameCounter = 0;	// the frame being rendered in the output canvas
 
@@ -26,7 +26,10 @@ const tileDimension = 256;	// Tiles are 256 x 256 pixels
 
 var needToRender = true;
 
-var cachedTiles = [];
+
+
+var terrainTiles;	// Tiles.js instance
+var mapTiles;	// Tiles.js instance
 
 
 function checkKey(e) {
@@ -55,6 +58,10 @@ function checkKey(e) {
 
     }
 
+	terrainTiles.moveTo(above.x, above.y);
+	mapTiles.moveTo(above.x, above.y);
+	needToRender = true;
+
 }
 document.onkeydown = checkKey;
 
@@ -63,7 +70,7 @@ document.onkeydown = checkKey;
 /// three js
 var scene, camera, renderer;
 var geometry, material, mesh;
-var texture;
+var terrainTexture, mapTexture;
 
 function initThree() {
 
@@ -74,17 +81,20 @@ function initThree() {
 
 	geometry = new THREE.PlaneGeometry(5000, 5000, 256, 256);
 
-	texture = new THREE.Texture(canvas);
+	terrainTexture = new THREE.Texture(terrainCanvas);
+	mapTexture = new THREE.Texture(mapCanvas);
+
 
 	//var vertexShader = "varying vec2 vuv; void main()	{ vuv = uv; gl_Position =  projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }";
 	//var fragmentShader = "varying vec2 vuv; uniform sampler2D texture; void main() { vec4 q = texture2D(texture, vuv) * 256.0; float w = (q.r * 256.0 + q.g + q.b / 256.0) - 32768.0; w = w / 4096.0; gl_FragColor = vec4(w, w, w, 0.5);}";
 
-	var vertexShader = "varying float v; uniform sampler2D texture; void main()	{ vec4 q = texture2D(texture, uv) * 256.0; float w = (q.r * 256.0 + q.g) - 32768.0; w = w / 4096.0 ; v = w ; gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + w * 300.0, 1.0 ); }";
-	var fragmentShader = "varying float v; void main() { gl_FragColor = vec4(v, v, v, 1.0);}";
+	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; void main()	{ v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float w = (q.r * 256.0 + q.g) - 32768.0; w = w / 4096.0 ; gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + w * 300.0, 1.0 ); }";
+	var fragmentShader = "varying vec2 v; uniform sampler2D mapTexture; void main() { gl_FragColor = texture2D(mapTexture, v); }";
 
 	var material = new THREE.ShaderMaterial({
 		uniforms: {
-			texture: { type: 't', value: texture }
+			terrainTexture: { type: 't', value: terrainTexture },
+			mapTexture: { type: 't', value: mapTexture }
 		},
 		vertexShader: vertexShader,
 		fragmentShader: fragmentShader
@@ -99,7 +109,7 @@ function initThree() {
 	scene.add(mesh);
 
 	renderer = new THREE.WebGLRenderer();
-	renderer.setSize(window.innerWidth, window.innerHeight);
+	renderer.setSize(window.innerWidth / 3, window.innerHeight / 3);
 
 	document.body.appendChild(renderer.domElement);
 
@@ -109,10 +119,11 @@ function animateThree() {
 
 	requestAnimationFrame(animateThree);
 
-	//mesh.rotation.z += 0.01;
+	mesh.rotation.z += 0.01;
 	//mesh.rotation.y += 0.02;
 
-	texture.needsUpdate = true;  // bugbug only if needed
+	terrainTexture.needsUpdate = true;  // bugbug only if needed
+	mapTexture.needsUpdate = true;  // bugbug only if needed
 
 	renderer.render(scene, camera);
 
@@ -121,125 +132,17 @@ function animateThree() {
 
 
 
-function getTileId(x, y) {
-	return x + y * tileDimension;
-}
-
-function makeTile(x, y, image) {
-	return {
-		id: getTileId(x, y),
-		x: x,
-		y: y,
-		image: image
-	};
-}
-
-function checkId(tile) {
-	return tile.id == this;
-}
-
-function getTile(x, y) {
-	// bugbug enforce [0 - 256][0 - 256]
-	const id = getTileId(x, y);
-
-	var tile = cachedTiles.find(checkId, id);
-
-	if (tile === undefined) {
-		if (cachedTiles.length > 1000) {
-			cachedTiles.shift();
-		}
-
-		var tile = makeTile(x, y, null);
-		cachedTiles.push(tile);
-
-		console.log('requesting ' + x + ' ' + y);
-
-		const url = 'https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/' + x + '/' + y + '.png?api_key=mapzen-JcyHAc8'
-
-		//const url = 'http://tile.stamen.com/terrain/10/' + x + '/' + y + '.png'
-		fetch(url)
-			.then(response => response.blob())
-			.then(blob => createImageBitmap(blob))
-			.then(image => tile.image = image)
-
-
-
-
-		return null;
-	}
-	else {
-		if (null == tile.image) {
-			//console.log('Found ...... tile! cache size = ' + cachedTiles.length);
-			return null;
-
-		}
-		else {
-			//console.log('Found cached tile! cache size = ' + cachedTiles.length);
-			return tile;
-		}
-	}
-}
-
 function onFrame() {
 
-	if (needToRender === false) { }
+	window.requestAnimationFrame(onFrame);
+
+	terrainTiles.moveTo(above.x, above.y);
+	mapTiles.moveTo(above.x, above.y);
 
 	//BUGBUG only render if needed
 
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	//
 
-	//above.x = 2;
-	//above.y = 2;
-
-	{
-
-		ctx.save();
-
-		const tileCount = (canvas.width / tileDimension) + 1; // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
-		const halfTileCount = tileCount / 2; // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
-
-		{
-
-		}
-
-		const translateX = (above.x - halfTileCount) * tileDimension;
-		const translateY = (above.y - halfTileCount) * tileDimension;
-		ctx.translate(-translateX, -translateY);
-
-		const lowerX = Math.floor(above.x - halfTileCount);
-		const lowerY = Math.floor(above.y - halfTileCount);
-
-		for (var y = lowerY; y <= lowerY + tileCount; y++) {
-			for (var x = lowerX; x <= lowerX + tileCount; x++) {
-
-				var text = 'blank';
-
-				const tile = getTile(x, y);
-				if (null == tile) {
-					text = 'no cached tile';
-				}
-				else {
-					ctx.drawImage(tile.image, x * tileDimension, y * tileDimension);
-					/*
-					ctx.save();
-					ctx.beginPath();
-					ctx.rect(x * tileDimension, y * tileDimension, tileDimension, tileDimension);
-                	ctx.stroke();
-					ctx.restore();
-					*/
-
-				}
-
-				//ctx.fillText(text + ' ' + x + ' , ' + y, x * tileDimension + (tileDimension / 2), y * tileDimension + (tileDimension / 2));
-			}
-
-		}
-
-		ctx.restore();
-
-	}
-
-	ctx.fillText(above.x + ' ' + above.y + ' ' + frameCounter, 10, 10);
 
 	//ctx.rect(628, 628, 36, 36);
 	//ctx.stroke();
@@ -257,7 +160,6 @@ function onFrame() {
 	frameCounter++;
 
 	needToRender = false;
-	window.requestAnimationFrame(onFrame);
 }
 
 function panningUpdate(point) {
@@ -265,32 +167,32 @@ function panningUpdate(point) {
 	//above 100, 200
 
 	//below 400
-	const scale = tileDimension; //canvas.width / ;  //bugbug should be based on canvas size / tile dimension?
+	const scale = tileDimension; 
 
 	above.x += point.x / scale; // minus, as we are panning BUGBUG move to Panning.js?
 	above.y += point.y / scale; // BUGBUG convert point to a true object
 
 	//console.log(above.x + '    ' + above.y);
 
+	terrainTiles.moveTo(above.x, above.y);
+	mapTiles.moveTo(above.x, above.y);
 	needToRender = true;
 }
 
+/*
 function onWindowResize() {
-	canvas.width = window.innerWidth;
-	canvas.height = window.innerHeight;
+	terrainCanvas.width = window.innerWidth;
+	terrainCanvas.height = window.innerHeight;
 
-	console.log(canvas.width + ' <<<>>> ' + canvas.height);
+	console.log(terrainCanvas.width + ' <<<>>> ' + terrainCanvas.height);
 }
+*/
 
 function init() {
 
-	canvas = document.getElementById('outputCanvas');
-	ctx = canvas.getContext('2d');
+	//window.addEventListener("resize", onWindowResize);
+	//onWindowResize();
 
-	window.addEventListener("resize", onWindowResize);
-	onWindowResize();
-
-	Panning.init(canvas, panningUpdate);
 	/*
 		worker = new Worker('worker.js');
 		worker.needsWork = true;
@@ -301,8 +203,22 @@ function init() {
 		}, false);
 	*/
 
+	const mapCanvas = document.getElementById('mapCanvas');
+	mapTiles = new Tiles('http://tile.stamen.com/terrain/10/%x%/%y%.png', mapCanvas, 256);
+
+	const terrainCanvas = document.getElementById('terrainCanvas');
+	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256);
+	Panning.init(terrainCanvas, panningUpdate);
+
+
+
+
 	initThree();
 	animateThree();
+
+	terrainTiles.moveTo(above.x, above.y);
+	mapTiles.moveTo(above.x, above.y);
+	needToRender = true;
 
 	onFrame();
 }
