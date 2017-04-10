@@ -42,12 +42,15 @@ function initThree() {
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
 	camera.position.z = 1000;
 
-	geometry = new THREE.PlaneGeometry(5000, 5000, 64, 64);
+	geometry = new THREE.PlaneGeometry(5000, 5000, 256, 256);
 
 	texture = new THREE.Texture(canvas);
 
-	var vertexShader = "varying vec2 frank; void main()	{ frank = uv; gl_Position =  projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }";
-	var fragmentShader = "varying vec2 frank; uniform sampler2D texture; void main() { gl_FragColor = texture2D(texture, frank); }";
+	//var vertexShader = "varying vec2 vuv; void main()	{ vuv = uv; gl_Position =  projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }";
+	//var fragmentShader = "varying vec2 vuv; uniform sampler2D texture; void main() { vec4 q = texture2D(texture, vuv) * 256.0; float w = (q.r * 256.0 + q.g + q.b / 256.0) - 32768.0; w = w / 4096.0; gl_FragColor = vec4(w, w, w, 0.5);}";
+
+	var vertexShader = "varying float v; uniform sampler2D texture; void main()	{ vec4 q = texture2D(texture, uv) * 256.0; float w = (q.r * 256.0 + q.g + q.b / 256.0) - 32768.0; w = w / 4096.0 ; v = w ; gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + w * 500.0, 1.0 ); }";
+	var fragmentShader = "varying float v; void main() { gl_FragColor = vec4(v, v, v, 1.0);}";
 
 	var material = new THREE.ShaderMaterial({
 		uniforms: {
@@ -76,7 +79,7 @@ function animateThree() {
 
 	requestAnimationFrame(animateThree);
 
-	mesh.rotation.z += 0.01;
+	//mesh.rotation.z += 0.01;
 	//mesh.rotation.y += 0.02;
 
 	texture.needsUpdate = true;  // bugbug only if needed
@@ -121,9 +124,9 @@ function getTile(x, y) {
 
 		console.log('requesting ' + x + ' ' + y);
 
-		//const url = 'https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/' + x + '/' + y + '.png?api_key=mapzen-JcyHAc8'
+		const url = 'https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/' + x + '/' + y + '.png?api_key=mapzen-JcyHAc8'
 
-		const url = 'http://tile.stamen.com/terrain/10/' + x + '/' + y + '.png'
+		//const url = 'http://tile.stamen.com/terrain/10/' + x + '/' + y + '.png'
 		fetch(url)
 			.then(response => response.blob())
 			.then(blob => createImageBitmap(blob))
