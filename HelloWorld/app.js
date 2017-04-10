@@ -32,7 +32,7 @@ var cachedTiles = [];
 /// three js
 var scene, camera, renderer;
 var geometry, material, mesh;
-
+var texture;
 
 
 function initThree() {
@@ -42,14 +42,17 @@ function initThree() {
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
 	camera.position.z = 1000;
 
-	geometry = new THREE.PlaneGeometry(1000, 1000, 64, 64);
+	geometry = new THREE.PlaneGeometry(5000, 5000, 64, 64);
+
+	texture = new THREE.Texture(canvas);
 
 	var vertexShader = "varying vec2 frank; void main()	{ frank = uv; gl_Position =  projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }";
-	var fragmentShader = "varying vec2 frank; void main() { gl_FragColor = vec4(frank, 0.0, 0.5); }";
+	var fragmentShader = "varying vec2 frank; uniform sampler2D texture; void main() { gl_FragColor = texture2D(texture, frank); }";
 
-	
-	
 	var material = new THREE.ShaderMaterial({
+		uniforms: {
+			texture: { type: 't', value: texture }
+		},
 		vertexShader: vertexShader,
 		fragmentShader: fragmentShader
 	});
@@ -57,6 +60,9 @@ function initThree() {
 	//material = new THREE.MeshBasicMaterial( { color: 0x777777, wireframe: true } );
 
 	mesh = new THREE.Mesh(geometry, material);
+
+	mesh.lookAt(new THREE.Vector3(0, 1, 1));
+
 	scene.add(mesh);
 
 	renderer = new THREE.WebGLRenderer();
@@ -70,8 +76,10 @@ function animateThree() {
 
 	requestAnimationFrame(animateThree);
 
-	mesh.rotation.x += 0.01;
-	mesh.rotation.y += 0.02;
+	mesh.rotation.z += 0.01;
+	//mesh.rotation.y += 0.02;
+
+	texture.needsUpdate = true;  // bugbug only if needed
 
 	renderer.render(scene, camera);
 
@@ -243,9 +251,6 @@ function onWindowResize() {
 
 function init() {
 
-	initThree();
-	animateThree();
-
 	canvas = document.getElementById('outputCanvas');
 	ctx = canvas.getContext('2d');
 
@@ -262,5 +267,9 @@ function init() {
 			worker.needsWork = true;
 		}, false);
 	*/
+
+	initThree();
+	animateThree();
+
 	onFrame();
 }
