@@ -29,11 +29,41 @@ var needToRender = true;
 var cachedTiles = [];
 
 
+function checkKey(e) {
+
+    const step = 1;
+
+    e = e || window.event;
+
+    if (e.keyCode == '38') {
+        // up arrow
+     	above.y -= step; // minus, as we are panning BUGBUG move to Panning.js?
+    }
+    else if (e.keyCode == '40') {
+        // down arrow		     	
+		above.y += step; // minus, as we are panning BUGBUG move to Panning.js?
+
+    }
+    else if (e.keyCode == '37') {
+       // left arrow
+   	   above.x -= step; // minus, as we are panning BUGBUG move to Panning.js?
+
+    }
+    else if (e.keyCode == '39') {
+       // right arrow	
+     	above.x += step; // minus, as we are panning BUGBUG move to Panning.js?
+
+    }
+
+}
+document.onkeydown = checkKey;
+
+
+
 /// three js
 var scene, camera, renderer;
 var geometry, material, mesh;
 var texture;
-
 
 function initThree() {
 
@@ -49,7 +79,7 @@ function initThree() {
 	//var vertexShader = "varying vec2 vuv; void main()	{ vuv = uv; gl_Position =  projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }";
 	//var fragmentShader = "varying vec2 vuv; uniform sampler2D texture; void main() { vec4 q = texture2D(texture, vuv) * 256.0; float w = (q.r * 256.0 + q.g + q.b / 256.0) - 32768.0; w = w / 4096.0; gl_FragColor = vec4(w, w, w, 0.5);}";
 
-	var vertexShader = "varying float v; uniform sampler2D texture; void main()	{ vec4 q = texture2D(texture, uv) * 256.0; float w = (q.r * 256.0 + q.g + q.b / 256.0) - 32768.0; w = w / 4096.0 ; v = w ; gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + w * 500.0, 1.0 ); }";
+	var vertexShader = "varying float v; uniform sampler2D texture; void main()	{ vec4 q = texture2D(texture, uv) * 256.0; float w = (q.r * 256.0 + q.g) - 32768.0; w = w / 4096.0 ; v = w ; gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + w * 300.0, 1.0 ); }";
 	var fragmentShader = "varying float v; void main() { gl_FragColor = vec4(v, v, v, 1.0);}";
 
 	var material = new THREE.ShaderMaterial({
@@ -69,7 +99,7 @@ function initThree() {
 	scene.add(mesh);
 
 	renderer = new THREE.WebGLRenderer();
-	renderer.setSize(window.innerWidth / 2, window.innerHeight / 2);
+	renderer.setSize(window.innerWidth, window.innerHeight);
 
 	document.body.appendChild(renderer.domElement);
 
@@ -246,8 +276,8 @@ function panningUpdate(point) {
 }
 
 function onWindowResize() {
-	canvas.width = window.innerWidth / 2;
-	canvas.height = window.innerHeight / 2;
+	canvas.width = window.innerWidth;
+	canvas.height = window.innerHeight;
 
 	console.log(canvas.width + ' <<<>>> ' + canvas.height);
 }
