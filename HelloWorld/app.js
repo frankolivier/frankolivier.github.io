@@ -88,7 +88,7 @@ function initThree() {
 	//var vertexShader = "varying vec2 vuv; void main()	{ vuv = uv; gl_Position =  projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }";
 	//var fragmentShader = "varying vec2 vuv; uniform sampler2D texture; void main() { vec4 q = texture2D(texture, vuv) * 256.0; float w = (q.r * 256.0 + q.g + q.b / 256.0) - 32768.0; w = w / 4096.0; gl_FragColor = vec4(w, w, w, 0.5);}";
 
-	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; void main()	{ v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float w = (q.r * 256.0 + q.g) - 32768.0; w = w / 4096.0 ; gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + w * 300.0, 1.0 ); }";
+	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; void main()	{ v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float w = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; w = w / 4096.0 ; gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + w * 300.0, 1.0 ); }";
 	var fragmentShader = "varying vec2 v; uniform sampler2D mapTexture; void main() { gl_FragColor = texture2D(mapTexture, v); }";
 
 	var material = new THREE.ShaderMaterial({
