@@ -16,20 +16,30 @@
     <script type="text/javascript" src="app.js"></script>
 
     <style>
-        body {
+        html, body {
             margin: 0;
+            padding: 0;
             overflow: none;
+            width: 100%;
+            height: 100%;
         }
         
         canvas {
-            width: 25%;
-            height: 25%;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #terrainCanvas {
+            display: none;
         }
 
-#ou tputCanvas {
-    display: none;
-}
-
+        #mapCanvas {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            width: 200px;
+            height: 200px;
+        }
     </style>
 </head>
 

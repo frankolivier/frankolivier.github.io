@@ -109,10 +109,11 @@ function initThree() {
 	scene.add(mesh);
 
 	renderer = new THREE.WebGLRenderer();
-	renderer.setSize(window.innerWidth / 3, window.innerHeight / 3);
+
+	renderer.setSize(document.body.clientWidth * 0.9, document.body.clientHeight * 0.9);
 
 	document.body.appendChild(renderer.domElement);
-
+	
 }
 
 function animateThree() {
@@ -179,18 +180,19 @@ function panningUpdate(point) {
 	needToRender = true;
 }
 
-/*
-function onWindowResize() {
-	terrainCanvas.width = window.innerWidth;
-	terrainCanvas.height = window.innerHeight;
 
-	console.log(terrainCanvas.width + ' <<<>>> ' + terrainCanvas.height);
+function onWindowResize() {
+	//terrainCanvas.width = window.innerWidth;
+	//terrainCanvas.height = window.innerHeight;
+
+	//console.log(terrainCanvas.width + ' <<<>>> ' + terrainCanvas.height);
+	//renderer.setSize(window.innerWidth, window.innerHeight);
 }
-*/
+
 
 function init() {
 
-	//window.addEventListener("resize", onWindowResize);
+	window.addEventListener("resize", onWindowResize);
 	//onWindowResize();
 
 	/*
@@ -208,7 +210,8 @@ function init() {
 
 	const terrainCanvas = document.getElementById('terrainCanvas');
 	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256);
-	Panning.init(terrainCanvas, panningUpdate);
+	
+	Panning.init(mapCanvas, panningUpdate);
 
 
 
