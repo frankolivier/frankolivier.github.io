@@ -11,6 +11,8 @@ function Tiles(url, canvas, tileDimension) {			//bugbug move to util class file?
     this.x = 128;
     this.y = 128;
 
+    this.updating = true;
+
     this.cachedTiles = [];
 
     //bugbug somehow this module should tell the others if the canvas is dirty or not
@@ -52,7 +54,7 @@ function Tiles(url, canvas, tileDimension) {			//bugbug move to util class file?
             url = url.replace('%x%', x);
             url = url.replace('%y%', y);
 
-            console.log(url);
+            //console.log(url);
 
             fetch(url)
                 .then(response => response.blob())
@@ -74,16 +76,16 @@ function Tiles(url, canvas, tileDimension) {			//bugbug move to util class file?
         }
     }
 
-
-    this.moveTo = function (x, y) {
+    // Returns true if we needed to render
+    this.render = function (x, y) {
         //bugbug enforce limits (0 - 256, 0 - 256)
+
+        if ((this.x == x)&&(this.y == y)&&this.updating==false) return;
 
         this.x = x;
         this.y = y;
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-
 
         this.ctx.save();
 
@@ -97,6 +99,8 @@ function Tiles(url, canvas, tileDimension) {			//bugbug move to util class file?
         const lowerX = Math.floor(this.x - halfTileCount);
         const lowerY = Math.floor(this.y - halfTileCount);
 
+        var updating = false; // see if this survives paint pass
+
         for (var y = lowerY; y <= lowerY + tileCount; y++) {
             for (var x = lowerX; x <= lowerX + tileCount; x++) {
 
@@ -105,6 +109,7 @@ function Tiles(url, canvas, tileDimension) {			//bugbug move to util class file?
                 const tile = this.getTile(x, y);
                 if (null == tile) {
                     text = 'no cached tile';
+                    updating = true;           
                 }
                 else {
                     this.ctx.drawImage(tile.image, x * tileDimension, y * tileDimension);
@@ -123,8 +128,9 @@ function Tiles(url, canvas, tileDimension) {			//bugbug move to util class file?
 
         }
 
-        this.ctx.restore();
+        this.updating = updating;
 
+        this.ctx.restore();
 
         this.ctx.fillText(this.x + ' ' + this.y, 10, 10);
 

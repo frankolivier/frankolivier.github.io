@@ -24,43 +24,38 @@ const projectionDimension = 256;	// Web Mercator is 256 x 256 tiles
 
 const tileDimension = 256;	// Tiles are 256 x 256 pixels
 
-var needToRender = true;
-
-
 
 var terrainTiles;	// Tiles.js instance
 var mapTiles;	// Tiles.js instance
 
+var renderedX = -1;
+var renderedY = -1;
 
 function checkKey(e) {
 
-    const step = 1;
+	const step = 0.1;
 
-    e = e || window.event;
+	e = e || window.event;
 
-    if (e.keyCode == '38') {
-        // up arrow
-     	above.y -= step; // minus, as we are panning BUGBUG move to Panning.js?
-    }
-    else if (e.keyCode == '40') {
-        // down arrow		     	
+	if (e.keyCode == '38') {
+		// up arrow
+		above.y -= step; // minus, as we are panning BUGBUG move to Panning.js?
+	}
+	else if (e.keyCode == '40') {
+		// down arrow		     	
 		above.y += step; // minus, as we are panning BUGBUG move to Panning.js?
 
-    }
-    else if (e.keyCode == '37') {
-       // left arrow
-   	   above.x -= step; // minus, as we are panning BUGBUG move to Panning.js?
+	}
+	else if (e.keyCode == '37') {
+		// left arrow
+		above.x -= step; // minus, as we are panning BUGBUG move to Panning.js?
 
-    }
-    else if (e.keyCode == '39') {
-       // right arrow	
-     	above.x += step; // minus, as we are panning BUGBUG move to Panning.js?
+	}
+	else if (e.keyCode == '39') {
+		// right arrow	
+		above.x += step; // minus, as we are panning BUGBUG move to Panning.js?
 
-    }
-
-	terrainTiles.moveTo(above.x, above.y);
-	mapTiles.moveTo(above.x, above.y);
-	needToRender = true;
+	}
 
 }
 document.onkeydown = checkKey;
@@ -69,6 +64,12 @@ document.onkeydown = checkKey;
 
 /// three js
 var scene, camera, renderer;
+
+var controls;
+
+
+var effect; // the webvr renderer
+
 var geometry, material, mesh;
 var terrainTexture, mapTexture;
 
@@ -77,7 +78,7 @@ function initThree() {
 	scene = new THREE.Scene();
 
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
-	camera.position.z = 1000;
+	//camera.position.z = 1000;
 
 	geometry = new THREE.PlaneGeometry(5000, 5000, 256, 256);
 
@@ -108,37 +109,70 @@ function initThree() {
 
 	scene.add(mesh);
 
+
+	mesh.position.z = -1000;
+
+
 	renderer = new THREE.WebGLRenderer();
+
+	controls = new THREE.VRControls( camera );
+	controls.standing = false;
+	controls.scale = 1000;
+
+
+	effect = new THREE.VREffect(renderer);
 
 	renderer.setSize(document.body.clientWidth * 0.9, document.body.clientHeight * 0.9);
 
 	document.body.appendChild(renderer.domElement);
-	
+
+	const vrButton = document.getElementById('vrButton');
+
+	vrButton.onclick = function () {
+
+		effect.isPresenting ? effect.exitPresent() : effect.requestPresent();
+
+	};
+
 }
 
 function animateThree() {
 
-	requestAnimationFrame(animateThree);
+	effect.requestAnimationFrame(animateThree);
 
-	mesh.rotation.z += 0.01;
+	terrainTiles.render(above.x, above.y);
+	mapTiles.render(above.x, above.y);
+
+	controls.update();
+
+	if (mapTiles.updating || terrainTiles.updating || renderedX!=above.x || renderedY!=above.y )
+	{
+		terrainTexture.needsUpdate = true;  // bugbug only if needed
+		mapTexture.needsUpdate = true;  // bugbug only if needed
+		renderedX = above.x;
+		renderedY = above.y;
+	}
+
+	//mesh.rotation.z += 0.001;
 	//mesh.rotation.y += 0.02;
 
-	terrainTexture.needsUpdate = true;  // bugbug only if needed
-	mapTexture.needsUpdate = true;  // bugbug only if needed
 
-	renderer.render(scene, camera);
+
+
+	//renderer.render(scene, camera);
+	effect.render(scene, camera);
+
+	frameCounter++;
 
 }
 /// three js
 
 
-
+/*
 function onFrame() {
 
-	window.requestAnimationFrame(onFrame);
 
-	terrainTiles.moveTo(above.x, above.y);
-	mapTiles.moveTo(above.x, above.y);
+
 
 	//BUGBUG only render if needed
 
@@ -150,34 +184,31 @@ function onFrame() {
 
 
 
-	/*
+
 		if (worker.needsWork == true)
 		{
 			worker.postMessage('Hello World ' + frameCounter); // Send data to our worker.
 			worker.needsWork = false;
 		}
-	*/
-	// Start exit
-	frameCounter++;
 
-	needToRender = false;
+	// Start exit
+
+
 }
+*/
 
 function panningUpdate(point) {
 
 	//above 100, 200
 
 	//below 400
-	const scale = tileDimension; 
+	const scale = tileDimension;
 
 	above.x += point.x / scale; // minus, as we are panning BUGBUG move to Panning.js?
 	above.y += point.y / scale; // BUGBUG convert point to a true object
 
 	//console.log(above.x + '    ' + above.y);
 
-	terrainTiles.moveTo(above.x, above.y);
-	mapTiles.moveTo(above.x, above.y);
-	needToRender = true;
 }
 
 
@@ -210,18 +241,15 @@ function init() {
 
 	const terrainCanvas = document.getElementById('terrainCanvas');
 	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256);
-	
+
 	Panning.init(mapCanvas, panningUpdate);
 
-
-
-
 	initThree();
+
 	animateThree();
 
-	terrainTiles.moveTo(above.x, above.y);
-	mapTiles.moveTo(above.x, above.y);
-	needToRender = true;
 
-	onFrame();
+//	terrainTiles.render(above.x, above.y);
+	//mapTiles.render(above.x, above.y);
+
 }
