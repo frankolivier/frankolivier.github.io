@@ -65,6 +65,9 @@ document.onkeydown = checkKey;
 /// three js
 var scene, camera, renderer;
 
+var controls;
+
+
 var effect; // the webvr renderer
 
 var geometry, material, mesh;
@@ -108,6 +111,9 @@ function initThree() {
 
 	renderer = new THREE.WebGLRenderer();
 
+	controls = new THREE.VRControls( camera );
+	controls.standing = true;
+
 	effect = new THREE.VREffect(renderer);
 
 	renderer.setSize(document.body.clientWidth * 0.9, document.body.clientHeight * 0.9);
@@ -129,6 +135,7 @@ function animateThree() {
 	terrainTiles.render(above.x, above.y);
 	mapTiles.render(above.x, above.y);
 
+	controls.update();
 
 	if (mapTiles.updating || terrainTiles.updating || renderedX!=above.x || renderedY!=above.y )
 	{
@@ -138,7 +145,7 @@ function animateThree() {
 		renderedY = above.y;
 	}
 
-	mesh.rotation.z += 0.001;
+	//mesh.rotation.z += 0.001;
 	//mesh.rotation.y += 0.02;
 
 
