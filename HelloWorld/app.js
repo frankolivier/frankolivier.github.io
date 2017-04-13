@@ -33,7 +33,11 @@ var renderedY = -1;
 
 function checkKey(e) {
 
+<<<<<<< HEAD
 	const step = 0.1;
+=======
+	const step = 1;
+>>>>>>> origin/master
 
 	e = e || window.event;
 
@@ -80,7 +84,7 @@ function initThree() {
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
 	//camera.position.z = 1000;
 
-	geometry = new THREE.PlaneGeometry(5000, 5000, 256, 256);
+	geometry = new THREE.PlaneGeometry(5000, 5000, 100, 100);
 
 	terrainTexture = new THREE.Texture(terrainCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
@@ -116,9 +120,13 @@ function initThree() {
 	renderer = new THREE.WebGLRenderer();
 
 	controls = new THREE.VRControls( camera );
+<<<<<<< HEAD
 	controls.standing = false;
 	controls.scale = 1000;
 
+=======
+	controls.standing = true;
+>>>>>>> origin/master
 
 	effect = new THREE.VREffect(renderer);
 
@@ -126,9 +134,13 @@ function initThree() {
 
 	document.body.appendChild(renderer.domElement);
 
+<<<<<<< HEAD
 	const vrButton = document.getElementById('vrButton');
 
 	vrButton.onclick = function () {
+=======
+	renderer.domElement.onclick = function () {
+>>>>>>> origin/master
 
 		effect.isPresenting ? effect.exitPresent() : effect.requestPresent();
 
@@ -139,12 +151,21 @@ function initThree() {
 function animateThree() {
 
 	effect.requestAnimationFrame(animateThree);
+<<<<<<< HEAD
 
 	terrainTiles.render(above.x, above.y);
 	mapTiles.render(above.x, above.y);
 
 	controls.update();
 
+=======
+
+	terrainTiles.render(above.x, above.y);
+	mapTiles.render(above.x, above.y);
+
+	controls.update();
+
+>>>>>>> origin/master
 	if (mapTiles.updating || terrainTiles.updating || renderedX!=above.x || renderedY!=above.y )
 	{
 		terrainTexture.needsUpdate = true;  // bugbug only if needed
