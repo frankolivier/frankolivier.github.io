@@ -33,11 +33,7 @@ var renderedY = -1;
 
 function checkKey(e) {
 
-<<<<<<< HEAD
 	const step = 0.1;
-=======
-	const step = 1;
->>>>>>> origin/master
 
 	e = e || window.event;
 
@@ -58,8 +54,16 @@ function checkKey(e) {
 	else if (e.keyCode == '39') {
 		// right arrow	
 		above.x += step; // minus, as we are panning BUGBUG move to Panning.js?
-
 	}
+	else if (e.keyCode == '71') {
+		// q
+		mesh.position.y -= 100;
+	}
+	else if (e.keyCode == '65') {
+		// e
+		mesh.position.y += 100;
+	}
+
 
 }
 document.onkeydown = checkKey;
@@ -109,24 +113,19 @@ function initThree() {
 
 	mesh = new THREE.Mesh(geometry, material);
 
-	mesh.lookAt(new THREE.Vector3(0, 1, 1));
+	mesh.lookAt(new THREE.Vector3(0, 1, 0));
 
 	scene.add(mesh);
 
 
-	mesh.position.z = -1000;
+	mesh.position.y = -1000;
 
 
 	renderer = new THREE.WebGLRenderer();
 
 	controls = new THREE.VRControls( camera );
-<<<<<<< HEAD
 	controls.standing = false;
 	controls.scale = 1000;
-
-=======
-	controls.standing = true;
->>>>>>> origin/master
 
 	effect = new THREE.VREffect(renderer);
 
@@ -134,13 +133,9 @@ function initThree() {
 
 	document.body.appendChild(renderer.domElement);
 
-<<<<<<< HEAD
 	const vrButton = document.getElementById('vrButton');
 
 	vrButton.onclick = function () {
-=======
-	renderer.domElement.onclick = function () {
->>>>>>> origin/master
 
 		effect.isPresenting ? effect.exitPresent() : effect.requestPresent();
 
@@ -151,21 +146,12 @@ function initThree() {
 function animateThree() {
 
 	effect.requestAnimationFrame(animateThree);
-<<<<<<< HEAD
 
 	terrainTiles.render(above.x, above.y);
 	mapTiles.render(above.x, above.y);
 
 	controls.update();
 
-=======
-
-	terrainTiles.render(above.x, above.y);
-	mapTiles.render(above.x, above.y);
-
-	controls.update();
-
->>>>>>> origin/master
 	if (mapTiles.updating || terrainTiles.updating || renderedX!=above.x || renderedY!=above.y )
 	{
 		terrainTexture.needsUpdate = true;  // bugbug only if needed
