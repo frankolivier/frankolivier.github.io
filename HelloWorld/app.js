@@ -81,6 +81,23 @@ var effect; // the webvr renderer
 var geometry, material, mesh;
 var terrainTexture, mapTexture;
 
+
+var controller = null;
+
+function gamepadHandler(event, connecting) {
+  var gamepad = event.gamepad;
+  // Note:
+  // gamepad === navigator.getGamepads()[gamepad.index]
+
+  if (connecting) {
+	console.log("controller connected!")
+    controller = gamepad;
+  } else {
+	console.log("controller disconnected!")
+	controller = null;
+  }
+}
+
 function initThree() {
 
 	scene = new THREE.Scene();
@@ -141,7 +158,11 @@ function initThree() {
 
 	};
 
+	//bugbug move?
+	window.addEventListener("gamepadconnected", function(e) { gamepadHandler(e, true); }, false);
+
 }
+
 
 function animateThree() {
 
@@ -163,6 +184,34 @@ function animateThree() {
 	//mesh.rotation.z += 0.001;
 	//mesh.rotation.y += 0.02;
 
+
+	//bugbug need to query hasorientation?s
+
+	// Handle controller input
+	if (controller != null)
+	{
+		if (controller.buttons[0].pressed==true)
+		{
+			var quaternion = new THREE.Quaternion().fromArray(controller.pose.orientation);
+			var vector = new THREE.Vector3(0, 0, -1);
+
+			vector.applyQuaternion(quaternion);
+
+			//console.log(vector.x + " " + vector.y + " " + vector.z);
+
+			var scale = 0.1;
+			above.x += vector.x * scale;
+			above.y += vector.z * scale;
+			
+			mesh.position.y -= vector.y * 50;
+
+
+
+		}
+
+
+
+	}
 
 
 
