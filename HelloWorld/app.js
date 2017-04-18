@@ -190,7 +190,12 @@ function animateThree() {
 	// Handle controller input
 	if (controller != null)
 	{
-		if (controller.buttons[0].pressed==true)
+
+		console.log("controller: " + controller.buttons[0].pressed + " " + controller.buttons[1].pressed + " " + controller.buttons[2].pressed + " " + controller.buttons[3].pressed + " ");
+
+		var pressed = controller.buttons[0].pressed ||  controller.buttons[1].pressed || controller.buttons[2].pressed || controller.buttons[3].pressed;
+
+		if ( pressed==true)
 		{
 			var quaternion = new THREE.Quaternion().fromArray(controller.pose.orientation);
 			var vector = new THREE.Vector3(0, 0, -1);
