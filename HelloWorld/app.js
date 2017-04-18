@@ -190,10 +190,9 @@ function animateThree() {
 	// Handle controller input
 	if (controller != null)
 	{
+		// id = Daydream Controller
 
-		console.log("controller: " + controller.buttons[0].pressed + " " + controller.buttons[1].pressed + " " + controller.buttons[2].pressed + " " + controller.buttons[3].pressed + " ");
-
-		var pressed = controller.buttons[0].pressed ||  controller.buttons[1].pressed || controller.buttons[2].pressed || controller.buttons[3].pressed;
+		var pressed = controller.buttons[0].pressed;
 
 		if ( pressed==true)
 		{
