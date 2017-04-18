@@ -82,22 +82,6 @@ var geometry, material, mesh;
 var terrainTexture, mapTexture;
 
 
-var controller = null;
-
-function gamepadHandler(event, connecting) {
-  var gamepad = event.gamepad;
-  // Note:
-  // gamepad === navigator.getGamepads()[gamepad.index]
-
-  if (connecting) {
-	console.log("controller connected!")
-    controller = gamepad;
-  } else {
-	console.log("controller disconnected!")
-	controller = null;
-  }
-}
-
 function initThree() {
 
 	scene = new THREE.Scene();
@@ -140,7 +124,7 @@ function initThree() {
 
 	renderer = new THREE.WebGLRenderer();
 
-	controls = new THREE.VRControls( camera );
+	controls = new THREE.VRControls(camera);
 	controls.standing = false;
 	controls.scale = 1000;
 
@@ -158,9 +142,6 @@ function initThree() {
 
 	};
 
-	//bugbug move?
-	window.addEventListener("gamepadconnected", function(e) { gamepadHandler(e, true); }, false);
-
 }
 
 
@@ -173,8 +154,7 @@ function animateThree() {
 
 	controls.update();
 
-	if (mapTiles.updating || terrainTiles.updating || renderedX!=above.x || renderedY!=above.y )
-	{
+	if (mapTiles.updating || terrainTiles.updating || renderedX != above.x || renderedY != above.y) {
 		terrainTexture.needsUpdate = true;  // bugbug only if needed
 		mapTexture.needsUpdate = true;  // bugbug only if needed
 		renderedX = above.x;
@@ -188,34 +168,43 @@ function animateThree() {
 	//bugbug need to query hasorientation?s
 
 	// Handle controller input
-	if (controller != null)
-	{
-		// id = Daydream Controller
 
-		var pressed = controller.buttons[0].pressed;
+	var gamepads = navigator.getGamepads();
 
-		if ( pressed==true)
-		{
-			var quaternion = new THREE.Quaternion().fromArray(controller.pose.orientation);
-			var vector = new THREE.Vector3(0, 0, -1);
+	for (var i = 0; i < gamepads.length; ++i) {
+		var controller = gamepads[i];
 
-			vector.applyQuaternion(quaternion);
 
-			//console.log(vector.x + " " + vector.y + " " + vector.z);
+		if (controller != null) {
+			// id = Daydream Controller bugbug
 
-			var scale = 0.1;
-			above.x += vector.x * scale;
-			above.y += vector.z * scale;
-			
-			mesh.position.y -= vector.y * 50;
+			var pressed = controller.buttons[0].pressed;
+
+			if (pressed == true) {
+				var quaternion = new THREE.Quaternion().fromArray(controller.pose.orientation);
+				var vector = new THREE.Vector3(0, 0, -1);
+
+				vector.applyQuaternion(quaternion);
+
+				//console.log(vector.x + " " + vector.y + " " + vector.z);
+
+				var scale = 0.1;
+				above.x += vector.x * scale;
+				above.y += vector.z * scale;
+
+				mesh.position.y -= vector.y * 50;
+
+
+
+			}
 
 
 
 		}
 
-
-
 	}
+
+
 
 
 
@@ -297,10 +286,10 @@ function init() {
 	*/
 
 
-//SSL
-//If you'd like to display these map tiles on a website that requires HTTPS, use our tile SSL endpoint by replacing http://tile.stamen.com with https://stamen-tiles.a.ssl.fastly.net. Multiple subdomains can be also be used: https://stamen-tiles-{S}.a.ssl.fastly.net
-//JavaScript can be loaded from https://stamen-maps.a.ssl.fastly.net/js/tile.stamen.js.
-//If you need protocol-agnostic URLs, use //stamen-tiles-{s}.a.ssl.fastly.net/, as that endpoint will work for both SSL and non-SSL connections.
+	//SSL
+	//If you'd like to display these map tiles on a website that requires HTTPS, use our tile SSL endpoint by replacing http://tile.stamen.com with https://stamen-tiles.a.ssl.fastly.net. Multiple subdomains can be also be used: https://stamen-tiles-{S}.a.ssl.fastly.net
+	//JavaScript can be loaded from https://stamen-maps.a.ssl.fastly.net/js/tile.stamen.js.
+	//If you need protocol-agnostic URLs, use //stamen-tiles-{s}.a.ssl.fastly.net/, as that endpoint will work for both SSL and non-SSL connections.
 
 
 	const mapCanvas = document.getElementById('mapCanvas');
@@ -316,7 +305,7 @@ function init() {
 	animateThree();
 
 
-//	terrainTiles.render(above.x, above.y);
+	//	terrainTiles.render(above.x, above.y);
 	//mapTiles.render(above.x, above.y);
 
 }
