@@ -15,6 +15,8 @@ document.addEventListener("DOMContentLoaded", init); // initialization
 
 var frameCounter = 0;	// the frame being rendered in the output canvas
 
+var totalFrameTime = 0;
+
 var worker = null;		// the background worker that'll update the data to draw in the canvas
 
 var above = new Point(166, 355);	// the point on the map we are currently above
@@ -147,6 +149,8 @@ function initThree() {
 
 function animateThree() {
 
+	var t1 = window.performance.now();
+
 	effect.requestAnimationFrame(animateThree);
 
 	terrainTiles.render(above.x, above.y);
@@ -212,6 +216,11 @@ function animateThree() {
 	effect.render(scene, camera);
 
 	frameCounter++;
+
+	var t2 = window.performance.now();
+
+	totalFrameTime += (t2 - t1);
+
 
 }
 /// three js

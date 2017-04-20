@@ -132,7 +132,9 @@ function Tiles(url, canvas, tileDimension) {			//bugbug move to util class file?
 
         this.ctx.restore();
 
-        this.ctx.fillText(this.x + ' ' + this.y, 10, 10);
+        this.ctx.font = '148px serif';
+        this.ctx.color = 'red';
+        this.ctx.fillText(totalFrameTime / frameCounter, 200, 200);
 
 
     }
