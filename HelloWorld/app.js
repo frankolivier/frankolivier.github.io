@@ -87,6 +87,7 @@ var terrainTexture, mapTexture;
 function initThree() {
 
 	scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2( 0xefd1b5, 25 );
 
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
 	//camera.position.z = 1000;
@@ -126,6 +127,8 @@ function initThree() {
 
 	renderer = new THREE.WebGLRenderer();
 
+	renderer.setClearColor (0x7ec0ee, 1);
+
 	controls = new THREE.VRControls(camera);
 	controls.standing = false;
 	controls.scale = 1000;
@@ -149,7 +152,10 @@ function initThree() {
 
 function animateThree() {
 
+
 	var t1 = window.performance.now();
+
+
 
 	effect.requestAnimationFrame(animateThree);
 
@@ -302,10 +308,10 @@ function init() {
 
 
 	const mapCanvas = document.getElementById('mapCanvas');
-	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/10/%x%/%y%.png', mapCanvas, 256);
+	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/10/%x%/%y%.png', mapCanvas, 256, true);
 
 	const terrainCanvas = document.getElementById('terrainCanvas');
-	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256);
+	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256, false);
 
 	Panning.init(mapCanvas, panningUpdate);
 

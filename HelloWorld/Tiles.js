@@ -1,12 +1,13 @@
 "use strict";
 
 
-function Tiles(url, canvas, tileDimension) {			//bugbug move to util class file?
+function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to util class file?
 
     this.url = url;
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.tileDimension = tileDimension; //bugbug duplicate
+    this.drawPerfCounter = drawPerfCounter;
 
     this.x = 128;
     this.y = 128;
@@ -132,9 +133,13 @@ function Tiles(url, canvas, tileDimension) {			//bugbug move to util class file?
 
         this.ctx.restore();
 
-        this.ctx.font = '148px serif';
-        this.ctx.color = 'red';
-        this.ctx.fillText(totalFrameTime / frameCounter, 200, 200);
+        if (this.drawPerfCounter==true)
+        {
+            this.ctx.font = '148px serif';
+            this.ctx.fillStyle = 'red';
+            this.ctx.fillText(totalFrameTime / frameCounter, 200, 400);
+        }
+
 
 
     }
