@@ -9,7 +9,7 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to
     this.tileDimension = tileDimension; //bugbug duplicate
     this.drawPerfCounter = drawPerfCounter;
 
-    this.x = 128;
+    this.x = 128;       // bugbug what does this do?
     this.y = 128;
 
     this.updating = true;

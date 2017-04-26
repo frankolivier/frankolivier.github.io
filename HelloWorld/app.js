@@ -101,8 +101,8 @@ function initThree() {
 	//var vertexShader = "varying vec2 vuv; void main()	{ vuv = uv; gl_Position =  projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }";
 	//var fragmentShader = "varying vec2 vuv; uniform sampler2D texture; void main() { vec4 q = texture2D(texture, vuv) * 256.0; float w = (q.r * 256.0 + q.g + q.b / 256.0) - 32768.0; w = w / 4096.0; gl_FragColor = vec4(w, w, w, 0.5);}";
 
-	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; void main()	{ v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float w = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; w = w / 4096.0 ; gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + w * 300.0, 1.0 ); }";
-	var fragmentShader = "varying vec2 v; uniform sampler2D mapTexture; void main() { gl_FragColor = texture2D(mapTexture, v); }";
+	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float distance; void main()	{ v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float w = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; w = w / 4096.0 ; gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + w * 300.0, 1.0 ); distance = clamp(length(gl_Position) / 3000.0, 0.0, 1.0); }";
+	var fragmentShader = "varying vec2 v; uniform sampler2D mapTexture; varying float distance; void main() { gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), distance); }";
 
 	var material = new THREE.ShaderMaterial({
 		uniforms: {
@@ -127,7 +127,7 @@ function initThree() {
 
 	renderer = new THREE.WebGLRenderer();
 
-	renderer.setClearColor (0x7ec0ee, 1);
+	renderer.setClearColor (0xffffff, 1);
 
 	controls = new THREE.VRControls(camera);
 	controls.standing = false;
@@ -308,7 +308,7 @@ function init() {
 
 
 	const mapCanvas = document.getElementById('mapCanvas');
-	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/10/%x%/%y%.png', mapCanvas, 256, true);
+	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/10/%x%/%y%.png', mapCanvas, 256, false);
 
 	const terrainCanvas = document.getElementById('terrainCanvas');
 	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256, false);
