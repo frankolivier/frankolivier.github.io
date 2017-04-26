@@ -314,7 +314,7 @@ function init() {
 
 
 	const mapCanvas = document.getElementById('mapCanvas');
-	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/10/%x%/%y%.png', mapCanvas, 256, true);
+	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/10/%x%/%y%.png', mapCanvas, 256, false);
 
 	const terrainCanvas = document.getElementById('terrainCanvas');
 	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256, false);
