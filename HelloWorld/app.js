@@ -5,6 +5,8 @@
 // https://en.wikipedia.org/wiki/Web_Mercator
 // http://mike.teczno.com/notes/osm-us-terrain-layer/foreground.html
 // https://www.mapbox.com/blog/3d-terrain-threejs/
+//bugbug todo				renderer.setPixelRatio( window.devicePixelRatio );
+
 
 // bugbug feature detect webgl, fetch, web workers
 
@@ -92,7 +94,7 @@ function initThree() {
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
 	//camera.position.z = 1000;
 
-	geometry = new THREE.PlaneGeometry(5000, 5000, 100, 100);
+	geometry = new THREE.PlaneGeometry(5000, 5000, 256, 256);
 
 	terrainTexture = new THREE.Texture(terrainCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
@@ -122,7 +124,7 @@ function initThree() {
 	scene.add(mesh);
 
 
-	mesh.position.y = -1000;
+	mesh.position.y = -500;
 
 
 	renderer = new THREE.WebGLRenderer();
@@ -152,15 +154,17 @@ function initThree() {
 
 function animateThree() {
 
-
 	var t1 = window.performance.now();
-
-
 
 	effect.requestAnimationFrame(animateThree);
 
-	terrainTiles.render(above.x, above.y);
-	mapTiles.render(above.x, above.y);
+	terrainTiles.render(Math.floor(above.x), Math.floor(above.y));
+	mapTiles.render(Math.floor(above.x), Math.floor(above.y));
+
+	const m = 625; //5000 / 8 tiles
+	mesh.position.x = (-above.x % 1) * m;
+	mesh.position.z = (-above.y % 1) * m;
+	
 
 	controls.update();
 
@@ -178,6 +182,9 @@ function animateThree() {
 	//bugbug need to query hasorientation?s
 
 	// Handle controller input
+
+	console.log(above.x + ' ' + above.y + ' ' + Math.floor(above.x) + ' ' + mesh.position.x);
+
 
 	var gamepads = navigator.getGamepads();
 
@@ -271,7 +278,6 @@ function panningUpdate(point) {
 	above.x += point.x / scale; // minus, as we are panning BUGBUG move to Panning.js?
 	above.y += point.y / scale; // BUGBUG convert point to a true object
 
-	//console.log(above.x + '    ' + above.y);
 
 }
 
@@ -308,7 +314,7 @@ function init() {
 
 
 	const mapCanvas = document.getElementById('mapCanvas');
-	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/10/%x%/%y%.png', mapCanvas, 256, false);
+	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/10/%x%/%y%.png', mapCanvas, 256, true);
 
 	const terrainCanvas = document.getElementById('terrainCanvas');
 	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256, false);
