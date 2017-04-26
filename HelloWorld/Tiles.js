@@ -16,6 +16,8 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to
 
     this.cachedTiles = [];
 
+    this.lastRenderTime = 0; // only render occasionally
+
     //bugbug somehow this module should tell the others if the canvas is dirty or not
 
 
@@ -89,7 +91,26 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to
     this.render = function (x, y) {
         //bugbug enforce limits of slippy map
 
-        if ((this.x == x) && (this.y == y) && this.updating == false) return;
+        if ((this.x == x) && (this.y == y)){
+            if (this.updating == false){
+                return;
+            }
+            else{
+	            var now = window.performance.now();
+                if (now - this.lastRenderTime < 1000)
+                {
+                    return;
+                }
+                else
+                {
+                    this.lastRenderTime = now;
+                }
+            }
+        } 
+
+
+
+
 
         this.x = x;
         this.y = y;
@@ -126,8 +147,8 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to
 
                 if (this.drawPerfCounter == true) {
                     //this.ctx.font = '40px serif';
-                    this.ctx.strokeRect(x * tileDimension, y * tileDimension, tileDimension, tileDimension);
-                    this.ctx.fillText(x + ' , ' + y, x * tileDimension, y * tileDimension + (tileDimension / 2));
+                    //this.ctx.strokeRect(x * tileDimension, y * tileDimension, tileDimension, tileDimension);
+                    //this.ctx.fillText(x + ' , ' + y, x * tileDimension, y * tileDimension + (tileDimension / 2));
                 }
             }
 
