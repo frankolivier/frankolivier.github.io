@@ -89,7 +89,7 @@ var terrainTexture, mapTexture;
 function initThree() {
 
 	scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2( 0xefd1b5, 25 );
+	scene.fog = new THREE.FogExp2(0xefd1b5, 25);
 
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
 	//camera.position.z = 1000;
@@ -129,7 +129,7 @@ function initThree() {
 
 	renderer = new THREE.WebGLRenderer();
 
-	renderer.setClearColor (0xffffff, 1);
+	renderer.setClearColor(0xffffff, 1);
 
 	controls = new THREE.VRControls(camera);
 	controls.standing = false;
@@ -164,7 +164,7 @@ function animateThree() {
 	const m = 625; //5000 / 8 tiles
 	mesh.position.x = (-above.x % 1) * m;
 	mesh.position.z = (-above.y % 1) * m;
-	
+
 
 	controls.update();
 
@@ -182,8 +182,6 @@ function animateThree() {
 	//bugbug need to query hasorientation?s
 
 	// Handle controller input
-
-	console.log(above.x + ' ' + above.y + ' ' + Math.floor(above.x) + ' ' + mesh.position.x);
 
 
 	var gamepads = navigator.getGamepads();
@@ -282,6 +280,7 @@ function panningUpdate(point) {
 }
 
 
+
 function onWindowResize() {
 	//terrainCanvas.width = window.innerWidth;
 	//terrainCanvas.height = window.innerHeight;
@@ -290,6 +289,35 @@ function onWindowResize() {
 	//renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+ function long2tile(lon,zoom) { return (Math.floor((lon+180)/360*Math.pow(2,zoom))); }
+ function lat2tile(lat,zoom)  { return (Math.floor((1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 *Math.pow(2,zoom))); }
+
+function geocodeAddress(geocoder) {
+	var address = document.getElementById('address').value;
+	geocoder.geocode({ 'address': address }, function (results, status) {
+		if (status === 'OK') {
+			console.log('in  ' + results[0].geometry.location.lat() + ' ' + results[0].geometry.location.lng());
+
+			above.x = long2tile(results[0].geometry.location.lng(), 10); //bugbug put zoom (10) in a var
+			above.y = lat2tile(results[0].geometry.location.lat(), 10); //bugbug put zoom (10) in a var
+
+			
+			console.log('out ' + above.x + ' ' + above.y);
+
+
+		} else {
+			///bugbug alert('Geocode was not successful for the following reason: ' + status);
+		}
+	});
+}
+
+function initMap() {
+	var geocoder = new google.maps.Geocoder();
+
+	document.getElementById('submit').addEventListener('click', function () {
+		geocodeAddress(geocoder);
+	});
+}
 
 function init() {
 
@@ -322,6 +350,8 @@ function init() {
 	Panning.init(mapCanvas, panningUpdate);
 
 	initThree();
+
+	///initMap();
 
 	animateThree();
 

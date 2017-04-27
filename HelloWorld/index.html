@@ -15,10 +15,13 @@
     <script type="text/javascript" src="Point.js"></script>
     <script type="text/javascript" src="Panning.js"></script>
     <script type="text/javascript" src="Tiles.js"></script>
+    <script type="text/javascript" src="latLngToTileXY.js"></script>
     <script type="text/javascript" src="app.js"></script>
 
+
     <style>
-        html, body {
+        html,
+        body {
             margin: 0;
             padding: 0;
             overflow: none;
@@ -34,23 +37,22 @@
         #bugbugterrainCanvas {
             display: none;
         }
-
+        
         #mapCanvas {
             position: absolute;
             left: 10px;
-            top: 10px;
-            width: 400px;
-            height: 400px;
+            top: 100px;
+            width: 200px;
+            height: 200px;
         }
-
+        
         #terrainCanvas {
             position: absolute;
             right: 10px;
-            top: 10px;
-            width: 400px;
-            height: 400px;
+            top: 100px;
+            width: 200px;
+            height: 200px;
         }
-
     </style>
 </head>
 
@@ -59,6 +61,14 @@
     <canvas id='terrainCanvas' width='2048' height='2048'></canvas>
     <canvas id='mapCanvas' width='2048' height='2048'></canvas>
     <button id='vrButton'>VR</button>
+
+    <div id="floating-panel">
+        <input id="address" type="textbox" value="Sydney, NSW">
+        <input id="submit" type="button" value="Geocode">
+    </div>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAxV93edgCGSHPg6uZryikDlY-OFRz2ew8&callback=initMap"></script>
+
 </body>
 
 </html>
