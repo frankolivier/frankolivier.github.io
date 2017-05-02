@@ -203,11 +203,11 @@ function animateThree() {
 
 				//console.log(vector.x + " " + vector.y + " " + vector.z);
 
-				var scale = 0.1;
+				var scale = 0.1 * controller.axes[1];
 				above.x += vector.x * scale;
 				above.y += vector.z * scale;
 
-				mesh.position.y -= vector.y * 50;
+				mesh.position.y -= vector.y * 50 * controller.axes[1]
 
 
 
