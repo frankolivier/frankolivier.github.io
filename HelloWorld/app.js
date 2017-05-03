@@ -85,26 +85,32 @@ var effect; // the webvr renderer
 var geometry, material, mesh;
 var terrainTexture, mapTexture;
 
+var cylinder;
 
 function initThree() {
 
 	scene = new THREE.Scene();
-	scene.fog = new THREE.FogExp2(0xefd1b5, 25);
 
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
-	//camera.position.z = 1000;
 
-	geometry = new THREE.PlaneGeometry(5000, 5000, 512, 512);
-
-	terrainTexture = new THREE.Texture(terrainCanvas);
-	mapTexture = new THREE.Texture(mapCanvas);
+	var geometry = new THREE.CylinderGeometry(1, 1, 9999, 16); //bugbug top and bottom are swapped?
+	geometry.rotateX(0.25 * 2 * Math.PI);
+	var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+	cylinder = new THREE.Mesh(geometry, material);
+		
+	scene.add(cylinder);
 
 
 	//var vertexShader = "varying vec2 vuv; void main()	{ vuv = uv; gl_Position =  projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }";
 	//var fragmentShader = "varying vec2 vuv; uniform sampler2D texture; void main() { vec4 q = texture2D(texture, vuv) * 256.0; float w = (q.r * 256.0 + q.g + q.b / 256.0) - 32768.0; w = w / 4096.0; gl_FragColor = vec4(w, w, w, 0.5);}";
 
+	geometry = new THREE.PlaneGeometry(5000, 5000, 512, 512);
+	terrainTexture = new THREE.Texture(terrainCanvas);
+	mapTexture = new THREE.Texture(mapCanvas);
+
+
 	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float distance; void main()	{ v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float w = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; w = w / 4096.0 ; gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + w * 200.0, 1.0 ); distance = clamp(length(gl_Position) / 3000.0, 0.0, 1.0); }";
-	var fragmentShader = "varying vec2 v; uniform sampler2D mapTexture; varying float distance; void main() { gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), distance); }";
+	var fragmentShader = "varying vec2 v; uniform sampler2D mapTexture; varying float distance; void main() { gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), distance); gl_FragColor.a = 0.5; }";
 
 	var material = new THREE.ShaderMaterial({
 		uniforms: {
@@ -193,22 +199,38 @@ function animateThree() {
 		if (controller != null) {
 			// id = Daydream Controller bugbug
 
+			const pscale = 10;
+			cylinder.position.x = camera.position.x + controller.pose.position[0] * pscale;
+			cylinder.position.y = camera.position.y + controller.pose.position[1] * pscale;
+			cylinder.position.z = camera.position.z + controller.pose.position[2] * pscale;
+
+
+			var quaternion = new THREE.Quaternion().fromArray(controller.pose.orientation);
+			cylinder.setRotationFromQuaternion(quaternion);
+
+			var vector = new THREE.Vector3(0, 0, -1);
+			vector.applyQuaternion(quaternion);
+
+			//bugbug sometime position is not availalbe?
+
+
+
+
+			//cylinder.position.set(mesh.position);
+
+
 			var pressed = controller.buttons[0].pressed;
 
 			if (pressed == true) {
-				var quaternion = new THREE.Quaternion().fromArray(controller.pose.orientation);
-				var vector = new THREE.Vector3(0, 0, -1);
 
-				vector.applyQuaternion(quaternion);
-
-				//console.log(vector.x + " " + vector.y + " " + vector.z);
+				///console.log("camera at" + camera.position.x + " " + camera.position.y + " " + camera.position.z)
+				///console.log("controller at" + controller.pose.position.x + " " + controller.pose.position.y + " " + controller.pose.position.z)
 
 				var scale = 0.1 * controller.axes[1];
 				above.x += vector.x * scale;
 				above.y += vector.z * scale;
 
 				mesh.position.y -= vector.y * 50 * controller.axes[1]
-
 
 
 			}
@@ -220,8 +242,14 @@ function animateThree() {
 	}
 
 
-
-
+	/*
+		linegeometry.vertices[0] = mesh.position;
+		linegeometry.vertices[1] = mesh.position;
+		linegeometry.vertices[1].x -= 1000;
+		linegeometry.vertices[1].y -= 1000;
+		linegeometry.vertices[1].z -= 1000;
+		linegeometry.verticesNeedUpdate = true;
+	*/
 
 	//renderer.render(scene, camera);
 	effect.render(scene, camera);
@@ -289,8 +317,8 @@ function onWindowResize() {
 	//renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
- function long2tile(lon,zoom) { return (Math.floor((lon+180)/360*Math.pow(2,zoom))); }
- function lat2tile(lat,zoom)  { return (Math.floor((1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 *Math.pow(2,zoom))); }
+function long2tile(lon, zoom) { return (Math.floor((lon + 180) / 360 * Math.pow(2, zoom))); }
+function lat2tile(lat, zoom) { return (Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom))); }
 
 function geocodeAddress(geocoder) {
 	var address = document.getElementById('address').value;
@@ -301,7 +329,7 @@ function geocodeAddress(geocoder) {
 			above.x = long2tile(results[0].geometry.location.lng(), 10); //bugbug put zoom (10) in a var
 			above.y = lat2tile(results[0].geometry.location.lat(), 10); //bugbug put zoom (10) in a var
 
-			
+
 			console.log('out ' + above.x + ' ' + above.y);
 
 
