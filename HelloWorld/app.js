@@ -109,7 +109,9 @@ function initThree() {
 	mapTexture = new THREE.Texture(mapCanvas);
 
 
-	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float distance; void main()	{ v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float w = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; w = w / 4096.0 ; gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + w * 200.0, 1.0 ); distance = clamp(length(gl_Position) / 3000.0, 0.0, 1.0); }";
+	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float distance; void main()	{ " +
+					   "v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; elevation = elevation / 32.0 ; " +
+					   "gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + elevation, 1.0 ); distance = clamp(length(gl_Position) / 3000.0, 0.0, 1.0); }";
 	var fragmentShader = "varying vec2 v; uniform sampler2D mapTexture; varying float distance; void main() { gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), distance); gl_FragColor.a = 0.5; }";
 
 	var material = new THREE.ShaderMaterial({
@@ -199,10 +201,10 @@ function animateThree() {
 		if (controller != null) {
 			// id = Daydream Controller bugbug
 
-			const pscale = 10;
-			cylinder.position.x = camera.position.x + controller.pose.position[0] * pscale;
-			cylinder.position.y = camera.position.y + controller.pose.position[1] * pscale;
-			cylinder.position.z = camera.position.z + controller.pose.position[2] * pscale;
+			const pscale = 1000;
+			cylinder.position.x = controller.pose.position[0] * pscale;
+			cylinder.position.y = controller.pose.position[1] * pscale;
+			cylinder.position.z = controller.pose.position[2] * pscale;
 
 
 			var quaternion = new THREE.Quaternion().fromArray(controller.pose.orientation);
