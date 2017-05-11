@@ -21,7 +21,7 @@ var totalFrameTime = 0;
 
 var worker = null;		// the background worker that'll update the data to draw in the canvas
 
-var above = new Point(166, 355);	// the point on the map we are currently above
+var above = new Point(322, 722);	// the point on the map we are currently above
 //var above = new Point(2, 2);	// the point on the map we are currently above
 
 const projectionDimension = 256;	// Web Mercator is 256 x 256 tiles
@@ -34,6 +34,8 @@ var mapTiles;	// Tiles.js instance
 
 var renderedX = -1;
 var renderedY = -1;
+
+const zoomLevel = 11;
 
 function checkKey(e) {
 
@@ -87,13 +89,18 @@ var terrainTexture, mapTexture;
 
 var cylinder;
 
+function isMobile()
+{
+	return (navigator.userAgent.toLowerCase().indexOf('mob') != -1);
+}
+
 function initThree() {
 
 	scene = new THREE.Scene();
 
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
 
-	var geometry = new THREE.CylinderGeometry(1, 1, 9999, 16); //bugbug top and bottom are swapped?
+	var geometry = new THREE.CylinderGeometry(1, 1, 100, 4); //bugbug top and bottom are swapped?
 	geometry.rotateX(0.25 * 2 * Math.PI);
 	var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 	cylinder = new THREE.Mesh(geometry, material);
@@ -104,13 +111,17 @@ function initThree() {
 	//var vertexShader = "varying vec2 vuv; void main()	{ vuv = uv; gl_Position =  projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }";
 	//var fragmentShader = "varying vec2 vuv; uniform sampler2D texture; void main() { vec4 q = texture2D(texture, vuv) * 256.0; float w = (q.r * 256.0 + q.g + q.b / 256.0) - 32768.0; w = w / 4096.0; gl_FragColor = vec4(w, w, w, 0.5);}";
 
-	geometry = new THREE.PlaneGeometry(5000, 5000, 512, 512);
+	var meshComplexity = isMobile() ? 100 : 512;
+
+	geometry = new THREE.PlaneGeometry(2048, 2048, meshComplexity, meshComplexity);
 	terrainTexture = new THREE.Texture(terrainCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
 
 
 	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float distance; void main()	{ " +
-					   "v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; elevation = elevation / 32.0 ; " +
+					   "v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; "+
+					   "elevation = clamp(elevation, 0.0, 10000.0); " +
+					   "elevation = elevation / 25.0; " +
 					   "gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + elevation, 1.0 ); distance = clamp(length(gl_Position) / 3000.0, 0.0, 1.0); }";
 	var fragmentShader = "varying vec2 v; uniform sampler2D mapTexture; varying float distance; void main() { gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), distance); gl_FragColor.a = 0.5; }";
 
@@ -169,7 +180,7 @@ function animateThree() {
 	terrainTiles.render(Math.floor(above.x), Math.floor(above.y));
 	mapTiles.render(Math.floor(above.x), Math.floor(above.y));
 
-	const m = 625; //5000 / 8 tiles
+	const m = 256; // 2048 / 8 tiles
 	mesh.position.x = (-above.x % 1) * m;
 	mesh.position.z = (-above.y % 1) * m;
 
@@ -201,11 +212,19 @@ function animateThree() {
 		if (controller != null) {
 			// id = Daydream Controller bugbug
 
-			const pscale = 1000;
-			cylinder.position.x = controller.pose.position[0] * pscale;
-			cylinder.position.y = controller.pose.position[1] * pscale;
-			cylinder.position.z = controller.pose.position[2] * pscale;
-
+			if (controller.pose.hasPosition == true)
+			{
+				const pscale = 1000;
+				cylinder.position.x = controller.pose.position[0] * pscale;
+				cylinder.position.y = controller.pose.position[1] * pscale;
+				cylinder.position.z = controller.pose.position[2] * pscale;
+			}
+			else
+			{
+				cylinder.position.x = camera.position.x - 100;
+				cylinder.position.y = camera.position.y - 100;
+				cylinder.position.z = camera.position.z - 100;
+			}
 
 			var quaternion = new THREE.Quaternion().fromArray(controller.pose.orientation);
 			cylinder.setRotationFromQuaternion(quaternion);
@@ -228,11 +247,11 @@ function animateThree() {
 				///console.log("camera at" + camera.position.x + " " + camera.position.y + " " + camera.position.z)
 				///console.log("controller at" + controller.pose.position.x + " " + controller.pose.position.y + " " + controller.pose.position.z)
 
-				var scale = 0.1 * controller.axes[1];
+				var scale = 0.05 * controller.axes[1];
 				above.x += vector.x * scale;
 				above.y += vector.z * scale;
 
-				mesh.position.y -= vector.y * 50 * controller.axes[1]
+				mesh.position.y -= vector.y * 25 * controller.axes[1]
 
 
 			}
@@ -328,8 +347,8 @@ function geocodeAddress(geocoder) {
 		if (status === 'OK') {
 			console.log('in  ' + results[0].geometry.location.lat() + ' ' + results[0].geometry.location.lng());
 
-			above.x = long2tile(results[0].geometry.location.lng(), 10); //bugbug put zoom (10) in a var
-			above.y = lat2tile(results[0].geometry.location.lat(), 10); //bugbug put zoom (10) in a var
+			above.x = long2tile(results[0].geometry.location.lng(), zoomLevel); //bugbug put zoom (10) in a var
+			above.y = lat2tile(results[0].geometry.location.lat(), zoomLevel); //bugbug put zoom (10) in a var
 
 
 			console.log('out ' + above.x + ' ' + above.y);
@@ -372,10 +391,10 @@ function init() {
 
 
 	const mapCanvas = document.getElementById('mapCanvas');
-	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/10/%x%/%y%.png', mapCanvas, 256, false);
+	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/'+zoomLevel+'/%x%/%y%.png', mapCanvas, 256, false);
 
 	const terrainCanvas = document.getElementById('terrainCanvas');
-	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256, false);
+	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/'+zoomLevel+'/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256, false);
 
 	Panning.init(mapCanvas, panningUpdate);
 
