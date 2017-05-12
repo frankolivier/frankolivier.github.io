@@ -1,38 +1,24 @@
 "use strict";
 
-// bugbug use require
-
 // https://en.wikipedia.org/wiki/Web_Mercator
 // http://mike.teczno.com/notes/osm-us-terrain-layer/foreground.html
 // https://www.mapbox.com/blog/3d-terrain-threejs/
-//bugbug todo				renderer.setPixelRatio( window.devicePixelRatio );
-
 
 // bugbug feature detect webgl, fetch, web workers
 
 document.addEventListener("DOMContentLoaded", init); // initialization
 
-//var terrainCanvas = null;		// the canvas we are rendering the map into
-//var ctx = null;			// the output canvas to render to
-
 var frameCounter = 0;	// the frame being rendered in the output canvas
-
 var totalFrameTime = 0;
 
-var worker = null;		// the background worker that'll update the data to draw in the canvas
-
-var above = new Point(322, 722);	// the point on the map we are currently above
-//var above = new Point(2, 2);	// the point on the map we are currently above
-
-const projectionDimension = 256;	// Web Mercator is 256 x 256 tiles
+var above = new Point(330, 722.7);	// the point on the map we are currently above
 
 const tileDimension = 256;	// Tiles are 256 x 256 pixels
 
+var terrainTiles;	  // Tiles.js instance for elevation data
+var mapTiles;		  // Tiles.js instance for color values
 
-var terrainTiles;	// Tiles.js instance
-var mapTiles;	// Tiles.js instance
-
-const zoomLevel = 11;
+const zoomLevel = 11; // The zoom level of the slippy map we're using
 
 function checkKey(e) {
 
@@ -75,16 +61,11 @@ document.onkeydown = checkKey;
 
 /// three js
 var scene, camera, renderer;
-
 var controls;
-
-
 var effect; // the webvr renderer
-
 var geometry, material, mesh;
 var terrainTexture, mapTexture;
-
-var cylinder;
+var cylinder;  // the cursor / pointer we're drawing for the gamepad
 
 function isMobile() {
 	return (navigator.userAgent.toLowerCase().indexOf('mob') != -1);
@@ -117,9 +98,10 @@ function initThree() {
 	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float distance; void main()	{ " +
 		"v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
 		"elevation = clamp(elevation, 0.0, 10000.0); " +
-		"elevation = elevation / 25.0; " +
-		"gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + elevation, 1.0 ); distance = clamp(length(gl_Position) / 3000.0, 0.0, 1.0); }";
-	var fragmentShader = "varying vec2 v; uniform sampler2D mapTexture; varying float distance; void main() { gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), distance); gl_FragColor.a = 0.5; }";
+		"elevation = elevation / 30.0; " +
+		"gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + elevation, 1.0 ); " +
+		"distance = clamp(length(gl_Position) / 1500.0, 0.0, 1.0); }";
+	var fragmentShader = "varying vec2 v; uniform sampler2D mapTexture; varying float distance; void main() { gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), distance); }";
 
 	var material = new THREE.ShaderMaterial({
 		uniforms: {
@@ -139,7 +121,7 @@ function initThree() {
 	scene.add(mesh);
 
 
-	mesh.position.y = -500;
+	mesh.position.y = -100;
 
 
 	const vrCanvas = document.getElementById('vrCanvas');
@@ -165,6 +147,11 @@ function initThree() {
 		effect.isPresenting ? effect.exitPresent() : effect.requestPresent();
 
 	};
+
+	renderer.setPixelRatio( window.devicePixelRatio );
+
+	window.addEventListener("resize", onWindowResize);
+	onWindowResize();
 
 }
 
@@ -333,7 +320,10 @@ function onWindowResize() {
 	//terrainCanvas.height = window.innerHeight;
 
 	//console.log(terrainCanvas.width + ' <<<>>> ' + terrainCanvas.height);
-	//renderer.setSize(window.innerWidth, window.innerHeight);
+	camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+	renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 function long2tile(lon, zoom) { return (Math.floor((lon + 180) / 360 * Math.pow(2, zoom))); }
@@ -368,8 +358,7 @@ function initMap() {
 
 function init() {
 
-	window.addEventListener("resize", onWindowResize);
-	//onWindowResize();
+
 
 	/*
 		worker = new Worker('worker.js');
