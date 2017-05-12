@@ -21,6 +21,8 @@ var mapTiles;		  // Tiles.js instance for color values
 const zoomLevel = 11; // The zoom level of the slippy map we're using
 
 var peer;
+var conn;	//connection to the client
+
 var myID;
 var friendID;
 
@@ -391,18 +393,42 @@ function init() {
 
 	initThree();
 
-	peer = new Peer({ id: 'frankodev', key: 'vykyy2qu9of7p66r', debug: 3,
-		 config: {'iceServers': [
-    		{ url: 'stun:stun.l.google.com:19302' }
-  		]} 
+	peer = new Peer({
+		id: 'frankodev', key: 'vykyy2qu9of7p66r', debug: 3,
+		config: {
+			'iceServers': [
+				{ url: 'stun:stun.l.google.com:19302' }
+			]
+		}
 	});
 
 	peer.on('open', function (id) {
 		console.log('My peer ID is: ' + id);
+
+		peer.on('connection', function (connX) {
+			conn = connX;
+			conn.on('data', function (data) {
+				// Will print 'hi!'
+				console.log(data);
+			});
+		});
 	});
 
 
 	///initMap();
+
+	document.getElementById('connect').addEventListener('click', function () {
+		var peerID = document.getElementById('peerID').value;
+		conn = peer.connect(peerID);
+		conn.on('open', function () {
+			conn.send('hi!');
+		});
+		conn.on('data', function (data) {
+			// Will print 'hi!'
+			console.log(data);
+		});
+	});
+
 
 	animateThree();
 

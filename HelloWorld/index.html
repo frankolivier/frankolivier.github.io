@@ -68,6 +68,14 @@
             left: 10px;
             top: 10px;
         }
+
+
+        
+        #peerControls {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+        }
     </style>
 </head>
 
@@ -84,6 +92,11 @@
     <div id='geoControls'>
         <input id="address" type="textbox" value="Sydney, NSW">
         <input id="submit" type="button" value="Geocode">
+    </div>
+
+    <div id='peerControls'>
+        <input id="peerID" type="textbox" value="">
+        <input id="connect" type="button" value="connect">
     </div>
 
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAxV93edgCGSHPg6uZryikDlY-OFRz2ew8&callback=initMap"></script>
