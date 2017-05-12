@@ -20,6 +20,10 @@ var mapTiles;		  // Tiles.js instance for color values
 
 const zoomLevel = 11; // The zoom level of the slippy map we're using
 
+var peer;
+var myID;
+var friendID;
+
 function checkKey(e) {
 
 	const step = 0.1;
@@ -125,7 +129,7 @@ function initThree() {
 
 
 	const vrCanvas = document.getElementById('vrCanvas');
-	renderer = new THREE.WebGLRenderer( { canvas: vrCanvas } );
+	renderer = new THREE.WebGLRenderer({ canvas: vrCanvas });
 
 
 
@@ -148,7 +152,7 @@ function initThree() {
 
 	};
 
-	renderer.setPixelRatio( window.devicePixelRatio );
+	renderer.setPixelRatio(window.devicePixelRatio);
 
 	window.addEventListener("resize", onWindowResize);
 	onWindowResize();
@@ -321,7 +325,7 @@ function onWindowResize() {
 
 	//console.log(terrainCanvas.width + ' <<<>>> ' + terrainCanvas.height);
 	camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+	camera.updateProjectionMatrix();
 
 	renderer.setSize(window.innerWidth, window.innerHeight);
 }
@@ -386,6 +390,17 @@ function init() {
 	Panning.init(mapCanvas, panningUpdate);
 
 	initThree();
+
+	peer = new Peer({ id: 'frankodev', key: 'vykyy2qu9of7p66r', debug: 3,
+		 config: {'iceServers': [
+    		{ url: 'stun:stun.l.google.com:19302' }
+  		]} 
+	});
+
+	peer.on('open', function (id) {
+		console.log('My peer ID is: ' + id);
+	});
+
 
 	///initMap();
 

@@ -9,6 +9,9 @@
 
     <link href="/global.css" rel="stylesheet">
 
+    <script src="http://cdn.peerjs.com/0.3/peer.min.js"></script>
+
+
     <script type="text/javascript" src="three.min.js"></script>
     <script type="text/javascript" src="VREffect.js"></script>
     <script type="text/javascript" src="VRControls.js"></script>
@@ -19,8 +22,8 @@
 
     <style>
         html,
-        body, canvas
-        {
+        body,
+        canvas {
             margin: 0;
             border: 0;
             padding: 0;
@@ -34,14 +37,13 @@
             height: 100vh;
         }
         
-       
         #mapCanvas {
             position: absolute;
             left: 10px;
             top: 100px;
             width: 200px;
             height: 200px;
-            display:none;
+            display: none;
         }
         
         #terrainCanvas {
@@ -50,9 +52,9 @@
             top: 100px;
             width: 200px;
             height: 200px;
-            display:none;
+            display: none;
         }
-
+        
         #vrButton {
             position: absolute;
             right: 10px;
@@ -60,13 +62,12 @@
             width: 66px;
             height: 66px;
         }
-
+        
         #geoControls {
             position: absolute;
             left: 10px;
             top: 10px;
         }
-
     </style>
 </head>
 
