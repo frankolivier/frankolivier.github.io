@@ -71,7 +71,10 @@ var controls;
 var effect; // the webvr renderer
 var geometry, material, mesh;
 var terrainTexture, mapTexture;
+
 var cylinder;  // the cursor / pointer we're drawing for the gamepad
+
+var friend;    // the other person in VR with us
 
 function isMobile() {
 	return (navigator.userAgent.toLowerCase().indexOf('mob') != -1);
@@ -83,13 +86,21 @@ function initThree() {
 
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
 
-	var geometry = new THREE.CylinderGeometry(1, 1, 100, 4); //bugbug top and bottom are swapped?
-	geometry.rotateX(0.25 * 2 * Math.PI);
-	var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-	cylinder = new THREE.Mesh(geometry, material);
-
+	{
+		var geometry = new THREE.CylinderGeometry(1, 1, 100, 4); //bugbug top and bottom are swapped?
+		geometry.rotateX(0.25 * 2 * Math.PI);
+		var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+		cylinder = new THREE.Mesh(geometry, material);
+	}
 	scene.add(cylinder);
 
+	{
+		var geometry = new THREE.CylinderGeometry(10, 10, 10, 4); //bugbug top and bottom are swapped?
+		//geometry.rotateX(0.25 * 2 * Math.PI);
+		var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+		friend = new THREE.Mesh(geometry, material);
+	}
+	scene.add(friend);
 
 	//var vertexShader = "varying vec2 vuv; void main()	{ vuv = uv; gl_Position =  projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }";
 	//var fragmentShader = "varying vec2 vuv; uniform sampler2D texture; void main() { vec4 q = texture2D(texture, vuv) * 256.0; float w = (q.r * 256.0 + q.g + q.b / 256.0) - 32768.0; w = w / 4096.0; gl_FragColor = vec4(w, w, w, 0.5);}";
@@ -253,15 +264,10 @@ function animateThree() {
 
 	}
 
+	friend.position.x = camera.position.x - 100;
+	friend.position.y = camera.position.y;
+	friend.position.z = camera.position.z - 100;
 
-	/*
-		linegeometry.vertices[0] = mesh.position;
-		linegeometry.vertices[1] = mesh.position;
-		linegeometry.vertices[1].x -= 1000;
-		linegeometry.vertices[1].y -= 1000;
-		linegeometry.vertices[1].z -= 1000;
-		linegeometry.verticesNeedUpdate = true;
-	*/
 
 	//renderer.render(scene, camera);
 	effect.render(scene, camera);
@@ -394,12 +400,17 @@ function init() {
 	initThree();
 
 	peer = new Peer({
-		id: 'frankodev', key: 'vykyy2qu9of7p66r', debug: 3,
-		config: {
+		id: 'frankodev', 
+		//key: 'vykyy2qu9of7p66r', 
+		debug: 3,
+		host: 'thawing-depths-36140.herokuapp.com',
+		port: 443,
+		secure: true,
+/*		config: {
 			'iceServers': [
 				{ url: 'stun:stun.l.google.com:19302' }
 			]
-		}
+		} */
 	});
 
 	peer.on('open', function (id) {
