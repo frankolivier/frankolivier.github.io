@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hello World</title>
     <link rel="icon" href="data:,">
 
@@ -18,29 +19,29 @@
 
     <style>
         html,
-        body {
+        body, canvas
+        {
             margin: 0;
+            border: 0;
             padding: 0;
-            overflow: none;
-            width: 100%;
-            height: 100%;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
         }
         
         canvas {
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
         }
         
-        #bugbugterrainCanvas {
-            display: none;
-        }
-        
+       
         #mapCanvas {
             position: absolute;
             left: 10px;
             top: 100px;
             width: 200px;
             height: 200px;
+            display:none;
         }
         
         #terrainCanvas {
@@ -49,17 +50,37 @@
             top: 100px;
             width: 200px;
             height: 200px;
+            display:none;
         }
+
+        #vrButton {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            width: 66px;
+            height: 66px;
+        }
+
+        #geoControls {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+        }
+
     </style>
 </head>
 
 <body>
 
+    <canvas id='vrCanvas'></canvas>
+
+
+
     <canvas id='terrainCanvas' width='2048' height='2048'></canvas>
     <canvas id='mapCanvas' width='2048' height='2048'></canvas>
     <button id='vrButton'>VR</button>
 
-    <div>
+    <div id='geoControls'>
         <input id="address" type="textbox" value="Sydney, NSW">
         <input id="submit" type="button" value="Geocode">
     </div>

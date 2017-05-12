@@ -9,10 +9,10 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to
     this.tileDimension = tileDimension; //bugbug duplicate
     this.drawPerfCounter = drawPerfCounter;
 
-    this.x = 128;       // bugbug what does this do?
-    this.y = 128;
+    this.x = -1;
+    this.y = -1;
 
-    this.updating = true;
+    this.rendered = -1; // the unique id of the tile (x, y and version) that we rendered
 
     this.cachedTiles = [];
 
@@ -38,17 +38,16 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to
         return tile.id == this;
     }
 
-    //bugbug todo only render an update if we have multiple new tiles (cut down on teximage2d)
-
+    // returns ? bugbug?
     this.getTile = function (x, y) {
         // bugbug enforce [0 - 256][0 - 256]
 
-/*
-        if (this.drawPerfCounter == false) {
-            x = 100;
-            y = 100;
-        }
-*/
+        /*
+                if (this.drawPerfCounter == false) {
+                    x = 100;
+                    y = 100;
+                }
+        */
         const id = this.getTileId(x, y);
 
         var tile = this.cachedTiles.find(this.checkId, id);
@@ -91,26 +90,17 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to
     this.render = function (x, y) {
         //bugbug enforce limits of slippy map
 
-        if ((this.x == x) && (this.y == y)){
-            if (this.updating == false){
+        if ((this.x == x) && (this.y == y)) {
+            var now = window.performance.now();
+            if (now - this.lastRenderTime < 1000) {
                 return;
             }
-            else{
-	            var now = window.performance.now();
-                if (now - this.lastRenderTime < 1000)
-                {
-                    return;
-                }
-                else
-                {
-                    this.lastRenderTime = now;
-                }
+            else {
+                this.lastRenderTime = now;
             }
-        } 
+        }
 
-
-
-
+        var rendered = this.getTileId(x, y);
 
         this.x = x;
         this.y = y;
@@ -129,20 +119,15 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to
         const lowerX = Math.floor(this.x - halfTileCount);
         const lowerY = Math.floor(this.y - halfTileCount);
 
-        var updating = false; // see if this survives paint pass
 
         for (var y = lowerY; y <= lowerY + tileCount; y++) {
             for (var x = lowerX; x <= lowerX + tileCount; x++) {
 
-                var text = 'blank';
 
                 const tile = this.getTile(x, y);
-                if (null == tile) {
-                    text = 'no cached tile';
-                    updating = true;
-                }
-                else {
+                if (null != tile) {
                     this.ctx.drawImage(tile.image, x * tileDimension, y * tileDimension);
+                    rendered += 0.001;
                 }
 
                 if (this.drawPerfCounter == true) {
@@ -154,7 +139,7 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to
 
         }
 
-        this.updating = updating;
+        this.rendered = rendered; //updating;
 
         this.ctx.restore();
 
@@ -168,5 +153,20 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to
 
     }
 
+    var uploadedRender = -1;
+    this.needsUpdate = function(){
+        if (this.rendered == uploadedRender)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    this.setUpdated = function(){
+        uploadedRender = this.render;
+    }
 
 }

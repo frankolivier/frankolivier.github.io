@@ -32,9 +32,6 @@ const tileDimension = 256;	// Tiles are 256 x 256 pixels
 var terrainTiles;	// Tiles.js instance
 var mapTiles;	// Tiles.js instance
 
-var renderedX = -1;
-var renderedY = -1;
-
 const zoomLevel = 11;
 
 function checkKey(e) {
@@ -89,8 +86,7 @@ var terrainTexture, mapTexture;
 
 var cylinder;
 
-function isMobile()
-{
+function isMobile() {
 	return (navigator.userAgent.toLowerCase().indexOf('mob') != -1);
 }
 
@@ -104,7 +100,7 @@ function initThree() {
 	geometry.rotateX(0.25 * 2 * Math.PI);
 	var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 	cylinder = new THREE.Mesh(geometry, material);
-		
+
 	scene.add(cylinder);
 
 
@@ -119,10 +115,10 @@ function initThree() {
 
 
 	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float distance; void main()	{ " +
-					   "v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; "+
-					   "elevation = clamp(elevation, 0.0, 10000.0); " +
-					   "elevation = elevation / 25.0; " +
-					   "gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + elevation, 1.0 ); distance = clamp(length(gl_Position) / 3000.0, 0.0, 1.0); }";
+		"v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
+		"elevation = clamp(elevation, 0.0, 10000.0); " +
+		"elevation = elevation / 25.0; " +
+		"gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + elevation, 1.0 ); distance = clamp(length(gl_Position) / 3000.0, 0.0, 1.0); }";
 	var fragmentShader = "varying vec2 v; uniform sampler2D mapTexture; varying float distance; void main() { gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), distance); gl_FragColor.a = 0.5; }";
 
 	var material = new THREE.ShaderMaterial({
@@ -146,7 +142,10 @@ function initThree() {
 	mesh.position.y = -500;
 
 
-	renderer = new THREE.WebGLRenderer();
+	const vrCanvas = document.getElementById('vrCanvas');
+	renderer = new THREE.WebGLRenderer( { canvas: vrCanvas } );
+
+
 
 	renderer.setClearColor(0xffffff, 1);
 
@@ -156,9 +155,8 @@ function initThree() {
 
 	effect = new THREE.VREffect(renderer);
 
-	renderer.setSize(document.body.clientWidth * 0.9, document.body.clientHeight * 0.9);
-
-	document.body.appendChild(renderer.domElement);
+	renderer.setSize(document.body.clientWidth, document.body.clientHeight);
+	//bugbug setsize for vr display
 
 	const vrButton = document.getElementById('vrButton');
 
@@ -184,14 +182,16 @@ function animateThree() {
 	mesh.position.x = (-above.x % 1) * m;
 	mesh.position.z = (-above.y % 1) * m;
 
-
 	controls.update();
 
-	if (mapTiles.updating || terrainTiles.updating || renderedX != above.x || renderedY != above.y) {
-		terrainTexture.needsUpdate = true;  // bugbug only if needed
-		mapTexture.needsUpdate = true;  // bugbug only if needed
-		renderedX = above.x;
-		renderedY = above.y;
+	if (mapTiles.needsUpdate()) {
+		mapTexture.needsUpdate = true;
+		mapTiles.setUpdated();
+	}
+
+	if (terrainTiles.needsUpdate()) {
+		terrainTexture.needsUpdate = true;
+		terrainTiles.setUpdated();
 	}
 
 	//mesh.rotation.z += 0.001;
@@ -212,15 +212,13 @@ function animateThree() {
 		if (controller != null) {
 			// id = Daydream Controller bugbug
 
-			if (controller.pose.hasPosition == true)
-			{
+			if (controller.pose.hasPosition == true) {
 				const pscale = 1000;
 				cylinder.position.x = controller.pose.position[0] * pscale;
 				cylinder.position.y = controller.pose.position[1] * pscale;
 				cylinder.position.z = controller.pose.position[2] * pscale;
 			}
-			else
-			{
+			else {
 				cylinder.position.x = camera.position.x - 100;
 				cylinder.position.y = camera.position.y - 100;
 				cylinder.position.z = camera.position.z - 100;
@@ -391,10 +389,10 @@ function init() {
 
 
 	const mapCanvas = document.getElementById('mapCanvas');
-	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/'+zoomLevel+'/%x%/%y%.png', mapCanvas, 256, false);
+	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/' + zoomLevel + '/%x%/%y%.png', mapCanvas, 256, false);
 
 	const terrainCanvas = document.getElementById('terrainCanvas');
-	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/'+zoomLevel+'/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256, false);
+	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/' + zoomLevel + '/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256, false);
 
 	Panning.init(mapCanvas, panningUpdate);
 
