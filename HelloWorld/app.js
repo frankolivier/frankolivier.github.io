@@ -280,50 +280,6 @@ function animateThree() {
 
 
 }
-/// three js
-
-
-/*
-function onFrame() {
-
-
-
-
-	//BUGBUG only render if needed
-
-	//
-
-
-	//ctx.rect(628, 628, 36, 36);
-	//ctx.stroke();
-
-
-
-
-		if (worker.needsWork == true)
-		{
-			worker.postMessage('Hello World ' + frameCounter); // Send data to our worker.
-			worker.needsWork = false;
-		}
-
-	// Start exit
-
-
-}
-*/
-
-function panningUpdate(point) {
-
-	//above 100, 200
-
-	//below 400
-	const scale = tileDimension;
-
-	above.x += point.x / scale; // minus, as we are panning BUGBUG move to Panning.js?
-	above.y += point.y / scale; // BUGBUG convert point to a true object
-
-
-}
 
 
 
@@ -395,7 +351,6 @@ function init() {
 	const terrainCanvas = document.getElementById('terrainCanvas');
 	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/' + zoomLevel + '/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256, false);
 
-	Panning.init(mapCanvas, panningUpdate);
 
 	initThree();
 
