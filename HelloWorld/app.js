@@ -77,8 +77,7 @@ var cylinder;  // the cursor / pointer we're drawing for the gamepad
 var friend;    // the other person in VR with us
 
 function isMobile() {
-	return true;
-	//return (navigator.userAgent.toLowerCase().indexOf('mob') != -1);
+	return (navigator.userAgent.toLowerCase().indexOf('mob') != -1);
 }
 
 function initThree() {
@@ -88,7 +87,7 @@ function initThree() {
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
 
 	{
-		var geometry = new THREE.CylinderGeometry(1, 1, 100, 4); //bugbug top and bottom are swapped?
+		var geometry = new THREE.CylinderGeometry(1, 1, 10000, 4); //bugbug top and bottom are swapped?
 		geometry.rotateX(0.25 * 2 * Math.PI);
 		var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 		cylinder = new THREE.Mesh(geometry, material);
@@ -106,12 +105,13 @@ function initThree() {
 	//var vertexShader = "varying vec2 vuv; void main()	{ vuv = uv; gl_Position =  projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }";
 	//var fragmentShader = "varying vec2 vuv; uniform sampler2D texture; void main() { vec4 q = texture2D(texture, vuv) * 256.0; float w = (q.r * 256.0 + q.g + q.b / 256.0) - 32768.0; w = w / 4096.0; gl_FragColor = vec4(w, w, w, 0.5);}";
 
-	var meshComplexity = isMobile() ? 10 : 512;
+	var meshComplexity = isMobile() ? 100 : 512;
 
 	geometry = new THREE.PlaneGeometry(2048, 2048, meshComplexity, meshComplexity);
 	terrainTexture = new THREE.Texture(terrainCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
 
+/*
 	// make textures smaller for mobile
 	if (isMobile())
 	{
@@ -122,11 +122,12 @@ function initThree() {
 		mapCanvas.height = canvasSize;
 
 	}
+*/
 
 	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float distance; void main()	{ " +
 		"v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
 		"elevation = clamp(elevation, 0.0, 10000.0); " +
-		"elevation = elevation / 30.0; " +
+		"elevation = elevation / 33.0; " +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + elevation, 1.0 ); " +
 		"distance = clamp(length(gl_Position) / 1500.0, 0.0, 1.0); }";
 	var fragmentShader = "varying vec2 v; uniform sampler2D mapTexture; varying float distance; void main() { gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), distance); }";
@@ -153,7 +154,7 @@ function initThree() {
 
 
 	const vrCanvas = document.getElementById('vrCanvas');
-	renderer = new THREE.WebGLRenderer({ canvas: vrCanvas });
+	renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, preserveDrawingBuffer: true }); //bugbug this might kill mobile perf?
 
 
 
@@ -199,25 +200,10 @@ function animateThree() {
 
 	controls.update();
 
-	if (mapTiles.needsUpdate()) {
-		mapTexture.needsUpdate = true;
-		mapTiles.setUpdated();
-	}
-
-	if (terrainTiles.needsUpdate()) {
-		terrainTexture.needsUpdate = true;
-		terrainTiles.setUpdated();
-	}
-
-	//mesh.rotation.z += 0.001;
-	//mesh.rotation.y += 0.02;
-
-
-	//bugbug need to query hasorientation?s
+	mapTexture.needsUpdate = mapTiles.checkUpdate();
+	terrainTexture.needsUpdate = terrainTiles.checkUpdate();
 
 	// Handle controller input
-
-
 	var gamepads = navigator.getGamepads();
 
 	for (var i = 0; i < gamepads.length; ++i) {
@@ -260,11 +246,21 @@ function animateThree() {
 				///console.log("camera at" + camera.position.x + " " + camera.position.y + " " + camera.position.z)
 				///console.log("controller at" + controller.pose.position.x + " " + controller.pose.position.y + " " + controller.pose.position.z)
 
-				var scale = 0.05 * controller.axes[1];
-				above.x += vector.x * scale;
-				above.y += vector.z * scale;
+				console.log(controller.axes[1]);
 
-				mesh.position.y -= vector.y * 25 * controller.axes[1]
+				var input = controller.axes[1];
+
+				if (controller.id == "Daydream Controller")
+				{
+					input *= -1;	// for some reason the daydream controller values are swapped?
+				}
+
+				const scale = 0.05;
+
+				above.x += vector.x * input * scale;
+				above.y += vector.z * input * scale;
+
+				mesh.position.y -= vector.y * 15 * input;
 
 
 			}

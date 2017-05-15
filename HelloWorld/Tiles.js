@@ -12,7 +12,8 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to
     this.x = -1;
     this.y = -1;
 
-    this.rendered = -1; // the unique id of the tile (x, y and version) that we rendered
+    this.renderedID = -1; // the unique id of the tile (x, y and version) of the tile rendered in the last pass
+    this.uploadedID = -2; // the unique id of the tile (x, y and version) of the tile uploaded to the GPU
 
     this.cachedTiles = [];
 
@@ -100,7 +101,7 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to
             }
         }
 
-        var rendered = this.getTileId(x, y);
+        var renderedID = this.getTileId(x, y);
 
         this.x = x;
         this.y = y;
@@ -127,7 +128,7 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to
                 const tile = this.getTile(x, y);
                 if (null != tile) {
                     this.ctx.drawImage(tile.image, x * tileDimension, y * tileDimension);
-                    rendered += 0.001;
+                    renderedID += 0.001;
                 }
 
                 if (this.drawPerfCounter == true) {
@@ -139,7 +140,7 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to
 
         }
 
-        this.rendered = rendered; //updating;
+        this.renderedID = renderedID; //updating;
 
         this.ctx.restore();
 
@@ -153,20 +154,17 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to
 
     }
 
-    var uploadedRender = -1;
-    this.needsUpdate = function(){
-        if (this.rendered == uploadedRender)
+    this.checkUpdate = function(){
+        if (this.renderedID === this.uploadedID)
         {
             return false;
         }
         else
         {
+            this.uploadedID = this.renderedID;
             return true;
         }
     }
-
-    this.setUpdated = function(){
-        uploadedRender = this.render;
-    }
+   
 
 }
