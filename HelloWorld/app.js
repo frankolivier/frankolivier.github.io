@@ -77,7 +77,8 @@ var cylinder;  // the cursor / pointer we're drawing for the gamepad
 var friend;    // the other person in VR with us
 
 function isMobile() {
-	return (navigator.userAgent.toLowerCase().indexOf('mob') != -1);
+	return true;
+	//return (navigator.userAgent.toLowerCase().indexOf('mob') != -1);
 }
 
 function initThree() {
@@ -105,12 +106,22 @@ function initThree() {
 	//var vertexShader = "varying vec2 vuv; void main()	{ vuv = uv; gl_Position =  projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }";
 	//var fragmentShader = "varying vec2 vuv; uniform sampler2D texture; void main() { vec4 q = texture2D(texture, vuv) * 256.0; float w = (q.r * 256.0 + q.g + q.b / 256.0) - 32768.0; w = w / 4096.0; gl_FragColor = vec4(w, w, w, 0.5);}";
 
-	var meshComplexity = isMobile() ? 100 : 512;
+	var meshComplexity = isMobile() ? 10 : 512;
 
 	geometry = new THREE.PlaneGeometry(2048, 2048, meshComplexity, meshComplexity);
 	terrainTexture = new THREE.Texture(terrainCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
 
+	// make textures smaller for mobile
+	if (isMobile())
+	{
+		const canvasSize = 512;
+		terrainCanvas.width = canvasSize;
+		terrainCanvas.height = canvasSize;
+		mapCanvas.width = canvasSize;
+		mapCanvas.height = canvasSize;
+
+	}
 
 	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float distance; void main()	{ " +
 		"v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
@@ -356,16 +367,10 @@ function init() {
 
 	peer = new Peer({
 		id: 'frankodev', 
-		//key: 'vykyy2qu9of7p66r', 
 		debug: 3,
 		host: 'thawing-depths-36140.herokuapp.com',
 		port: 443,
 		secure: true,
-/*		config: {
-			'iceServers': [
-				{ url: 'stun:stun.l.google.com:19302' }
-			]
-		} */
 	});
 
 	peer.on('open', function (id) {
@@ -379,9 +384,6 @@ function init() {
 			});
 		});
 	});
-
-
-	///initMap();
 
 	document.getElementById('connect').addEventListener('click', function () {
 		var peerID = document.getElementById('peerID').value;
