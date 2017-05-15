@@ -1,0 +1,105 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hello World</title>
+    <link rel="icon" href="data:,">
+
+    <link href="/global.css" rel="stylesheet">
+
+    <script type="text/javascript" src="peer.min.js"></script>
+
+
+    <script type="text/javascript" src="three.min.js"></script>
+    <script type="text/javascript" src="VREffect.js"></script>
+    <script type="text/javascript" src="VRControls.js"></script>
+    <script type="text/javascript" src="Point.js"></script>
+    <script type="text/javascript" src="Tiles.js"></script>
+    <script type="text/javascript" src="app.js"></script>
+
+    <style>
+        html,
+        body,
+        canvas {
+            margin: 0;
+            border: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        canvas {
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #mapCanvas {
+            position: absolute;
+            left: 10px;
+            top: 100px;
+            width: 200px;
+            height: 200px;
+            display: none;
+        }
+        
+        #terrainCanvas {
+            position: absolute;
+            right: 10px;
+            top: 100px;
+            width: 200px;
+            height: 200px;
+            display: none;
+        }
+        
+        #vrButton {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            width: 66px;
+            height: 66px;
+        }
+        
+        #geoControls {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+        }
+
+
+        
+        #peerControls {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id='vrCanvas'></canvas>
+
+
+
+    <canvas id='terrainCanvas' width='2048' height='2048'></canvas>
+    <canvas id='mapCanvas' width='2048' height='2048'></canvas>
+    <button id='vrButton'>VR</button>
+
+    <div id='geoControls'>
+        <input id="address" type="textbox" value="Sydney, NSW">
+        <input id="submit" type="button" value="Geocode">
+    </div>
+
+    <div id='peerControls'>
+        <input id="peerID" type="textbox" value="">
+        <input id="connect" type="button" value="connect">
+    </div>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAxV93edgCGSHPg6uZryikDlY-OFRz2ew8&callback=initMap"></script>
+
+</body>
+
+</html>

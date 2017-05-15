@@ -17,7 +17,7 @@ canvas {
 
 <body>
     <h1>Image deskewing</h1>
-    <div>A simple WebGL utility for creating deskewed version of skewed photos</div>
+    <div>A simple WebGL utility for creating deskewed version of skewed photos. Click on the photo to set the four corners of the object to deskew.</div>
     
     <div>
     <canvas id='inputcanvas' width='600' height='600'></canvas>
@@ -30,6 +30,7 @@ canvas {
     <button onclick='renderer.savePhoto()'>Save</button>
 
     <div id="log"></div>
+    <div>TODO: Use a projective transformation.</div>
 
     <script type="text/javascript" src="point.js"></script>
     <script type="text/javascript" src="fourcorners.js"></script>

@@ -255,7 +255,7 @@ var renderer = new function () {
 			renderer.loadImage2(image);
 		}
 
-		image.src = "photos/fo.jpg";
+		image.src = "fo.jpg";
 
 	}
 

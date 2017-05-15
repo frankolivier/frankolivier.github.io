@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-document.addEventListener("DOMContentLoaded", getVRDisplays, false)
+document.addEventListener("DOMContentLoaded", getVRDisplays, false);
 
 var canvas;
 var gl;
@@ -11,6 +11,8 @@ var textureCoordsBuffer;
 
 var vrDisplay = null;
 var frameData = null;
+
+//TODO remove texture coord stuff
 
 //const numberOfFramesToSample = 1200;
 //var frameTimes = [numberOfFramesToSample];
@@ -91,8 +93,6 @@ function getBuffer(data, shaderName, itemSize) {
 
 	gl.enableVertexAttribArray(buffer.shaderReference);
 
-	//console.log(shaderName + " " + buffer.count + ' items ' + buffer.itemSize + ' size ' + buffer.shaderReference);
-
 	return buffer;
 }
 
@@ -152,61 +152,6 @@ function init() {
 	];
 	vertexBuffer = getBuffer(cubeVertices, 'aVertexPosition', 3);
 	gl.vertexAttribPointer(vertexBuffer.shaderReference, vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-	var textureCoords = [
-		0.001667,
-		0.5025,
-		0.331667,
-		0.5025,
-		0.331667,
-		0.9975,
-		0.001667,
-		0.9975,
-		0.335,
-		0.5025,
-		0.665,
-		0.5025,
-		0.665,
-		0.9975,
-		0.335,
-		0.9975,
-		0.668333,
-		0.5025,
-		0.998333,
-		0.5025,
-		0.998333,
-		0.9975,
-		0.668333,
-		0.9975,
-		0.001667,
-		0.0025,
-		0.331667,
-		0.0025,
-		0.331667,
-		0.4975,
-		0.001667,
-		0.4975,
-		0.335,
-		0.0025,
-		0.665,
-		0.0025,
-		0.665,
-		0.4975,
-		0.335,
-		0.4975,
-		0.668333,
-		0.0025,
-		0.998333,
-		0.0025,
-		0.998333,
-		0.4975,
-		0.668333,
-		0.4975
-	];
-	textureCoordsBuffer = getBuffer(textureCoords, 'aTextureCoord', 2);
-
-	gl.vertexAttribPointer(textureCoordsBuffer.shaderReference, textureCoordsBuffer.itemSize, gl.FLOAT, false, 0, 0); //bugbug move
-
 
 	indicesBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
@@ -281,9 +226,9 @@ function onVRFrame() {
 	setMat4('uMVMatrix', false, rightVM);
 	drawGeometry();
 
-
 	// Indicate that we are ready to present the rendered frame to the VRDisplay
 	//bugbug vrDisplay.submitFrame();
+
 	vrDisplay.submitFrame();
 
 }
@@ -322,9 +267,14 @@ function enterVR() {
 		premultipliedAlpha: true
 	});
 
+
 	vrDisplay.requestPresent([{ source: canvas }]).then(function () {
 		init();
 		vrDisplay.requestAnimationFrame(onVRFrame);
 	});
+
+
+
+
 
 }

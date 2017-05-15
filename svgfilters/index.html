@@ -1,0 +1,230 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>SVG Filter Effects</title>
+    <link href="..\global.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="hands-on.css" />
+	<style type="text/css">
+		#sample
+		{
+			padding: 0;
+			max-width: 90%;
+			width: 800px;
+			height: 553px;
+		}
+		#markup:before
+		{
+			content: '';
+		}
+		#markup:after
+		{
+			content: '';
+		}
+		svg
+		{
+			overflow: visible;
+		}
+		.photoCaption
+		{
+			fill: red;
+			font-size: 150px;
+			text-transform: uppercase;
+			font-family: 'Segoe UI' , sans-serif;
+			font-weight: 900;
+			letter-spacing: -8px;
+			text-anchor: end;
+		}
+
+		td.tabs
+		{
+			white-space: nowrap;
+		}
+		div.notab
+		{
+			width: 220px;
+		}
+
+		.filterControlLine1
+		{
+			position: relative;
+		}
+
+		.filterControlLine1 .filterControlName
+		{
+			font-weight: 600;
+		}
+
+		.filterControlLine1 .xIcon
+		{
+			display: inline-block;
+			float: right;
+			border: 1px solid #999;
+			position: relative;
+			top: 5px;
+		}
+
+		.filterControlLine1 .xIcon:hover
+		{
+			background-color: gold;
+		}
+
+		.filterControlLine2
+		{
+			text-align: center;
+			padding-bottom: 0.5em;
+		}
+		
+		.filterControlLine2 .filterControlSlider
+		{
+			width: 250px;
+		}
+	</style>
+	<script type="text/javascript">
+		function UpdateSampleAspectRatio() {
+			var sampleElement = document.getElementById("sample");
+			var svgImage = document.querySelectorAll("svg image")[0];
+			sampleElement.style.height = (sampleElement.offsetWidth * svgImage.height.baseVal.value / svgImage.width.baseVal.value).toString() + "px";
+		}
+
+		function Init() {
+			ShowPicture();
+			window.addEventListener("resize", UpdateSampleAspectRatio, false);
+			window.setTimeout(UpdateSampleAspectRatio, 1);
+		}
+
+		function ShowIframeDemo(iframeSrc, demoCredit, creditColor) {
+			var dimDiv = document.createElement("div");
+			dimDiv.setAttribute("id", "dimDiv");
+			dimDiv.setAttribute("style", "position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, .7); z-index: 100;");
+			document.body.appendChild(dimDiv);
+
+			var iframe = document.createElement("iframe");
+			var daWidth = dimDiv.offsetWidth - 400;
+			var daHeight = dimDiv.offsetHeight - 200;
+			iframe.setAttribute("frameborder", "0");
+			iframe.setAttribute("scrolling", "no");
+			iframe.setAttribute("style", "position: absolute; top: 100px; left: 200px; width: " + daWidth.toString() + "px; height: " + daHeight.toString() + "px; background-color: black; border: solid 1px silver;");
+			iframe.setAttribute("src", iframeSrc);
+			dimDiv.appendChild(iframe);
+
+			if (demoCredit) {
+			    var creditDiv = document.createElement("div");
+			    if (!creditColor)
+			        creditColor = "silver";
+				creditDiv.setAttribute("style", "position: absolute; top: " + (100 + daHeight - 24).toString() + "px; left: 212px; width: auto; height: auto; font-size: 10pt; color: " + creditColor + ";");
+				creditDiv.innerHTML = demoCredit;
+				dimDiv.appendChild(creditDiv);
+			}
+
+			//  clear this on any click outside
+			dimDiv.addEventListener("mousedown", function (e) { document.body.removeChild(document.getElementById('dimDiv')); }, false);
+		}
+    
+	</script>
+</head>
+<body onload="Init();">
+	<div id="ReturnAndShareControls">
+	</div>
+	<h1 id="DemoTitle">Hands On: SVG Filter Effects</h1>
+	<div id="DemoScreenreaderText">
+	</div>
+	<div id="DemoContent">
+		<div id="example">
+			<div id="sample">
+				<svg id="svgroot" viewbox="0 0 800 533" preserveaspectratio="xMidYMin">
+    <defs>
+     <filter id="filtersPicture"><feComposite operator="arithmetic" k1="0" k2="1" k3="0" k4="0" in="SourceGraphic" in2="SourceGraphic" /></filter>
+     <filter id="filtersText"><feComposite operator="arithmetic" k1="0" k2="1" k3="0" k4="0" in="SourceGraphic" in2="SourceGraphic" /></filter>
+    </defs>
+    <image x="0" y="0" width="800" height="533" xlink:href="win11_-23929.jpg" filter="url(#filtersPicture)"></image>
+       <text class="photoCaption" x="790" y="105" filter="url(#filtersText)">MIND</text>
+       <text class="photoCaption" x="790" y="215" filter="url(#filtersText)">THE</text>
+       <text class="photoCaption" x="790" y="325" filter="url(#filtersText)">GAP</text>
+   </svg>
+			</div>
+			<div id='markup'>
+			</div>
+		</div>
+		<div id='controls'>
+			<table>
+				<tr>
+					<td class="tabs">
+						<span class="notab">&nbsp;</span><a id="pictureTab" class="tab" value="picture" href="javascript:ShowPicture()">Picture</a><span
+							class="notab">&nbsp;</span><a id="textTab" class="tab" value="text" href="javascript:ShowText()">Text</a><div class="notab">
+								&nbsp;</div>
+					</td>
+				</tr>
+				<tbody id="pictureSection">
+					<tr>
+						<td id="controlsPicture" style="height: 300px; vertical-align: top;">
+						</td>
+					</tr>
+					<tr>
+						<td style="height: 0px; border-bottom: 2px dotted lightblue;">
+						</td>
+					</tr>
+					<tr>
+						<td style="vertical-align: middle;">
+							<select style="vertical-align: middle;" onchange="if(selectedIndex!=0){addFilterSet('Picture', value);selectedIndex=0;}">
+								<option>Select a filter to add</option>
+								<option>feGaussianBlur</option>
+								<option>feMorphology-erode</option>
+								<option>feMorphology-dilate</option>
+								<option>feColorMatrix-saturate</option>
+								<option>feColorMatrix-huerotate</option>
+								<option>Height Map + Diffuse Light</option>
+								<option>feColorMatrix-sepiatone</option>
+								<option>Sobel Edge Detection</option>
+								<option>Turbulence + Displacement Map</option>
+							</select>
+							&nbsp;&nbsp;<a style="vertical-align: middle;" class="moButton" href="javascript:RemoveAllFilters('Picture');"> Remove All</a>
+						</td>
+					</tr>
+				</tbody>
+				<tbody id="textSection">
+					<tr>
+						<td id="controlsText" style="height: 300px; vertical-align: top;">
+						</td>
+					</tr>
+					<tr>
+						<td style="height: 0px; border-bottom: 2px dotted lightblue;">
+						</td>
+					</tr>
+					<tr>
+						<td style="vertical-align: middle;">
+							<select style="vertical-align: middle;" onchange="if(selectedIndex!=0){addFilterSet('Text', value);selectedIndex=0;}">
+								<option>Select a filter to add</option>
+								<option>feGaussianBlur</option>
+								<option>feMorphology-erode</option>
+								<option>feMorphology-dilate</option>
+								<option>feColorMatrix-saturate</option>
+								<option>feColorMatrix-huerotate</option>
+								<option>Bevel + Specular Light</option>
+								<option>Drop Shadow</option>
+								<!--<option>Sobel Edge Detection</option>-->
+								<option>Turbulence + Displacement Map</option>
+							</select>
+							&nbsp;&nbsp;<a style="vertical-align: middle;" class="moButton" href="javascript:RemoveAllFilters('Text');">Remove All</a>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<div id="featureNotes">
+			</div>
+			<div id="testLinks">
+				Preset examples:
+				<a href="javascript:Do20s()">20s</a>
+				<a href="javascript:Do60s()">60s</a>
+				<a href="javascript:Do80s()">80s</a>
+				<a href="javascript:Do90s()">90s</a>
+				<a href="javascript:Do00s()">00s</a><br />
+			</div>
+		</div>
+	</div>
+	<div id="DemoDetails">
+	</div>
+	<script src="hands-on.js" type="text/javascript"></script>
+	<script type="text/javascript" src="filterEffectsScript.js"></script>
+</body>
+</html>

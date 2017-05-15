@@ -32795,7 +32795,8 @@ THREE.WebGLRenderer = function ( parameters ) {
 			stencil: _stencil,
 			antialias: _antialias,
 			premultipliedAlpha: _premultipliedAlpha,
-			preserveDrawingBuffer: _preserveDrawingBuffer
+			//preserveDrawingBuffer: _preserveDrawingBuffer
+			preserveDrawingBuffer: true
 		};
 
 		_gl = _context || _canvas.getContext( 'webgl', attributes ) || _canvas.getContext( 'experimental-webgl', attributes );
@@ -56216,6 +56217,8 @@ Util.getScreenHeight = function() {
 };
 
 Util.requestFullscreen = function(element) {
+alert('fs');
+/*
   if (element.requestFullscreen) {
     element.requestFullscreen();
   } else if (element.webkitRequestFullscreen) {
@@ -56227,11 +56230,12 @@ Util.requestFullscreen = function(element) {
   } else {
     return false;
   }
-
+*/
   return true;
 };
 
 Util.exitFullscreen = function() {
+	/*
   if (document.exitFullscreen) {
     document.exitFullscreen();
   } else if (document.webkitExitFullscreen) {
@@ -56243,7 +56247,7 @@ Util.exitFullscreen = function() {
   } else {
     return false;
   }
-
+*/
   return true;
 };
 
@@ -63208,7 +63212,10 @@ module.exports = registerElement('a-scene', {
           // TODO: 07/16 Chromium builds break when `requestFullscreen`ing on a canvas
           // that we are also `requestPresent`ing. Until then, don't fullscreen if headset
           // connected.
-          if (!self.isMobile && !checkHeadsetConnected()) { requestFullscreen(self.canvas); }
+          if (!self.isMobile && !checkHeadsetConnected()) {
+			   alert('fs2');
+			   //requestFullscreen(self.canvas); 
+			}
           self.resize();
         }
 
@@ -64909,6 +64916,10 @@ window.Promise = window.Promise || _dereq_('promise-polyfill');
 // Check before the polyfill runs
 window.hasNativeWebVRImplementation = !!navigator.getVRDisplays || !!navigator.getVRDevices;
 
+console.log('aframe thinks native WebVR support = ' + window.hasNativeWebVRImplementation);
+
+window.hasNativeWebVRImplementation = true;
+
 window.WebVRConfig = window.WebVRConfig || {
   BUFFER_SCALE: 1,
   CARDBOARD_UI_DISABLED: true,
@@ -66234,9 +66245,9 @@ function checkHeadsetConnected () {
   var orientation;
   controls.update();
   orientation = dolly.quaternion;
-  if (orientation._x !== 0 || orientation._y !== 0 || orientation._z !== 0) {
+  //if (orientation._x !== 0 || orientation._y !== 0 || orientation._z !== 0) {
     return true;
-  }
+  //}
   return false;
 }
 module.exports.checkHeadsetConnected = checkHeadsetConnected;
@@ -66877,12 +66888,17 @@ THREE.VRControls = function ( object, onError ) {
 				var pose = vrInput.getPose();
 
 				if ( pose.orientation !== null ) {
+				//if ( pose !== null ) {
+
+					console.log('pose = ' + pose);
+					console.log('pose.orientation = ' + pose.orientation);
 
 					object.quaternion.fromArray( pose.orientation );
 
 				}
 
 				if ( pose.position !== null ) {
+				//if ( pose !== null ) {
 
 					object.position.fromArray( pose.position );
 

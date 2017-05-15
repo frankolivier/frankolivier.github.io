@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"> 
     <title>Frank Olivier</title> 
-
+    <link rel="icon" href="data:,">
 
 <link href="global.css" rel="stylesheet"> 
 
@@ -11,10 +11,20 @@
 <body>
 
 <style>
+
+h2 {
+    margin-bottom: 0;
+}
+
 #demos a {
     font-size: 120%;
     display:block;
 }
+
+#demos div {
+    padding-bottom: 22px;
+}
+
 </style>
 
 
@@ -26,13 +36,20 @@
 
 <a href="Warp">Photo Warp</a>
 
-<a href="Skew">Photo Skew</a>
-
-
-
 <h2>Older</h2>
-<a href="box">Simple WebVR box demo</a>
-<a href="360video/00-hello-webvr.html">WebVR emulation parameter listing</a>
+<a href="svgfilters">SVG Filters demo</a>
+
+
+<h2>In progress</h2>
+<a href="Skew">Photo Skew</a>
+<a href="box">Simple WebVR box demo</a><div> (Useful for testing VR HMD 6DoF tracking performance)</div>
+<a href="360video/00-hello-webvr.html">WebVR HMD Info</a><div>A Javascript polyfill that emulates a real HMD, for debugging interoperability issues. Used in the other examples on this page</div>
+
+<h2>Content debugging:</h2>
+<a href="360video/XX-360-panorama.html">WebVR panorama emulator test</a>
+<a href="360video/03-vr-presentation.html">VR presentation emulation test</a>
+<a href="aframe/examples/showcase/composite/index.html">aframe composite test</a>
+<a href="aframe/examples/boilerplate/hello-world/index.html">aframe emulation test</a>
 </div>
 
 <!--
