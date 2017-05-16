@@ -91,7 +91,7 @@ function initThree() {
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
 	{
-		var geometry = new THREE.CylinderGeometry(1, 1, 100, 4); //bugbug top and bottom are swapped?
+		var geometry = new THREE.CylinderGeometry(0.01, 0.01, 100, 4); //bugbug top and bottom are swapped?
 		geometry.rotateX(0.25 * 2 * Math.PI);
 		var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 		cylinder = new THREE.Mesh(geometry, material);
@@ -204,62 +204,84 @@ function sendFriend() {
 
 function handleController() {
 	// Handle controller input
-	var gamepads = navigator.getGamepads();
 
-	for (var i = 0; i < gamepads.length; ++i) {
-		var controller = gamepads[i];
-
-		if (controller != null) {
-			// id = Daydream Controller bugbug
-
-			if (controller.pose.hasPosition == true) {
-				const pscale = 1000;
-				cylinder.position.x = controller.pose.position[0] * pscale;
-				cylinder.position.y = controller.pose.position[1] * pscale;
-				cylinder.position.z = controller.pose.position[2] * pscale;
-			}
-			else {
-				cylinder.position.x = camera.position.x - 100;
-				cylinder.position.y = camera.position.y - 100;
-				cylinder.position.z = camera.position.z - 100;
-			}
-
-			var quaternion = new THREE.Quaternion().fromArray(controller.pose.orientation);
-			cylinder.setRotationFromQuaternion(quaternion);
-
-			var vector = new THREE.Vector3(0, 0, -1);
-			vector.applyQuaternion(quaternion);
-
-			//bugbug sometime position is not availalbe?
+	try {
 
 
 
+		var gamepads = navigator.getGamepads();
 
-			//cylinder.position.set(mesh.position);
+		for (var i = 0; i < gamepads.length; ++i) {
+			var controller = gamepads[i];
+
+			if (controller != null) {
+				// id = Daydream Controller bugbug
+				
+							if (controller.pose.hasPosition == true) {
+								try
+								{
+									cylinder.position.x = controller.pose.position[0];
+									cylinder.position.y = 0; //controller.pose.position[1];
+									cylinder.position.z = controller.pose.position[2];
+								}
+								catch (e)
+								{
+				
+								}
+				
+							}
+							else {
+								cylinder.position.x = camera.position.x - 0.1; //bugbug
+								cylinder.position.y = camera.position.y - 0.1;
+								cylinder.position.z = camera.position.z - 0.1;
+							}
+				
+				/*
+				cylinder.position.x = 0.1;
+				cylinder.position.y = 0;
+				cylinder.position.z = 0;
+				*/
+
+				var quaternion = new THREE.Quaternion().fromArray(controller.pose.orientation);
+				cylinder.setRotationFromQuaternion(quaternion);
+
+				var vector = new THREE.Vector3(0, 0, -1);
+				vector.applyQuaternion(quaternion);
+
+				//bugbug sometime position is not availalbe?
 
 
-			var pressed = controller.buttons[0].pressed;
 
-			if (pressed == true) {
-				var input = controller.axes[1];
 
-				if (controller.id == "Daydream Controller") {
-					input *= -1;	// for some reason the daydream controller values are swapped?
+				//cylinder.position.set(mesh.position);
+
+
+				var pressed = controller.buttons[0].pressed;
+
+				if (pressed == true) {
+					var input = controller.axes[1];
+
+					if (controller.id == "Daydream Controller") {
+						input *= -1;	// for some reason the daydream controller values are swapped?
+					}
+
+					const scale = 0.05;
+
+					user.x += vector.x * input * scale;
+					user.z += vector.z * input * scale;
+					user.y += vector.y * input * scale;
 				}
 
-				const scale = 0.05;
 
-				user.x += vector.x * input * scale;
-				user.z += vector.z * input * scale;
-				user.y += vector.y * input * scale;
+
 			}
-
-
 
 		}
 
 	}
+	catch (e) {
 
+	}
 }
 
 function renderScene() {
