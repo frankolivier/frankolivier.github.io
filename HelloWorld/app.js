@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", init); // initialization
 var frameCounter = 0;	// the frame being rendered in the output canvas
 var totalFrameTime = 0;
 
-var above = new Point(330, 722.7);	// the point on the map we are currently above
+var user = new THREE.Vector3(330, 100, 722.7);	// the point on the map we are currently above
 
 const tileDimension = 256;	// Tiles are 256 x 256 pixels
 
@@ -34,29 +34,29 @@ function checkKey(e) {
 
 	if (e.keyCode == '38') {
 		// up arrow
-		above.y -= step; // minus, as we are panning BUGBUG move to Panning.js?
+		user.z -= step; // minus, as we are panning BUGBUG move to Panning.js?
 	}
 	else if (e.keyCode == '40') {
 		// down arrow		     	
-		above.y += step; // minus, as we are panning BUGBUG move to Panning.js?
+		user.z += step; // minus, as we are panning BUGBUG move to Panning.js?
 
 	}
 	else if (e.keyCode == '37') {
 		// left arrow
-		above.x -= step; // minus, as we are panning BUGBUG move to Panning.js?
+		user.x -= step; // minus, as we are panning BUGBUG move to Panning.js?
 
 	}
 	else if (e.keyCode == '39') {
 		// right arrow	
-		above.x += step; // minus, as we are panning BUGBUG move to Panning.js?
+		user.x += step; // minus, as we are panning BUGBUG move to Panning.js?
 	}
 	else if (e.keyCode == '71') {
 		// q
-		mesh.position.y -= 10;
+		user.y += 10;
 	}
 	else if (e.keyCode == '65') {
 		// e
-		mesh.position.y += 10;
+		user.y -= 10;
 	}
 
 
@@ -155,7 +155,6 @@ function initThree() {
 	scene.add(mesh);
 
 
-	mesh.position.y = -100;
 
 
 	const vrCanvas = document.getElementById('vrCanvas');
@@ -194,9 +193,9 @@ function sendFriend() {
 	var t1 = window.performance.now();
 	if (!!conn) {
 		var data = {};
-		data.x = above.x;
-		data.z = above.y;
-		data.y = mesh.position.y * -1;
+		data.x = user.x;
+		data.z = user.z;
+		data.y = user.y;
 		conn.send(data);
 		//bugbug maybe send timestamp as well?
 	}
@@ -211,12 +210,12 @@ function animateThree() {
 
 	effect.requestAnimationFrame(animateThree);
 
-	terrainTiles.render(Math.floor(above.x), Math.floor(above.y));
-	mapTiles.render(Math.floor(above.x), Math.floor(above.y));
+	terrainTiles.render(Math.floor(user.x), Math.floor(user.z));
+	mapTiles.render(Math.floor(user.x), Math.floor(user.z));
 
 	const m = 256; // 2048 / 8 tiles
-	mesh.position.x = (-above.x % 1) * m;
-	mesh.position.z = (-above.y % 1) * m;
+	mesh.position.x = (-user.x % 1) * m;
+	mesh.position.z = (-user.z % 1) * m;
 
 	controls.update();
 
@@ -276,8 +275,8 @@ function animateThree() {
 
 				const scale = 0.05;
 
-				above.x += vector.x * input * scale;
-				above.y += vector.z * input * scale;
+				user.x += vector.x * input * scale;
+				user.z += vector.z * input * scale;
 
 				mesh.position.y -= vector.y * 15 * input;
 
@@ -296,10 +295,12 @@ function animateThree() {
 
 	var xx = 1000;
 
-	friend.position.x = camera.position.x + (friendData.x - above.x) * 1000;
-	friend.position.z = camera.position.z + (friendData.z - above.y) * 1000;
+	friend.position.x = camera.position.x + (friendData.x - user.x) * 1000;
+	friend.position.z = camera.position.z + (friendData.z - user.z) * 1000;
 	friend.position.y = mesh.position.y + friendData.y;
 	console.log(">>> " + friend.position.y + " " + camera.position.y + " " + friendData.y + " " + mesh.position.y);
+
+	mesh.position.y = user.y * -1;
 
 	//renderer.render(scene, camera);
 	effect.render(scene, camera);
@@ -335,11 +336,11 @@ function geocodeAddress(geocoder) {
 		if (status === 'OK') {
 			console.log('in  ' + results[0].geometry.location.lat() + ' ' + results[0].geometry.location.lng());
 
-			above.x = long2tile(results[0].geometry.location.lng(), zoomLevel); //bugbug put zoom (10) in a var
-			above.y = lat2tile(results[0].geometry.location.lat(), zoomLevel); //bugbug put zoom (10) in a var
+			user.x = long2tile(results[0].geometry.location.lng(), zoomLevel); //bugbug put zoom (10) in a var
+			user.z = lat2tile(results[0].geometry.location.lat(), zoomLevel); //bugbug put zoom (10) in a var
 
 
-			console.log('out ' + above.x + ' ' + above.y);
+			console.log('out ' + user.x + ' ' + user.z);
 
 
 		} else {
@@ -372,7 +373,7 @@ function init() {
 		worker.needsWork = true;
 	
 		worker.addEventListener('message', function(e) {
-			console.log('Worker said: ', e.data + 'current frame = ' + above.x + ' ' + above.y + ' '+ frameCounter);
+			console.log('Worker said: ', e.data + 'current frame = ' + user.x + ' ' + user.z + ' '+ frameCounter);
 			worker.needsWork = true;
 		}, false);
 	*/
@@ -433,7 +434,7 @@ function init() {
 	animateThree();
 
 
-	//	terrainTiles.render(above.x, above.y);
-	//mapTiles.render(above.x, above.y);
+	//	terrainTiles.render(user.x, user.z);
+	//mapTiles.render(user.x, user.z);
 
 }
