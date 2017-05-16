@@ -52,11 +52,11 @@ function checkKey(e) {
 	}
 	else if (e.keyCode == '71') {
 		// q
-		mesh.position.y -= 100;
+		mesh.position.y -= 10;
 	}
 	else if (e.keyCode == '65') {
 		// e
-		mesh.position.y += 100;
+		mesh.position.y += 10;
 	}
 
 
@@ -75,6 +75,11 @@ var terrainTexture, mapTexture;
 var cylinder;  // the cursor / pointer we're drawing for the gamepad
 
 var friend;    // the other person in VR with us
+var friendData = {};
+friendData.x = 0;
+friendData.y = 0;
+friendData.z = 0;
+
 
 function isMobile() {
 	return (navigator.userAgent.toLowerCase().indexOf('mob') != -1);
@@ -111,18 +116,18 @@ function initThree() {
 	terrainTexture = new THREE.Texture(terrainCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
 
-/*
-	// make textures smaller for mobile
-	if (isMobile())
-	{
-		const canvasSize = 512;
-		terrainCanvas.width = canvasSize;
-		terrainCanvas.height = canvasSize;
-		mapCanvas.width = canvasSize;
-		mapCanvas.height = canvasSize;
-
-	}
-*/
+	/*
+		// make textures smaller for mobile
+		if (isMobile())
+		{
+			const canvasSize = 512;
+			terrainCanvas.width = canvasSize;
+			terrainCanvas.height = canvasSize;
+			mapCanvas.width = canvasSize;
+			mapCanvas.height = canvasSize;
+	
+		}
+	*/
 
 	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float distance; void main()	{ " +
 		"v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
@@ -184,6 +189,21 @@ function initThree() {
 
 }
 
+function sendFriend() {
+
+	var t1 = window.performance.now();
+	if (!!conn) {
+		var data = {};
+		data.x = above.x;
+		data.z = above.y;
+		data.y = mesh.position.y * -1;
+		conn.send(data);
+		//bugbug maybe send timestamp as well?
+	}
+
+	window.setTimeout(sendFriend, 1000);
+
+}
 
 function animateThree() {
 
@@ -250,8 +270,7 @@ function animateThree() {
 
 				var input = controller.axes[1];
 
-				if (controller.id == "Daydream Controller")
-				{
+				if (controller.id == "Daydream Controller") {
 					input *= -1;	// for some reason the daydream controller values are swapped?
 				}
 
@@ -271,10 +290,16 @@ function animateThree() {
 
 	}
 
-	friend.position.x = camera.position.x - 100;
-	friend.position.y = camera.position.y;
-	friend.position.z = camera.position.z - 100;
+	//friend.position.x = camera.position.x - 100;
+	//friend.position.y = camera.position.y;
 
+
+	var xx = 1000;
+
+	friend.position.x = camera.position.x + (friendData.x - above.x) * 1000;
+	friend.position.z = camera.position.z + (friendData.z - above.y) * 1000;
+	friend.position.y = mesh.position.y + friendData.y;
+	console.log(">>> " + friend.position.y + " " + camera.position.y + " " + friendData.y + " " + mesh.position.y);
 
 	//renderer.render(scene, camera);
 	effect.render(scene, camera);
@@ -331,6 +356,13 @@ function initMap() {
 	});
 }
 
+function incomingMessageHandler(data) {
+	console.log(data);
+	friendData.x = data.x;
+	friendData.y = data.y;
+	friendData.z = data.z;
+}
+
 function init() {
 
 
@@ -362,7 +394,7 @@ function init() {
 	initThree();
 
 	peer = new Peer({
-		id: 'frankodev', 
+		id: 'frankodev',
 		debug: 3,
 		host: 'thawing-depths-36140.herokuapp.com',
 		port: 443,
@@ -374,10 +406,7 @@ function init() {
 
 		peer.on('connection', function (connX) {
 			conn = connX;
-			conn.on('data', function (data) {
-				// Will print 'hi!'
-				console.log(data);
-			});
+			conn.on('data', incomingMessageHandler);
 		});
 	});
 
@@ -385,13 +414,20 @@ function init() {
 		var peerID = document.getElementById('peerID').value;
 		conn = peer.connect(peerID);
 		conn.on('open', function () {
-			conn.send('hi!');
+			///conn.send('hi!');
 		});
+		conn.on('data', incomingMessageHandler);
+
+		/*
 		conn.on('data', function (data) {
 			// Will print 'hi!'
 			console.log(data);
 		});
+		*/
 	});
+
+
+	sendFriend();
 
 
 	animateThree();
