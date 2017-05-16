@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", init); // initialization
 var frameCounter = 0;	// the frame being rendered in the output canvas
 var totalFrameTime = 0;
 
-var user = new THREE.Vector3(330, 1.5, 722.7);	// the point on the map we are currently above
+var user = new THREE.Vector3(330, 0.5, 722.7);	// the point on the map we are currently above
 var friend;    // the other person in VR with us
 var friendData = new THREE.Vector3(10, 10, 10);
 
@@ -131,7 +131,7 @@ function initThree() {
 	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float distance; void main()	{ " +
 		"v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
 		"elevation = clamp(elevation, 0.0, 10000.0); " +
-		"elevation = elevation / 6600.0; " +
+		"elevation = elevation / 10000.0; " +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + elevation, 1.0 ); " +
 		"distance = clamp(length(gl_Position) / 1500.0, 0.0, 1.0); }";
 	var fragmentShader = "varying vec2 v; uniform sampler2D mapTexture; varying float distance; void main() { gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), distance); }";
@@ -164,7 +164,7 @@ function initThree() {
 	renderer.setClearColor(0xffffff, 1);
 
 	controls = new THREE.VRControls(camera);
-	controls.standing = true;
+	controls.standing = false;
 
 	effect = new THREE.VREffect(renderer);
 
@@ -221,7 +221,7 @@ function handleController() {
 								try
 								{
 									cylinder.position.x = controller.pose.position[0];
-									cylinder.position.y = 0; //controller.pose.position[1];
+									cylinder.position.y = controller.pose.position[1];
 									cylinder.position.z = controller.pose.position[2];
 								}
 								catch (e)
