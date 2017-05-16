@@ -13,8 +13,10 @@ var totalFrameTime = 0;
 
 var user = new THREE.Vector3(330, 0.5, 722.7);	// the point on the map we are currently above
 var friend;    // the other person in VR with us
-var friendData = new THREE.Vector3(10, 10, 10);
 
+var friendData = new THREE.Vector3(10, 10, 10);
+var friendPointerData = new THREE.Vector3(10, 10, 10);
+var friendPointerQuaternion = new THREE.Quaternion(0, 0, 0, 1);
 
 const tileDimension = 256;	// Tiles are 256 x 256 pixels
 
@@ -77,6 +79,7 @@ var terrainTexture, mapTexture;
 
 var cylinder;  // the cursor / pointer we're drawing for the gamepad
 
+var friendPointer;	//Mesh; our friend's pointer
 
 
 
@@ -105,6 +108,14 @@ function initThree() {
 		friend = new THREE.Mesh(geometry, material);
 	}
 	scene.add(friend);
+
+	{
+		var geometry = new THREE.CylinderGeometry(0.01, 0.01, 100, 4); //bugbug top and bottom are swapped?
+		geometry.rotateX(0.25 * 2 * Math.PI);
+		var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+		friendPointer = new THREE.Mesh(geometry, material);
+	}
+	scene.add(friendPointer);
 
 	//var vertexShader = "varying vec2 vuv; void main()	{ vuv = uv; gl_Position =  projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }";
 	//var fragmentShader = "varying vec2 vuv; uniform sampler2D texture; void main() { vec4 q = texture2D(texture, vuv) * 256.0; float w = (q.r * 256.0 + q.g + q.b / 256.0) - 32768.0; w = w / 4096.0; gl_FragColor = vec4(w, w, w, 0.5);}";
@@ -194,11 +205,21 @@ function sendFriend() {
 		data.x = user.x;
 		data.z = user.z;
 		data.y = user.y;
+
+		data.px = user.x + cylinder.position.x; //bugbug need to put this in global coordinate space...
+		data.py = user.y + cylinder.position.y;
+		data.pz = user.z + cylinder.position.z;
+
+		data.qx = cylinder.quaternion.x;
+		data.qy = cylinder.quaternion.y;
+		data.qz = cylinder.quaternion.z;
+		data.qw = cylinder.quaternion.w;
+
 		conn.send(data);
 		//bugbug maybe send timestamp as well?
 	}
 
-	window.setTimeout(sendFriend, 1000);
+	window.setTimeout(sendFriend, 250);
 
 }
 
@@ -216,31 +237,24 @@ function handleController() {
 
 			if (controller != null) {
 				// id = Daydream Controller bugbug
-				
-							if (controller.pose.hasPosition == true) {
-								try
-								{
-									cylinder.position.x = controller.pose.position[0];
-									cylinder.position.y = controller.pose.position[1];
-									cylinder.position.z = controller.pose.position[2];
-								}
-								catch (e)
-								{
-				
-								}
-				
-							}
-							else {
-								cylinder.position.x = camera.position.x - 0.1; //bugbug
-								cylinder.position.y = camera.position.y - 0.1;
-								cylinder.position.z = camera.position.z - 0.1;
-							}
-				
-				/*
-				cylinder.position.x = 0.1;
-				cylinder.position.y = 0;
-				cylinder.position.z = 0;
-				*/
+
+				if (controller.pose.hasPosition == true) {
+					try {
+						cylinder.position.x = controller.pose.position[0];
+						cylinder.position.y = controller.pose.position[1];
+						cylinder.position.z = controller.pose.position[2];
+					}
+					catch (e) {
+
+					}
+
+				}
+				else {
+					cylinder.position.x = camera.position.x - 0.1; //bugbug
+					cylinder.position.y = camera.position.y - 0.1;
+					cylinder.position.z = camera.position.z - 0.1;
+				}
+
 
 				var quaternion = new THREE.Quaternion().fromArray(controller.pose.orientation);
 				cylinder.setRotationFromQuaternion(quaternion);
@@ -249,12 +263,7 @@ function handleController() {
 				vector.applyQuaternion(quaternion);
 
 				//bugbug sometime position is not availalbe?
-
-
-
-
 				//cylinder.position.set(mesh.position);
-
 
 				var pressed = controller.buttons[0].pressed;
 
@@ -304,7 +313,11 @@ function renderScene() {
 	friend.position.x = friendData.x - user.x;
 	friend.position.z = friendData.z - user.z;
 	friend.position.y = friendData.y - user.y;
-	console.log(">>> " + friend.position.x + " " + camera.position.x + " " + friendData.x + " " + user.x);
+
+	friendPointer.position.x = friendPointerData.x - user.x;
+	friendPointer.position.z = friendPointerData.z - user.z;
+	friendPointer.position.y = friendPointerData.y - user.y;
+	friendPointer.setRotationFromQuaternion(friendPointerQuaternion);
 
 
 	effect.render(scene, camera);
@@ -322,10 +335,6 @@ function renderScene() {
 
 
 function onWindowResize() {
-	//terrainCanvas.width = window.innerWidth;
-	//terrainCanvas.height = window.innerHeight;
-
-	//console.log(terrainCanvas.width + ' <<<>>> ' + terrainCanvas.height);
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
 
@@ -366,6 +375,17 @@ function incomingMessageHandler(data) {
 	friendData.x = data.x;
 	friendData.y = data.y;
 	friendData.z = data.z;
+
+	friendPointerData.x = data.px;
+	friendPointerData.y = data.py;
+	friendPointerData.z = data.pz;
+	
+	friendPointerQuaternion.x = data.qx;
+	friendPointerQuaternion.y = data.qy;
+	friendPointerQuaternion.z = data.qz;
+	friendPointerQuaternion.w = data.qw;
+
+	console.log("[incoming ]" + friendData.x + " " + friendData.y + " " + friendData.z);
 }
 
 function init() {
