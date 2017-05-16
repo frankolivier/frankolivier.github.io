@@ -11,7 +11,10 @@ document.addEventListener("DOMContentLoaded", init); // initialization
 var frameCounter = 0;	// the frame being rendered in the output canvas
 var totalFrameTime = 0;
 
-var user = new THREE.Vector3(330, 100, 722.7);	// the point on the map we are currently above
+var user = new THREE.Vector3(330, 1.5, 722.7);	// the point on the map we are currently above
+var friend;    // the other person in VR with us
+var friendData = new THREE.Vector3(10, 10, 10);
+
 
 const tileDimension = 256;	// Tiles are 256 x 256 pixels
 
@@ -28,7 +31,7 @@ var friendID;
 
 function checkKey(e) {
 
-	const step = 0.1;
+	const step = 0.05;
 
 	e = e || window.event;
 
@@ -52,11 +55,11 @@ function checkKey(e) {
 	}
 	else if (e.keyCode == '71') {
 		// q
-		user.y += 10;
+		user.y += step;
 	}
 	else if (e.keyCode == '65') {
 		// e
-		user.y -= 10;
+		user.y -= step;
 	}
 
 
@@ -74,11 +77,7 @@ var terrainTexture, mapTexture;
 
 var cylinder;  // the cursor / pointer we're drawing for the gamepad
 
-var friend;    // the other person in VR with us
-var friendData = {};
-friendData.x = 0;
-friendData.y = 0;
-friendData.z = 0;
+
 
 
 function isMobile() {
@@ -89,10 +88,10 @@ function initThree() {
 
 	scene = new THREE.Scene();
 
-	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
+	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
 	{
-		var geometry = new THREE.CylinderGeometry(1, 1, 10000, 4); //bugbug top and bottom are swapped?
+		var geometry = new THREE.CylinderGeometry(1, 1, 100, 4); //bugbug top and bottom are swapped?
 		geometry.rotateX(0.25 * 2 * Math.PI);
 		var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 		cylinder = new THREE.Mesh(geometry, material);
@@ -100,7 +99,7 @@ function initThree() {
 	scene.add(cylinder);
 
 	{
-		var geometry = new THREE.CylinderGeometry(10, 10, 10, 4); //bugbug top and bottom are swapped?
+		var geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.1, 4); //bugbug top and bottom are swapped?
 		//geometry.rotateX(0.25 * 2 * Math.PI);
 		var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 		friend = new THREE.Mesh(geometry, material);
@@ -112,7 +111,7 @@ function initThree() {
 
 	var meshComplexity = isMobile() ? 100 : 512;
 
-	geometry = new THREE.PlaneGeometry(2048, 2048, meshComplexity, meshComplexity);
+	geometry = new THREE.PlaneGeometry(8, 8, meshComplexity, meshComplexity);
 	terrainTexture = new THREE.Texture(terrainCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
 
@@ -132,7 +131,7 @@ function initThree() {
 	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float distance; void main()	{ " +
 		"v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
 		"elevation = clamp(elevation, 0.0, 10000.0); " +
-		"elevation = elevation / 33.0; " +
+		"elevation = elevation / 6600.0; " +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + elevation, 1.0 ); " +
 		"distance = clamp(length(gl_Position) / 1500.0, 0.0, 1.0); }";
 	var fragmentShader = "varying vec2 v; uniform sampler2D mapTexture; varying float distance; void main() { gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), distance); }";
@@ -165,8 +164,7 @@ function initThree() {
 	renderer.setClearColor(0xffffff, 1);
 
 	controls = new THREE.VRControls(camera);
-	controls.standing = false;
-	controls.scale = 1000;
+	controls.standing = true;
 
 	effect = new THREE.VREffect(renderer);
 
@@ -204,30 +202,12 @@ function sendFriend() {
 
 }
 
-function animateThree() {
-
-	var t1 = window.performance.now();
-
-	effect.requestAnimationFrame(animateThree);
-
-	terrainTiles.render(Math.floor(user.x), Math.floor(user.z));
-	mapTiles.render(Math.floor(user.x), Math.floor(user.z));
-
-	const m = 256; // 2048 / 8 tiles
-	mesh.position.x = (-user.x % 1) * m;
-	mesh.position.z = (-user.z % 1) * m;
-
-	controls.update();
-
-	mapTexture.needsUpdate = mapTiles.checkUpdate();
-	terrainTexture.needsUpdate = terrainTiles.checkUpdate();
-
+function handleController() {
 	// Handle controller input
 	var gamepads = navigator.getGamepads();
 
 	for (var i = 0; i < gamepads.length; ++i) {
 		var controller = gamepads[i];
-
 
 		if (controller != null) {
 			// id = Daydream Controller bugbug
@@ -261,12 +241,6 @@ function animateThree() {
 			var pressed = controller.buttons[0].pressed;
 
 			if (pressed == true) {
-
-				///console.log("camera at" + camera.position.x + " " + camera.position.y + " " + camera.position.z)
-				///console.log("controller at" + controller.pose.position.x + " " + controller.pose.position.y + " " + controller.pose.position.z)
-
-				console.log(controller.axes[1]);
-
 				var input = controller.axes[1];
 
 				if (controller.id == "Daydream Controller") {
@@ -277,10 +251,7 @@ function animateThree() {
 
 				user.x += vector.x * input * scale;
 				user.z += vector.z * input * scale;
-
-				mesh.position.y -= vector.y * 15 * input;
-
-
+				user.y += vector.y * input * scale;
 			}
 
 
@@ -289,20 +260,31 @@ function animateThree() {
 
 	}
 
-	//friend.position.x = camera.position.x - 100;
-	//friend.position.y = camera.position.y;
+}
 
+function renderScene() {
 
-	var xx = 1000;
+	var t1 = window.performance.now();
 
-	friend.position.x = camera.position.x + (friendData.x - user.x) * 1000;
-	friend.position.z = camera.position.z + (friendData.z - user.z) * 1000;
-	friend.position.y = mesh.position.y + friendData.y;
-	console.log(">>> " + friend.position.y + " " + camera.position.y + " " + friendData.y + " " + mesh.position.y);
+	handleController();
 
+	terrainTiles.render(Math.floor(user.x), Math.floor(user.z));
+	mapTiles.render(Math.floor(user.x), Math.floor(user.z));
+	mapTexture.needsUpdate = mapTiles.checkUpdate();
+	terrainTexture.needsUpdate = terrainTiles.checkUpdate();
+
+	const m = 8 / 8; // mesh size / 8 tiles
+	mesh.position.x = (-user.x % 1) * m;
+	mesh.position.z = (-user.z % 1) * m;
 	mesh.position.y = user.y * -1;
 
-	//renderer.render(scene, camera);
+	controls.update();	// update HMD head position
+	friend.position.x = friendData.x - user.x;
+	friend.position.z = friendData.z - user.z;
+	friend.position.y = friendData.y - user.y;
+	console.log(">>> " + friend.position.x + " " + camera.position.x + " " + friendData.x + " " + user.x);
+
+
 	effect.render(scene, camera);
 
 	frameCounter++;
@@ -311,6 +293,7 @@ function animateThree() {
 
 	totalFrameTime += (t2 - t1);
 
+	effect.requestAnimationFrame(renderScene);
 
 }
 
@@ -358,7 +341,6 @@ function initMap() {
 }
 
 function incomingMessageHandler(data) {
-	console.log(data);
 	friendData.x = data.x;
 	friendData.y = data.y;
 	friendData.z = data.z;
@@ -431,7 +413,7 @@ function init() {
 	sendFriend();
 
 
-	animateThree();
+	renderScene();
 
 
 	//	terrainTiles.render(user.x, user.z);
