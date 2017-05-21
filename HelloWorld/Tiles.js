@@ -1,13 +1,14 @@
 "use strict";
 
 
-function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to util class file?
+function Tiles(url, canvas, tileDimension, drawPerfCounter, fillStyle) {			//bugbug move to util class file?
 
     this.url = url;
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.tileDimension = tileDimension; //bugbug duplicate
     this.drawPerfCounter = drawPerfCounter;
+    this.fillStyle = fillStyle;
 
     this.x = -1;
     this.y = -1;
@@ -96,8 +97,6 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to
     }
 
     this.render = function (x, y) {
-        //bugbug enforce limits of slippy map
-
         if ((this.x == x) && (this.y == y)) {
             var now = window.performance.now();
             if (now - this.lastRenderTime < 1000) {
@@ -113,7 +112,8 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to
         this.x = x;
         this.y = y;
 
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillStyle = this.fillStyle;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         this.ctx.save();
 
