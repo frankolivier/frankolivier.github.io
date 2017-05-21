@@ -66,12 +66,19 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter) {			//bugbug move to
             url = url.replace('%x%', x);
             url = url.replace('%y%', y);
 
-            //console.log(url);
-
-            fetch(url)
+            if (!!window.createImageBitmap){
+                fetch(url)
                 .then(response => response.blob())
                 .then(blob => createImageBitmap(blob))
                 .then(image => tile.image = image)
+            }
+            else
+            {
+                // fallback path
+                fetch(url)
+                .then(response => response.blob())
+                .then(blob => { tile.image = new Image(); tile.image.src = URL.createObjectURL(blob) })
+            }
 
             return null;
         }
