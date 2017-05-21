@@ -117,9 +117,6 @@ function initThree() {
 	}
 	scene.add(friendPointer);
 
-	//var vertexShader = "varying vec2 vuv; void main()	{ vuv = uv; gl_Position =  projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }";
-	//var fragmentShader = "varying vec2 vuv; uniform sampler2D texture; void main() { vec4 q = texture2D(texture, vuv) * 256.0; float w = (q.r * 256.0 + q.g + q.b / 256.0) - 32768.0; w = w / 4096.0; gl_FragColor = vec4(w, w, w, 0.5);}";
-
 	var meshComplexity = isMobile() ? 100 : 512;
 
 	geometry = new THREE.PlaneGeometry(8, 8, meshComplexity, meshComplexity);
@@ -144,8 +141,15 @@ function initThree() {
 		"elevation = clamp(elevation, 0.0, 10000.0); " +
 		"elevation = elevation / 10000.0; " +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + elevation, 1.0 ); " +
-		"distance = clamp(length(gl_Position) / 1500.0, 0.0, 1.0); }";
-	var fragmentShader = "varying vec2 v; uniform sampler2D mapTexture; varying float distance; void main() { gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), distance); }";
+		"distance = length(gl_Position); }";
+
+	var fragmentShader = "varying vec2 v; " +
+	                     "uniform sampler2D mapTexture; " +
+						 "varying float distance; " +
+						 "void main() { " +
+						 "  float fogStrength = smoothstep(2.0, 4.0, distance);" +
+						 "  gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), fogStrength); " +
+						 "}";
 
 	var material = new THREE.ShaderMaterial({
 		uniforms: {
