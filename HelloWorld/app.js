@@ -6,6 +6,9 @@
 
 // bugbug feature detect webgl, fetch, web workers
 
+// bugbug http://www.thunderforest.com/maps/landscape/
+
+
 document.addEventListener("DOMContentLoaded", init); // initialization
 
 var frameCounter = 0;	// the frame being rendered in the output canvas
@@ -91,7 +94,7 @@ function initThree() {
 
 	scene = new THREE.Scene();
 
-	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
 
 	{
 		var geometry = new THREE.CylinderGeometry(0.01, 0.01, 100, 4); //bugbug top and bottom are swapped?
@@ -137,10 +140,20 @@ function initThree() {
 	*/
 
 	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float distance; void main()	{ " +
-		"v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
+		"v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; " + 
+		"float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
 		"elevation = clamp(elevation, 0.0, 10000.0); " +
 		"elevation = elevation / 10000.0; " +
-		"gl_Position = projectionMatrix * modelViewMatrix * vec4( position.x, position.y, position.z + elevation, 1.0 ); " +
+		"vec3 p = position;" +
+		"if ((v.x < 0.2)||(v.x > 0.8)||(v.y < 0.2)||(v.y > 0.8)){" +
+		"p.x *= 100.0; " +
+		"p.y *= 100.0; " +
+		"p.z = 0.0; " +
+		//"}"+
+		"}else{"+
+		"p.z += elevation; "+
+		"}"+
+		"gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
 		"distance = length(gl_Position); }";
 
 	var fragmentShader = "varying vec2 v; " +
@@ -149,6 +162,13 @@ function initThree() {
 						 "void main() { " +
 						 "  float fogStrength = smoothstep(2.0, 4.0, distance);" +
 						 "  gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), fogStrength); " +
+
+						 "  float hazeStrength = smoothstep(10.0, 100.0, distance);" +
+						 "  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
+
+						 //"  gl_FragColor.r = 135.0 / 255.0; "+
+						 //"  gl_FragColor.g = 206.0 / 255.0; "+
+						 //"  gl_FragColor.b = 250.0 / 255.0; " +
 						 "}";
 
 	var material = new THREE.ShaderMaterial({
@@ -176,7 +196,7 @@ function initThree() {
 
 
 
-	renderer.setClearColor(0xffffff, 1);
+	renderer.setClearColor(0x87ceff, 1);
 
 	controls = new THREE.VRControls(camera);
 	controls.standing = false;
