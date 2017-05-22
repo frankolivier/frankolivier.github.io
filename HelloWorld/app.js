@@ -95,6 +95,7 @@ function initThree() {
 	scene = new THREE.Scene();
 
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+    camera.lookAt(new THREE.Vector3( 0, -0.5, -1 ));
 
 	{
 		var geometry = new THREE.CylinderGeometry(0.01, 0.01, 100, 4); //bugbug top and bottom are swapped?
@@ -145,7 +146,7 @@ function initThree() {
 		"elevation = clamp(elevation, 0.0, 10000.0); " +
 		"elevation = elevation / 10000.0; " +
 		"vec3 p = position;" +
-		"if ((v.x < 0.2)||(v.x > 0.8)||(v.y < 0.2)||(v.y > 0.8)){" +
+		"if ((v.x < 0.1)||(v.x > 0.9)||(v.y < 0.1)||(v.y > 0.9)){" +
 		"p.x *= 100.0; " +
 		"p.y *= 100.0; " +
 		"p.z = 0.0; " +
