@@ -121,7 +121,7 @@ function initThree() {
 	}
 	scene.add(friendPointer);
 
-	var meshComplexity = isMobile() ? 100 : 512;
+	var meshComplexity = isMobile() ? 200 : 512;
 
 	geometry = new THREE.PlaneGeometry(8, 8, meshComplexity, meshComplexity);
 	terrainTexture = new THREE.Texture(terrainCanvas);
@@ -146,14 +146,14 @@ function initThree() {
 		"elevation = clamp(elevation, 0.0, 10000.0); " +
 		"elevation = elevation / 10000.0; " +
 		"vec3 p = position;" +
-		"if ((v.x < 0.1)||(v.x > 0.9)||(v.y < 0.1)||(v.y > 0.9)){" +
-		"p.x *= 100.0; " +
-		"p.y *= 100.0; " +
-		"p.z = 0.0; " +
+		//"if ((v.x < 0.01)||(v.x > 0.99)||(v.y < 0.01)||(v.y > 0.99)){" +
+		//"p.x *= 100.0; " +
+		//"p.y *= 100.0; " +
+		//"p.z = 0.0; " +
 		//"}"+
-		"}else{" +
+		//"}else{" +
 		"p.z += elevation; " +
-		"}" +
+		//"}" +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
 		"distance = length(gl_Position); }";
 
@@ -161,15 +161,16 @@ function initThree() {
 		"uniform sampler2D mapTexture; " +
 		"varying float distance; " +
 		"void main() { " +
+
+		"  gl_FragColor = texture2D(mapTexture, v); " +
+
+/*
 		"  float fogStrength = smoothstep(2.0, 4.0, distance);" +
 		"  gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), fogStrength); " +
 
 		"  float hazeStrength = smoothstep(10.0, 100.0, distance);" +
 		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
-
-		//"  gl_FragColor.r = 135.0 / 255.0; "+
-		//"  gl_FragColor.g = 206.0 / 255.0; "+
-		//"  gl_FragColor.b = 250.0 / 255.0; " +
+*/
 		"}";
 
 	var material = new THREE.ShaderMaterial({
@@ -439,7 +440,7 @@ function init() {
 
 
 	const mapCanvas = document.getElementById('mapCanvas');
-	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/' + zoomLevel + '/%x%/%y%.png', mapCanvas, 256, false, '#ffffff');
+	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/' + zoomLevel + '/%x%/%y%.png', mapCanvas, 256, false, '#87ceff');
 
 	const terrainCanvas = document.getElementById('terrainCanvas');
 	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/' + zoomLevel + '/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256, false, '#00000000');
