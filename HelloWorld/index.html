@@ -81,16 +81,14 @@
 
     <canvas id='vrCanvas'></canvas>
 
-
-
     <canvas id='terrainCanvas' width='2048' height='2048'></canvas>
     <canvas id='mapCanvas' width='2048' height='2048'></canvas>
     <button id='vrButton'>VR</button>
 
-    <div id='geoControls'>
-        <input id="address" type="textbox" value="Sydney, NSW">
-        <input id="submit" type="button" value="Geocode">
-    </div>
+    <form id='geoControls' action=''>
+        <input id="address" type="textbox" placeholder='where to?'>
+        <input type="button" value='go!'>
+    </form>
 
     <div id='peerControls'>
         <input id="peerID" type="textbox" value="">

@@ -95,7 +95,7 @@ function initThree() {
 	scene = new THREE.Scene();
 
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
-    camera.lookAt(new THREE.Vector3( 0, -0.5, -1 ));
+	camera.lookAt(new THREE.Vector3(0, -0.5, -1));
 
 	{
 		var geometry = new THREE.CylinderGeometry(0.01, 0.01, 100, 4); //bugbug top and bottom are swapped?
@@ -141,7 +141,7 @@ function initThree() {
 	*/
 
 	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float distance; void main()	{ " +
-		"v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; " + 
+		"v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; " +
 		"float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
 		"elevation = clamp(elevation, 0.0, 10000.0); " +
 		"elevation = elevation / 10000.0; " +
@@ -151,26 +151,26 @@ function initThree() {
 		"p.y *= 100.0; " +
 		"p.z = 0.0; " +
 		//"}"+
-		"}else{"+
-		"p.z += elevation; "+
-		"}"+
+		"}else{" +
+		"p.z += elevation; " +
+		"}" +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
 		"distance = length(gl_Position); }";
 
 	var fragmentShader = "varying vec2 v; " +
-	                     "uniform sampler2D mapTexture; " +
-						 "varying float distance; " +
-						 "void main() { " +
-						 "  float fogStrength = smoothstep(2.0, 4.0, distance);" +
-						 "  gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), fogStrength); " +
+		"uniform sampler2D mapTexture; " +
+		"varying float distance; " +
+		"void main() { " +
+		"  float fogStrength = smoothstep(2.0, 4.0, distance);" +
+		"  gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), fogStrength); " +
 
-						 "  float hazeStrength = smoothstep(10.0, 100.0, distance);" +
-						 "  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
+		"  float hazeStrength = smoothstep(10.0, 100.0, distance);" +
+		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
 
-						 //"  gl_FragColor.r = 135.0 / 255.0; "+
-						 //"  gl_FragColor.g = 206.0 / 255.0; "+
-						 //"  gl_FragColor.b = 250.0 / 255.0; " +
-						 "}";
+		//"  gl_FragColor.r = 135.0 / 255.0; "+
+		//"  gl_FragColor.g = 206.0 / 255.0; "+
+		//"  gl_FragColor.b = 250.0 / 255.0; " +
+		"}";
 
 	var material = new THREE.ShaderMaterial({
 		uniforms: {
@@ -369,7 +369,12 @@ function onWindowResize() {
 function long2tile(lon, zoom) { return (Math.floor((lon + 180) / 360 * Math.pow(2, zoom))); }
 function lat2tile(lat, zoom) { return (Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom))); }
 
-function geocodeAddress(geocoder) {
+let geocoder = null;
+
+
+function geocodeAddress() {
+	if (geocoder === null) geocoder = new google.maps.Geocoder()
+
 	var address = document.getElementById('address').value;
 	geocoder.geocode({ 'address': address }, function (results, status) {
 		if (status === 'OK') {
@@ -389,10 +394,9 @@ function geocodeAddress(geocoder) {
 }
 
 function initMap() {
-	var geocoder = new google.maps.Geocoder();
-
-	document.getElementById('submit').addEventListener('click', function () {
-		geocodeAddress(geocoder);
+	document.getElementById('geoControls').addEventListener('submit', function (e) {
+		geocodeAddress();
+		e.preventDefault();
 	});
 }
 
@@ -404,7 +408,7 @@ function incomingMessageHandler(data) {
 	friendPointerData.x = data.px;
 	friendPointerData.y = data.py;
 	friendPointerData.z = data.pz;
-	
+
 	friendPointerQuaternion.x = data.qx;
 	friendPointerQuaternion.y = data.qy;
 	friendPointerQuaternion.z = data.qz;
