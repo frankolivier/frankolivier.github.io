@@ -203,6 +203,15 @@ function initThree() {
 	controls = new THREE.VRControls(camera);
 	controls.standing = false;
 
+	// controls
+	var orbitControls = new THREE.OrbitControls( camera, renderer.domElement );
+	orbitControls.maxPolarAngle = Math.PI * 0.5;
+	orbitControls.minDistance = 0.2;
+	orbitControls.maxDistance = 2;
+	orbitControls.enableKeys = false;
+
+
+
 	effect = new THREE.VREffect(renderer);
 
 	renderer.setSize(document.body.clientWidth, document.body.clientHeight);
