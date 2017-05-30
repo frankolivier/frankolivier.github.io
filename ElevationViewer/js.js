@@ -61,9 +61,7 @@ function getTile(x, y) {
 
 			console.log('requesting ' + x + ' ' + y);
 
-			//const url = 'https://tile.mapzen.com/mapzen/terrain/v1/terrarium/10/' + x + '/' + y + '.png?api_key=mapzen-JcyHAc8'
-
-			const url = 'http://tile.stamen.com/terrain/10/'+x+'/'+y+'.png'
+			const url = 'https://stamen-tiles.a.ssl.fastly.net/terrain/10/'+x+'/'+y+'.png'
 			fetch(url)
 				.then(response => response.blob())
 				.then(blob => createImageBitmap(blob))
