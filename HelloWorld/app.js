@@ -122,7 +122,7 @@ function initGraphics() {
 	}
 	scene.add(friendPointer);
 */
-	var meshComplexity = isMobile() ? 200 : 512;
+	var meshComplexity = isMobile() ? 128 : 512;
 
 	geometry = new THREE.PlaneGeometry(8, 8, meshComplexity, meshComplexity);
 	terrainTexture = new THREE.Texture(terrainCanvas);
