@@ -98,10 +98,10 @@ function initGraphics() {
 
 
 	{
-		var geometry = new THREE.CylinderGeometry(0.01, 0.01, 100, 4); //bugbug top and bottom are swapped?
-		geometry.rotateX(0.25 * 2 * Math.PI);
-		var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-		cylinder = new THREE.Mesh(geometry, material);
+		let pointerGeometry = new THREE.CylinderGeometry(0.01, 0.01, 100, 4); //bugbug top and bottom are swapped?
+		pointerGeometry.rotateX(0.25 * 2 * Math.PI);
+		let pointerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+		cylinder = new THREE.Mesh(pointerGeometry, pointerMaterial);
 	}
 	scene.add(cylinder);
 
