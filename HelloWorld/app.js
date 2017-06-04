@@ -8,7 +8,6 @@
 
 // bugbug http://www.thunderforest.com/maps/landscape/
 
-
 document.addEventListener("DOMContentLoaded", init); // initialization
 
 var frameCounter = 0;	// the frame being rendered in the output canvas
@@ -97,6 +96,7 @@ function initThree() {
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
 	camera.lookAt(new THREE.Vector3(0, -0.5, -1));
 
+/*
 	{
 		var geometry = new THREE.CylinderGeometry(0.01, 0.01, 100, 4); //bugbug top and bottom are swapped?
 		geometry.rotateX(0.25 * 2 * Math.PI);
@@ -120,25 +120,12 @@ function initThree() {
 		friendPointer = new THREE.Mesh(geometry, material);
 	}
 	scene.add(friendPointer);
-
+*/
 	var meshComplexity = isMobile() ? 200 : 512;
 
 	geometry = new THREE.PlaneGeometry(8, 8, meshComplexity, meshComplexity);
 	terrainTexture = new THREE.Texture(terrainCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
-
-	/*
-		// make textures smaller for mobile
-		if (isMobile())
-		{
-			const canvasSize = 512;
-			terrainCanvas.width = canvasSize;
-			terrainCanvas.height = canvasSize;
-			mapCanvas.width = canvasSize;
-			mapCanvas.height = canvasSize;
-	
-		}
-	*/
 
 	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float distance; void main()	{ " +
 		"v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; " +
@@ -190,32 +177,25 @@ function initThree() {
 
 	scene.add(mesh);
 
-
-
-
 	const vrCanvas = document.getElementById('vrCanvas');
 	renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, preserveDrawingBuffer: true }); //bugbug this might kill mobile perf?
-
-
 
 	renderer.setClearColor(0x87ceff, 1);
 
 	controls = new THREE.VRControls(camera);
 	controls.standing = false;
 
-	// controls
+	// non-VR controls
 	var orbitControls = new THREE.OrbitControls( camera, renderer.domElement );
 	orbitControls.maxPolarAngle = Math.PI * 0.5;
 	orbitControls.minDistance = 0.2;
 	orbitControls.maxDistance = 2;
 	orbitControls.enableKeys = false;
 
-
-
 	effect = new THREE.VREffect(renderer);
 
 	renderer.setSize(document.body.clientWidth, document.body.clientHeight);
-	//bugbug setsize for vr display
+	renderer.setPixelRatio(window.devicePixelRatio);
 
 	const vrButton = document.getElementById('vrButton');
 
@@ -225,7 +205,6 @@ function initThree() {
 
 	};
 
-	renderer.setPixelRatio(window.devicePixelRatio);
 
 	window.addEventListener("resize", onWindowResize);
 	onWindowResize();
@@ -339,12 +318,13 @@ function renderScene() {
 	mapTexture.needsUpdate = mapTiles.checkUpdate();
 	terrainTexture.needsUpdate = terrainTiles.checkUpdate();
 
-	const m = 8 / 8; // mesh size / 8 tiles
+	const m = geometry.parameters.width / (mapCanvas.width / tileDimension); // mesh size / 8 tiles
 	mesh.position.x = (-user.x % 1) * m;
 	mesh.position.z = (-user.z % 1) * m;
 	mesh.position.y = user.y * -1;
 
 	controls.update();	// update HMD head position
+	/*
 	friend.position.x = friendData.x - user.x;
 	friend.position.z = friendData.z - user.z;
 	friend.position.y = friendData.y - user.y;
@@ -353,7 +333,7 @@ function renderScene() {
 	friendPointer.position.z = friendPointerData.z - user.z;
 	friendPointer.position.y = friendPointerData.y - user.y;
 	friendPointer.setRotationFromQuaternion(friendPointerQuaternion);
-
+	*/
 
 	effect.render(scene, camera);
 
@@ -368,7 +348,7 @@ function renderScene() {
 }
 
 
-
+// Resize the WebGL canvas when the window size changes
 function onWindowResize() {
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
@@ -427,36 +407,23 @@ function incomingMessageHandler(data) {
 	console.log("[incoming ]" + friendData.x + " " + friendData.y + " " + friendData.z);
 }
 
+
+// Main initialization
 function init() {
 
-
-
-	/*
-		worker = new Worker('worker.js');
-		worker.needsWork = true;
-	
-		worker.addEventListener('message', function(e) {
-			console.log('Worker said: ', e.data + 'current frame = ' + user.x + ' ' + user.z + ' '+ frameCounter);
-			worker.needsWork = true;
-		}, false);
-	*/
-
-
-	//SSL
 	//If you'd like to display these map tiles on a website that requires HTTPS, use our tile SSL endpoint by replacing http://tile.stamen.com with https://stamen-tiles.a.ssl.fastly.net. Multiple subdomains can be also be used: https://stamen-tiles-{S}.a.ssl.fastly.net
 	//JavaScript can be loaded from https://stamen-maps.a.ssl.fastly.net/js/tile.stamen.js.
 	//If you need protocol-agnostic URLs, use //stamen-tiles-{s}.a.ssl.fastly.net/, as that endpoint will work for both SSL and non-SSL connections.
 
-
 	const mapCanvas = document.getElementById('mapCanvas');
-	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/' + zoomLevel + '/%x%/%y%.png', mapCanvas, 256, false, '#87ceff');
+	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/' + zoomLevel + '/%x%/%y%.png', mapCanvas, 256, true, '#87ceff');
 
 	const terrainCanvas = document.getElementById('terrainCanvas');
 	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/' + zoomLevel + '/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256, false, '#00000000');
 
 
 	initThree();
-
+/*
 	peer = new Peer({
 		id: 'frankodev',
 		debug: 3,
@@ -473,7 +440,7 @@ function init() {
 			conn.on('data', incomingMessageHandler);
 		});
 	});
-
+*/
 	document.getElementById('connect').addEventListener('click', function () {
 		var peerID = document.getElementById('peerID').value;
 		conn = peer.connect(peerID);
@@ -481,23 +448,8 @@ function init() {
 			///conn.send('hi!');
 		});
 		conn.on('data', incomingMessageHandler);
-
-		/*
-		conn.on('data', function (data) {
-			// Will print 'hi!'
-			console.log(data);
-		});
-		*/
 	});
 
-
-	sendFriend();
-
-
-	renderScene();
-
-
-	//	terrainTiles.render(user.x, user.z);
-	//mapTiles.render(user.x, user.z);
-
+	///sendFriend();   // Start main communication loop
+	renderScene();	// Start main rendering loop
 }

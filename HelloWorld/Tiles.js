@@ -55,7 +55,7 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter, fillStyle) {			//bug
         var tile = this.cachedTiles.find(this.checkId, id);
 
         if (tile === undefined) {
-            if (this.cachedTiles.length > 200) {
+            if (this.cachedTiles.length > 1600) {
                 this.cachedTiles.shift();
             }
 
@@ -140,7 +140,7 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter, fillStyle) {			//bug
 
                 if (this.drawPerfCounter == true) {
                     //this.ctx.font = '40px serif';
-                    //this.ctx.strokeRect(x * tileDimension, y * tileDimension, tileDimension, tileDimension);
+                    this.ctx.strokeRect(x * tileDimension, y * tileDimension, tileDimension, tileDimension);
                     //this.ctx.fillText(x + ' , ' + y, x * tileDimension, y * tileDimension + (tileDimension / 2));
                 }
             }
@@ -152,9 +152,9 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter, fillStyle) {			//bug
         this.ctx.restore();
 
         if (this.drawPerfCounter == true) {
-            this.ctx.font = '60px serif';
+            //this.ctx.font = '60px serif';
             //this.ctx.fillStyle = 'red';
-            this.ctx.fillText(totalFrameTime / frameCounter, 800, 800);
+            //this.ctx.fillText(totalFrameTime / frameCounter, 800, 800);
         }
 
 
