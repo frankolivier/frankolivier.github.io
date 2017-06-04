@@ -89,14 +89,14 @@ function isMobile() {
 	return (navigator.userAgent.toLowerCase().indexOf('mob') != -1);
 }
 
-function initThree() {
+function initGraphics() {
 
 	scene = new THREE.Scene();
 
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
 	camera.lookAt(new THREE.Vector3(0, -0.5, -1));
 
-/*
+
 	{
 		var geometry = new THREE.CylinderGeometry(0.01, 0.01, 100, 4); //bugbug top and bottom are swapped?
 		geometry.rotateX(0.25 * 2 * Math.PI);
@@ -105,6 +105,7 @@ function initThree() {
 	}
 	scene.add(cylinder);
 
+/*
 	{
 		var geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.1, 4); //bugbug top and bottom are swapped?
 		//geometry.rotateX(0.25 * 2 * Math.PI);
@@ -241,8 +242,6 @@ function handleController() {
 	// Handle controller input
 
 	try {
-
-
 
 		var gamepads = navigator.getGamepads();
 
@@ -403,17 +402,11 @@ function incomingMessageHandler(data) {
 	friendPointerQuaternion.y = data.qy;
 	friendPointerQuaternion.z = data.qz;
 	friendPointerQuaternion.w = data.qw;
-
-	console.log("[incoming ]" + friendData.x + " " + friendData.y + " " + friendData.z);
 }
 
 
 // Main initialization
 function init() {
-
-	//If you'd like to display these map tiles on a website that requires HTTPS, use our tile SSL endpoint by replacing http://tile.stamen.com with https://stamen-tiles.a.ssl.fastly.net. Multiple subdomains can be also be used: https://stamen-tiles-{S}.a.ssl.fastly.net
-	//JavaScript can be loaded from https://stamen-maps.a.ssl.fastly.net/js/tile.stamen.js.
-	//If you need protocol-agnostic URLs, use //stamen-tiles-{s}.a.ssl.fastly.net/, as that endpoint will work for both SSL and non-SSL connections.
 
 	const mapCanvas = document.getElementById('mapCanvas');
 	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/' + zoomLevel + '/%x%/%y%.png', mapCanvas, 256, '#87ceff');
@@ -422,7 +415,7 @@ function init() {
 	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/' + zoomLevel + '/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256, '#00000000');
 
 
-	initThree();
+	initGraphics();
 /*
 	peer = new Peer({
 		id: 'frankodev',
@@ -440,8 +433,6 @@ function init() {
 			conn.on('data', incomingMessageHandler);
 		});
 	});
-*/
-/*
 	document.getElementById('connect').addEventListener('click', function () {
 		var peerID = document.getElementById('peerID').value;
 		conn = peer.connect(peerID);
@@ -450,7 +441,8 @@ function init() {
 		});
 		conn.on('data', incomingMessageHandler);
 	});
+	sendFriend();   // Start main communication loop
 */
-	///sendFriend();   // Start main communication loop
+
 	renderScene();	// Start main rendering loop
 }
