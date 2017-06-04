@@ -1,13 +1,11 @@
 "use strict";
 
-
-function Tiles(url, canvas, tileDimension, drawPerfCounter, fillStyle) {			//bugbug move to util class file?
+function Tiles(url, canvas, tileDimension, fillStyle) {			//bugbug move to util class file?
 
     this.url = url;
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.tileDimension = tileDimension; //bugbug duplicate
-    this.drawPerfCounter = drawPerfCounter;
     this.fillStyle = fillStyle;
 
     this.x = -1;
@@ -42,14 +40,7 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter, fillStyle) {			//bug
 
     // returns ? bugbug?
     this.getTile = function (x, y) {
-        // bugbug enforce [0 - 256][0 - 256]
 
-        /*
-                if (this.drawPerfCounter == false) {
-                    x = 100;
-                    y = 100;
-                }
-        */
         const id = this.getTileId(x, y);
 
         var tile = this.cachedTiles.find(this.checkId, id);
@@ -137,27 +128,12 @@ function Tiles(url, canvas, tileDimension, drawPerfCounter, fillStyle) {			//bug
                     this.ctx.drawImage(tile.image, x * tileDimension, y * tileDimension);
                     renderedID += 0.001;
                 }
-
-                if (this.drawPerfCounter == true) {
-                    //this.ctx.font = '40px serif';
-                    this.ctx.strokeRect(x * tileDimension, y * tileDimension, tileDimension, tileDimension);
-                    //this.ctx.fillText(x + ' , ' + y, x * tileDimension, y * tileDimension + (tileDimension / 2));
-                }
             }
-
         }
 
         this.renderedID = renderedID; //updating;
 
         this.ctx.restore();
-
-        if (this.drawPerfCounter == true) {
-            //this.ctx.font = '60px serif';
-            //this.ctx.fillStyle = 'red';
-            //this.ctx.fillText(totalFrameTime / frameCounter, 800, 800);
-        }
-
-
 
     }
 

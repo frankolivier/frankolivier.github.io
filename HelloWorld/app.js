@@ -416,10 +416,10 @@ function init() {
 	//If you need protocol-agnostic URLs, use //stamen-tiles-{s}.a.ssl.fastly.net/, as that endpoint will work for both SSL and non-SSL connections.
 
 	const mapCanvas = document.getElementById('mapCanvas');
-	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/' + zoomLevel + '/%x%/%y%.png', mapCanvas, 256, true, '#87ceff');
+	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/' + zoomLevel + '/%x%/%y%.png', mapCanvas, 256, '#87ceff');
 
 	const terrainCanvas = document.getElementById('terrainCanvas');
-	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/' + zoomLevel + '/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256, false, '#00000000');
+	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/' + zoomLevel + '/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256, '#00000000');
 
 
 	initThree();
@@ -441,6 +441,7 @@ function init() {
 		});
 	});
 */
+/*
 	document.getElementById('connect').addEventListener('click', function () {
 		var peerID = document.getElementById('peerID').value;
 		conn = peer.connect(peerID);
@@ -449,7 +450,7 @@ function init() {
 		});
 		conn.on('data', incomingMessageHandler);
 	});
-
+*/
 	///sendFriend();   // Start main communication loop
 	renderScene();	// Start main rendering loop
 }
