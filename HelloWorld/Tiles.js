@@ -1,12 +1,13 @@
 "use strict";
 
-function Tiles(url, canvas, tileDimension, fillStyle) {			//bugbug move to util class file?
+function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class file?
 
     this.url = url;
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
-    this.tileDimension = tileDimension; //bugbug duplicate
+    this.zoom = zoom;
     this.fillStyle = fillStyle;
+    this.tileDimension = 256; 
 
     this.x = -1;
     this.y = -1;
@@ -57,6 +58,7 @@ function Tiles(url, canvas, tileDimension, fillStyle) {			//bugbug move to util 
 
             url = url.replace('%x%', x);
             url = url.replace('%y%', y);
+            url = url.replace('%zoom%', zoom);
 
             if (!!window.createImageBitmap){
                 fetch(url)
@@ -127,6 +129,8 @@ function Tiles(url, canvas, tileDimension, fillStyle) {			//bugbug move to util 
                 if (null != tile) {
                     this.ctx.drawImage(tile.image, x * tileDimension, y * tileDimension);
                     renderedID += 0.001;
+
+                    this.ctx.strokeRect(x * tileDimension, y * tileDimension, tileDimension, tileDimension);
                 }
             }
         }

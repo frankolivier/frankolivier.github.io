@@ -25,8 +25,9 @@ const tileDimension = 256;	// Tiles are 256 x 256 pixels
 var terrainTiles;	  // Tiles.js instance for elevation data
 var mapTiles;		  // Tiles.js instance for color values
 
-const zoomLevel = 11; // The zoom level of the slippy map we're using
-
+const mapZoom = 11; // The zoom level of the slippy map we're using
+const terrainZoom = 11;
+	
 var peer;
 var conn;	//connection to the client
 
@@ -83,7 +84,11 @@ var cylinder;  // the cursor / pointer we're drawing for the gamepad
 
 var friendPointer;	//Mesh; our friend's pointer
 
+function long2tile(lon, zoom) { return (Math.floor((lon + 180) / 360 * Math.pow(2, zoom))); }
+function lat2tile(lat, zoom) { return (Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom))); }
 
+ function tile2long(x,z) { return (x/Math.pow(2,z)*360-180); }
+ function tile2lat(y,z) { var n=Math.PI-2*Math.PI*y/Math.pow(2,z); return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n)))); }
 
 function isMobile() {
 	return (navigator.userAgent.toLowerCase().indexOf('mob') != -1);
@@ -95,7 +100,6 @@ function initGraphics() {
 
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
 	camera.lookAt(new THREE.Vector3(0, -0.5, -1));
-
 
 	{
 		let pointerGeometry = new THREE.CylinderGeometry(0.01, 0.01, 100, 4); //bugbug top and bottom are swapped?
@@ -312,9 +316,17 @@ function renderScene() {
 
 	handleController();
 
-	terrainTiles.render(Math.floor(user.x), Math.floor(user.z));
-	mapTiles.render(Math.floor(user.x), Math.floor(user.z));
+	const fx = Math.floor(user.x);
+	const fz = Math.floor(user.z);
+
+	mapTiles.render(fx, fz);
 	mapTexture.needsUpdate = mapTiles.checkUpdate();
+
+	// the zoom level for terrain tiles are different; so let's calc that...
+	const tx = Math.floor(long2tile(tile2long(fx, mapZoom), terrainZoom));
+	const tz = Math.floor(lat2tile(tile2lat(fz, mapZoom), terrainZoom));
+
+	terrainTiles.render(tx, tz);
 	terrainTexture.needsUpdate = terrainTiles.checkUpdate();
 
 	const m = geometry.parameters.width / (mapCanvas.width / tileDimension); // mesh size / 8 tiles
@@ -355,9 +367,6 @@ function onWindowResize() {
 	renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function long2tile(lon, zoom) { return (Math.floor((lon + 180) / 360 * Math.pow(2, zoom))); }
-function lat2tile(lat, zoom) { return (Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom))); }
-
 let geocoder = null;
 
 
@@ -369,8 +378,8 @@ function geocodeAddress() {
 		if (status === 'OK') {
 			console.log('in  ' + results[0].geometry.location.lat() + ' ' + results[0].geometry.location.lng());
 
-			user.x = long2tile(results[0].geometry.location.lng(), zoomLevel); //bugbug put zoom (10) in a var
-			user.z = lat2tile(results[0].geometry.location.lat(), zoomLevel); //bugbug put zoom (10) in a var
+			user.x = long2tile(results[0].geometry.location.lng(), mapZoom); //bugbug put zoom (10) in a var
+			user.z = lat2tile(results[0].geometry.location.lat(), mapZoom); //bugbug put zoom (10) in a var
 
 
 			console.log('out ' + user.x + ' ' + user.z);
@@ -409,11 +418,10 @@ function incomingMessageHandler(data) {
 function init() {
 
 	const mapCanvas = document.getElementById('mapCanvas');
-	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/' + zoomLevel + '/%x%/%y%.png', mapCanvas, 256, '#87ceff');
+	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/%zoom%/%x%/%y%.png', mapCanvas, mapZoom, '#87ceff');
 
 	const terrainCanvas = document.getElementById('terrainCanvas');
-	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/' + zoomLevel + '/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, 256, '#00000000');
-
+	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%zoom%/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, terrainZoom, '#00000000');
 
 	initGraphics();
 /*
