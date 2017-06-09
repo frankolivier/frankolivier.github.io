@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", init); // initialization
 var frameCounter = 0;	// the frame being rendered in the output canvas
 var totalFrameTime = 0;
 
-var user = new THREE.Vector3(330, 0.5, 722.7);	// the point on the map we are currently above
+var user = new THREE.Vector3(330.002, 0.5, 722.002);	// the point on the map we are currently above
 var friend;    // the other person in VR with us
 
 var friendData = new THREE.Vector3(10, 10, 10);
@@ -85,7 +85,10 @@ var cylinder;  // the cursor / pointer we're drawing for the gamepad
 var friendPointer;	//Mesh; our friend's pointer
 
 function long2tile(lon, zoom) { return (Math.floor((lon + 180) / 360 * Math.pow(2, zoom))); }
-function lat2tile(lat, zoom) { return (Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom))); }
+function lat2tile(lat, zoom) { 
+	let f = Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180);
+	return (Math.floor((1 - Math.log(f) / Math.PI) / 2 * Math.pow(2, zoom))); 
+}
 
  function tile2long(x,z) { return (x/Math.pow(2,z)*360-180); }
  function tile2lat(y,z) { var n=Math.PI-2*Math.PI*y/Math.pow(2,z); return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n)))); }
@@ -102,7 +105,7 @@ function initGraphics() {
 	camera.lookAt(new THREE.Vector3(0, -0.5, -1));
 
 	{
-		let pointerGeometry = new THREE.CylinderGeometry(0.01, 0.01, 100, 4); //bugbug top and bottom are swapped?
+		let pointerGeometry = new THREE.CylinderGeometry(0.01, 0.01, 0.001 /*100*/, 4); //bugbug top and bottom are swapped?
 		pointerGeometry.rotateX(0.25 * 2 * Math.PI);
 		let pointerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 		cylinder = new THREE.Mesh(pointerGeometry, pointerMaterial);
@@ -267,9 +270,9 @@ function handleController() {
 
 				}
 				else {
-					cylinder.position.x = camera.position.x - 0.1; //bugbug
+					//cylinder.position.x = camera.position.x - 0.1; //bugbug
 					cylinder.position.y = camera.position.y - 0.1;
-					cylinder.position.z = camera.position.z - 0.1;
+					//cylinder.position.z = camera.position.z - 0.1;
 				}
 
 
@@ -316,23 +319,26 @@ function renderScene() {
 
 	handleController();
 
-	const fx = Math.floor(user.x);
-	const fz = Math.floor(user.z);
+	const fx = user.x; //Math.floor(user.x);
+	const fz = user.z; //Math.floor(user.z);
 
-	mapTiles.render(fx, fz);
+	const longtitude = tile2long(fx, mapZoom);
+	const latitude = tile2lat(fz, mapZoom);
+
+	let yyy = mapTiles.render(longtitude, latitude);
 	mapTexture.needsUpdate = mapTiles.checkUpdate();
 
-	// the zoom level for terrain tiles are different; so let's calc that...
-	const tx = Math.floor(long2tile(tile2long(fx, mapZoom), terrainZoom));
-	const tz = Math.floor(lat2tile(tile2lat(fz, mapZoom), terrainZoom));
-
-	terrainTiles.render(tx, tz);
+	terrainTiles.render(longtitude, latitude);
 	terrainTexture.needsUpdate = terrainTiles.checkUpdate();
 
 	const m = geometry.parameters.width / (mapCanvas.width / tileDimension); // mesh size / 8 tiles
-	mesh.position.x = (-user.x % 1) * m;
-	mesh.position.z = (-user.z % 1) * m;
+	//mesh.position.x = ((user.x - fx) - 0.5) * m * -1;
+	//mesh.position.z = ((user.z - fz) - 0.5) * m * -1;
+	mesh.position.x = -1 * (user.x % 1) * m;
+	mesh.position.z = -1 * (user.z % 1) * m;
 	mesh.position.y = user.y * -1;
+
+	console.log(longtitude + " " + latitude + " " + fx + " " + fz + " " + mesh.position.x + " " + mesh.position.z + " " + yyy);
 
 	controls.update();	// update HMD head position
 	/*

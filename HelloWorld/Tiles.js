@@ -9,21 +9,22 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
     this.fillStyle = fillStyle;
     this.tileDimension = 256; 
 
-    this.x = -1;
-    this.y = -1;
-
-    this.renderedID = -1; // the unique id of the tile (x, y and version) of the tile rendered in the last pass
-    this.uploadedID = -2; // the unique id of the tile (x, y and version) of the tile uploaded to the GPU
+    this.longtitude = 0;  // bugbug init to better sentry values
+    this.latitude = 0;
 
     this.cachedTiles = [];
 
+    this.renderedID = -1; // the unique id of the tile (id + version) of the tile rendered in the last pass
+    this.uploadedID = -2; // the unique id of the tile (id +  and version) of the tile uploaded to the GPU
     this.lastRenderTime = 0; // only render occasionally
 
     //bugbug somehow this module should tell the others if the canvas is dirty or not
 
 
     this.getTileId = function (x, y) {
-        return x + y * tileDimension;
+        //return x + "." + y;
+        
+        return x + y * Math.pow(2, zoom);
     }
 
     this.makeTile = function (x, y, image) {
@@ -47,7 +48,7 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
         var tile = this.cachedTiles.find(this.checkId, id);
 
         if (tile === undefined) {
-            if (this.cachedTiles.length > 1600) {
+            if (this.cachedTiles.length > 300) { // bugbug find best number
                 this.cachedTiles.shift();
             }
 
@@ -89,21 +90,24 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
         }
     }
 
-    this.render = function (x, y) {
-        if ((this.x == x) && (this.y == y)) {
-            var now = window.performance.now();
-            if (now - this.lastRenderTime < 1000) {
-                return;
-            }
-            else {
-                this.lastRenderTime = now;
-            }
-        }
+    this.render = function(longtitude, latitude) {
 
+        //if ((this.longtitude === longtitude) || (this.latitude === latitude)) {
+            let now = window.performance.now();
+        //     if (now - this.lastRenderTime < 1000) {  // No need to update if we've updated in the past second; let's wait on more network requests to complete
+        //        return;
+        //    }
+        //    else {
+                this.lastRenderTime = now;
+        //    }
+        //}
+
+        let x = long2tile(longtitude, zoom);
+        let y = lat2tile(latitude, zoom);
         var renderedID = this.getTileId(x, y);
 
-        this.x = x;
-        this.y = y;
+        this.longtitude = longtitude;
+        this.latitude = latitude;
 
         this.ctx.fillStyle = this.fillStyle;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -113,24 +117,34 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
         const tileCount = (this.canvas.width / tileDimension); // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
         const halfTileCount = tileCount / 2; // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
 
-        const translateX = (this.x - halfTileCount) * tileDimension;
-        const translateY = (this.y - halfTileCount) * tileDimension;
+        const translateX = (x - halfTileCount) * tileDimension;
+        const translateY = (y - halfTileCount) * tileDimension;
         this.ctx.translate(-translateX, -translateY);
 
-        const lowerX = Math.floor(this.x - halfTileCount);
-        const lowerY = Math.floor(this.y - halfTileCount);
+        const lowerX = Math.floor(x - halfTileCount);
+        const lowerY = Math.floor(y - halfTileCount);
 
+        for (var yy = lowerY; yy <= lowerY + tileCount; yy++) {
+            for (var xx = lowerX; xx <= lowerX + tileCount; xx++) {
 
-        for (var y = lowerY; y <= lowerY + tileCount; y++) {
-            for (var x = lowerX; x <= lowerX + tileCount; x++) {
-
-
-                const tile = this.getTile(x, y);
+                const tile = this.getTile(xx, yy);
                 if (null != tile) {
-                    this.ctx.drawImage(tile.image, x * tileDimension, y * tileDimension);
+                    this.ctx.drawImage(tile.image, xx * tileDimension, yy * tileDimension);
                     renderedID += 0.001;
 
-                    this.ctx.strokeRect(x * tileDimension, y * tileDimension, tileDimension, tileDimension);
+                    
+                    if (this.url.indexOf('st amen')>0){
+                    
+                        this.ctx.fillStyle = 'rgb('+  (xx % 16) * 16 + ', 0, '+  (yy % 16) * 16 + ')';
+                        this.ctx.fillRect(xx * tileDimension, yy * tileDimension, tileDimension, tileDimension);
+
+                        this.ctx.fillStyle = 'rgb(0, 0, 0)';
+                        this.ctx.font = '40px serif';
+                        this.ctx.fillText(x + ' , ' + y, xx * tileDimension + 10, yy * tileDimension + (tileDimension / 2));
+                        this.ctx.fillText(tile.id, xx * tileDimension + 10, yy * tileDimension + (tileDimension / 3));
+
+                    }
+
                 }
             }
         }
@@ -139,8 +153,11 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
 
         this.ctx.restore();
 
+        return y;
+
     }
 
+    //bugbug move this into render function? 
     this.checkUpdate = function(){
         if (this.renderedID === this.uploadedID)
         {
@@ -149,9 +166,12 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
         else
         {
             this.uploadedID = this.renderedID;
+            if (this.url.indexOf('stamen')>0){
+                console.log("UPDATE NEEDED");
+            }
             return true;
         }
-    }
-   
+    }   
+
 
 }
