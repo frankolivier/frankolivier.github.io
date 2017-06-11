@@ -27,7 +27,7 @@ var mapTiles;		  // Tiles.js instance for color values
 
 const mapZoom = 11; // The zoom level of the slippy map we're using
 const terrainZoom = 11;
-	
+
 var peer;
 var conn;	//connection to the client
 
@@ -58,12 +58,12 @@ function checkKey(e) {
 		// right arrow	
 		user.x += step; // minus, as we are panning BUGBUG move to Panning.js?
 	}
-	else if (e.keyCode == '71') {
-		// q
+	else if (e.keyCode == '219') {
+		// [
 		user.y += step;
 	}
-	else if (e.keyCode == '65') {
-		// e
+	else if (e.keyCode == '221') {
+		// ]
 		user.y -= step;
 	}
 
@@ -76,6 +76,7 @@ document.onkeydown = checkKey;
 /// three js
 var scene, camera, renderer;
 var controls;
+let orbitControls;
 var effect; // the webvr renderer
 var geometry, material, mesh;
 var terrainTexture, mapTexture;
@@ -85,16 +86,26 @@ var cylinder;  // the cursor / pointer we're drawing for the gamepad
 var friendPointer;	//Mesh; our friend's pointer
 
 function long2tile(lon, zoom) { return (Math.floor((lon + 180) / 360 * Math.pow(2, zoom))); }
-function lat2tile(lat, zoom) { 
+function lat2tile(lat, zoom) {
 	let f = Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180);
-	return (Math.floor((1 - Math.log(f) / Math.PI) / 2 * Math.pow(2, zoom))); 
+	return (Math.floor((1 - Math.log(f) / Math.PI) / 2 * Math.pow(2, zoom)));
 }
 
- function tile2long(x,z) { return (x/Math.pow(2,z)*360-180); }
- function tile2lat(y,z) { var n=Math.PI-2*Math.PI*y/Math.pow(2,z); return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n)))); }
+function tile2long(x, z) { return (x / Math.pow(2, z) * 360 - 180); }
+function tile2lat(y, z) { var n = Math.PI - 2 * Math.PI * y / Math.pow(2, z); return (180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)))); }
 
 function isMobile() {
 	return (navigator.userAgent.toLowerCase().indexOf('mob') != -1);
+}
+
+var moving = false;
+
+function orbitMouseDown() {
+	moving = true;
+}
+
+function orbitMouseUp() {
+	moving = false;
 }
 
 function initGraphics() {
@@ -112,23 +123,23 @@ function initGraphics() {
 	}
 	scene.add(cylinder);
 
-/*
-	{
-		var geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.1, 4); //bugbug top and bottom are swapped?
-		//geometry.rotateX(0.25 * 2 * Math.PI);
-		var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-		friend = new THREE.Mesh(geometry, material);
-	}
-	scene.add(friend);
-
-	{
-		var geometry = new THREE.CylinderGeometry(0.01, 0.01, 100, 4); //bugbug top and bottom are swapped?
-		geometry.rotateX(0.25 * 2 * Math.PI);
-		var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-		friendPointer = new THREE.Mesh(geometry, material);
-	}
-	scene.add(friendPointer);
-*/
+	/*
+		{
+			var geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.1, 4); //bugbug top and bottom are swapped?
+			//geometry.rotateX(0.25 * 2 * Math.PI);
+			var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+			friend = new THREE.Mesh(geometry, material);
+		}
+		scene.add(friend);
+	
+		{
+			var geometry = new THREE.CylinderGeometry(0.01, 0.01, 100, 4); //bugbug top and bottom are swapped?
+			geometry.rotateX(0.25 * 2 * Math.PI);
+			var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+			friendPointer = new THREE.Mesh(geometry, material);
+		}
+		scene.add(friendPointer);
+	*/
 	var meshComplexity = isMobile() ? 128 : 512;
 
 	geometry = new THREE.PlaneGeometry(8, 8, meshComplexity, meshComplexity);
@@ -159,13 +170,13 @@ function initGraphics() {
 
 		"  gl_FragColor = texture2D(mapTexture, v); " +
 
-/*
-		"  float fogStrength = smoothstep(2.0, 4.0, distance);" +
-		"  gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), fogStrength); " +
-
-		"  float hazeStrength = smoothstep(10.0, 100.0, distance);" +
-		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
-*/
+		/*
+				"  float fogStrength = smoothstep(2.0, 4.0, distance);" +
+				"  gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), fogStrength); " +
+		
+				"  float hazeStrength = smoothstep(10.0, 100.0, distance);" +
+				"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
+		*/
 		"}";
 
 	var material = new THREE.ShaderMaterial({
@@ -194,11 +205,15 @@ function initGraphics() {
 	controls.standing = false;
 
 	// non-VR controls
-	var orbitControls = new THREE.OrbitControls( camera, renderer.domElement );
-	orbitControls.maxPolarAngle = Math.PI * 0.5;
+	orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+	orbitControls.maxPolarAngle = Math.PI * 0.7;
 	orbitControls.minDistance = 0.2;
 	orbitControls.maxDistance = 2;
 	orbitControls.enableKeys = false;
+
+	renderer.domElement.addEventListener("mousedown", orbitMouseDown);
+	renderer.domElement.addEventListener("mouseup", orbitMouseUp);
+	renderer.domElement.addEventListener("mouseout", orbitMouseUp);
 
 	effect = new THREE.VREffect(renderer);
 
@@ -338,7 +353,17 @@ function renderScene() {
 	mesh.position.z = -1 * (user.z % 1) * m;
 	mesh.position.y = user.y * -1;
 
-	console.log(longtitude + " " + latitude + " " + fx + " " + fz + " " + mesh.position.x + " " + mesh.position.z + " " + yyy);
+	//console.log(longtitude + " " + latitude + " " + fx + " " + fz + " " + mesh.position.x + " " + mesh.position.z + " " + yyy);
+
+	if (true == moving) {
+
+		let vector = new THREE.Vector3(0, 0, -0.001);
+		vector.applyQuaternion(orbitControls.object.quaternion);
+		user.add(vector);
+
+		console.log(vector.x + ' ' + vector.y + ' ' + vector.z);
+	}
+
 
 	controls.update();	// update HMD head position
 	/*
@@ -373,11 +398,8 @@ function onWindowResize() {
 	renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-let geocoder = null;
-
-
 function geocodeAddress() {
-	if (geocoder === null) geocoder = new google.maps.Geocoder()
+	let geocoder = new google.maps.Geocoder()
 
 	var address = document.getElementById('address').value;
 	geocoder.geocode({ 'address': address }, function (results, status) {
@@ -397,12 +419,6 @@ function geocodeAddress() {
 	});
 }
 
-function initMap() {
-	document.getElementById('geoControls').addEventListener('submit', function (e) {
-		geocodeAddress();
-		e.preventDefault();
-	});
-}
 
 function incomingMessageHandler(data) {
 	friendData.x = data.x;
@@ -430,33 +446,40 @@ function init() {
 	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%zoom%/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, terrainZoom, '#00000000');
 
 	initGraphics();
-/*
-	peer = new Peer({
-		id: 'frankodev',
-		debug: 3,
-		host: 'thawing-depths-36140.herokuapp.com',
-		port: 443,
-		secure: true,
+
+	document.getElementById('geoControls').addEventListener('submit', function (e) {
+		geocodeAddress();
+		e.preventDefault();
 	});
 
-	peer.on('open', function (id) {
-		console.log('My peer ID is: ' + id);
 
-		peer.on('connection', function (connX) {
-			conn = connX;
+	/*
+		peer = new Peer({
+			id: 'frankodev',
+			debug: 3,
+			host: 'thawing-depths-36140.herokuapp.com',
+			port: 443,
+			secure: true,
+		});
+	
+		peer.on('open', function (id) {
+			console.log('My peer ID is: ' + id);
+	
+			peer.on('connection', function (connX) {
+				conn = connX;
+				conn.on('data', incomingMessageHandler);
+			});
+		});
+		document.getElementById('connect').addEventListener('click', function () {
+			var peerID = document.getElementById('peerID').value;
+			conn = peer.connect(peerID);
+			conn.on('open', function () {
+				///conn.send('hi!');
+			});
 			conn.on('data', incomingMessageHandler);
 		});
-	});
-	document.getElementById('connect').addEventListener('click', function () {
-		var peerID = document.getElementById('peerID').value;
-		conn = peer.connect(peerID);
-		conn.on('open', function () {
-			///conn.send('hi!');
-		});
-		conn.on('data', incomingMessageHandler);
-	});
-	sendFriend();   // Start main communication loop
-*/
+		sendFriend();   // Start main communication loop
+	*/
 
 	renderScene();	// Start main rendering loop
 }
