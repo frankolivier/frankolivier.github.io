@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", init); // initialization
 var frameCounter = 0;	// the frame being rendered in the output canvas
 var totalFrameTime = 0;
 
-var user = new THREE.Vector3(330.002, 0.5, 722.002);	// the point on the map we are currently above
+var user = new THREE.Vector3(330.502, 0.55, 722.952);	// the point on the map we are currently above
 var friend;    // the other person in VR with us
 
 var friendData = new THREE.Vector3(10, 10, 10);
@@ -158,7 +158,6 @@ function initGraphics() {
 		//"p.x *= 100.0; " +
 		//"p.y *= 100.0; " +
 		//"p.z = 0.0; " +
-		//"}"+
 		//"}else{" +
 		"p.z += elevation; " +
 		//"}" +
@@ -172,13 +171,18 @@ function initGraphics() {
 
 		"  gl_FragColor = texture2D(mapTexture, v); " +
 
-		/*
-				"  float fogStrength = smoothstep(2.0, 4.0, distance);" +
-				"  gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), fogStrength); " +
 		
-				"  float hazeStrength = smoothstep(10.0, 100.0, distance);" +
-				"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
-		*/
+				//"  float fogStrength = smoothstep(2.8, 3.2, distance);" +
+				//"  gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), fogStrength); " +
+		
+				//"  float hazeStrength = smoothstep(10.0, 100.0, distance);" +
+				//"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
+				//"  float fogStrength = smoothstep(2.8, 3.2, distance);" +
+
+				//"  gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), fogStrength); " +
+		
+				"  float hazeStrength = smoothstep(4.0, 7.0, distance);" +
+				"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +		
 		"}";
 
 	var material = new THREE.ShaderMaterial({
