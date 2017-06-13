@@ -221,6 +221,11 @@ function initGraphics() {
 	renderer.domElement.addEventListener("mouseup", orbitMouseUp);
 	renderer.domElement.addEventListener("mouseout", orbitMouseUp);
 
+	renderer.domElement.addEventListener("touchstart", orbitMouseDown);
+	renderer.domElement.addEventListener("touchend", orbitMouseUp);
+
+
+
 	effect = new THREE.VREffect(renderer);
 
 	renderer.setSize(document.body.clientWidth, document.body.clientHeight);
