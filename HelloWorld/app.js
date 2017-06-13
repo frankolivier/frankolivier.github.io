@@ -98,13 +98,15 @@ function isMobile() {
 	return (navigator.userAgent.toLowerCase().indexOf('mob') != -1);
 }
 
-var moving = false;
-
+let moving = false;
+let downTime = 0;
 function orbitMouseDown() {
 	moving = true;
+	downTime = window.performance.now();
 }
 
 function orbitMouseUp() {
+	downTime = 0;
 	moving = false;
 }
 
@@ -263,6 +265,8 @@ function sendFriend() {
 function handleController() {
 	// Handle controller input
 
+	let hasPointerHardware = false;
+
 	try {
 
 		var gamepads = navigator.getGamepads();
@@ -293,6 +297,8 @@ function handleController() {
 
 				var quaternion = new THREE.Quaternion().fromArray(controller.pose.orientation);
 				cylinder.setRotationFromQuaternion(quaternion);
+
+				hasPointerHardware = true;
 
 				var vector = new THREE.Vector3(0, 0, -1);
 				vector.applyQuaternion(quaternion);
@@ -326,6 +332,9 @@ function handleController() {
 	catch (e) {
 
 	}
+
+	cylinder.visible = hasPointerHardware;
+
 }
 
 function renderScene() {
@@ -356,12 +365,14 @@ function renderScene() {
 	//console.log(longtitude + " " + latitude + " " + fx + " " + fz + " " + mesh.position.x + " " + mesh.position.z + " " + yyy);
 
 	if (true == moving) {
-
-		let vector = new THREE.Vector3(0, 0, -0.001);
-		vector.applyQuaternion(orbitControls.object.quaternion);
-		user.add(vector);
-
-		console.log(vector.x + ' ' + vector.y + ' ' + vector.z);
+		if (window.performance.now() - downTime > 1000)
+		{
+			// wait 1000ms before moving forward
+			// this gives the user time to turn
+			let vector = new THREE.Vector3(0, 0, -0.001);
+			vector.applyQuaternion(orbitControls.object.quaternion);
+			user.add(vector);
+		}
 	}
 
 
@@ -398,20 +409,18 @@ function onWindowResize() {
 	renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+let geocoder;
 function geocodeAddress() {
-	let geocoder = new google.maps.Geocoder()
+	geocoder = new google.maps.Geocoder()
 
 	var address = document.getElementById('address').value;
 	geocoder.geocode({ 'address': address }, function (results, status) {
 		if (status === 'OK') {
-			console.log('in  ' + results[0].geometry.location.lat() + ' ' + results[0].geometry.location.lng());
 
 			user.x = long2tile(results[0].geometry.location.lng(), mapZoom); //bugbug put zoom (10) in a var
 			user.z = lat2tile(results[0].geometry.location.lat(), mapZoom); //bugbug put zoom (10) in a var
 
-
-			console.log('out ' + user.x + ' ' + user.z);
-
+			document.getElementById('vrCanvas').focus();
 
 		} else {
 			///bugbug alert('Geocode was not successful for the following reason: ' + status);
