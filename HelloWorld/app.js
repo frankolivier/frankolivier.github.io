@@ -148,40 +148,32 @@ function initGraphics() {
 	terrainTexture = new THREE.Texture(terrainCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
 
-	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float distance; void main()	{ " +
+	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float hazeStrength; void main()	{ " +
 		"v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; " +
 		"float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
 		"elevation = clamp(elevation, 0.0, 10000.0); " +
 		"elevation = elevation / 10000.0; " +
 		"vec3 p = position;" +
-		//"if ((v.x < 0.01)||(v.x > 0.99)||(v.y < 0.01)||(v.y > 0.99)){" +
-		//"p.x *= 100.0; " +
-		//"p.y *= 100.0; " +
-		//"p.z = 0.0; " +
-		//"}else{" +
 		"p.z += elevation; " +
-		//"}" +
+		//"float tempX = max(smoothstep(uv.x, 0.0, 0.1), smoothstep(1.0 - uv.x, 0.0, 0.1));"+
+		"float temp1 = 1.0 - smoothstep(uv.x, 0.0, 0.05);"+
+		"float temp2 = 1.0 - smoothstep(uv.y, 0.0, 0.05);"+
+		"float temp3 = 1.0 - smoothstep(1.0 - uv.x, 0.0, 0.05);"+
+		"float temp4 = 1.0 - smoothstep(1.0 - uv.y, 0.0, 0.05);"+
+		//max(smoothstep(uv.y, 0.0, 0.1), smoothstep(1.0 - uv.y, 0.0, 0.1));"+
+		//"distance = max(tempX, tempY);" +
+		"float temp5 = max(temp1, temp2);" +
+		"float temp6 = max(temp3, temp4);" +
+		"hazeStrength = max(temp5, temp6);" +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
-		"distance = length(gl_Position); }";
+		"}";
 
 	var fragmentShader = "varying vec2 v; " +
 		"uniform sampler2D mapTexture; " +
-		"varying float distance; " +
+		"varying float hazeStrength; " +
 		"void main() { " +
 
-		"  gl_FragColor = texture2D(mapTexture, v); " +
-
-		
-				//"  float fogStrength = smoothstep(2.8, 3.2, distance);" +
-				//"  gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), fogStrength); " +
-		
-				//"  float hazeStrength = smoothstep(10.0, 100.0, distance);" +
-				//"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
-				//"  float fogStrength = smoothstep(2.8, 3.2, distance);" +
-
-				//"  gl_FragColor = mix(texture2D(mapTexture, v), vec4(1.0, 1.0, 1.0, 1.0), fogStrength); " +
-		
-				"  float hazeStrength = smoothstep(4.0, 7.0, distance);" +
+		"  gl_FragColor = texture2D(mapTexture, v); " +		
 				"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +		
 		"}";
 
@@ -220,25 +212,17 @@ function initGraphics() {
 	renderer.domElement.addEventListener("mousedown", orbitMouseDown);
 	renderer.domElement.addEventListener("mouseup", orbitMouseUp);
 	renderer.domElement.addEventListener("mouseout", orbitMouseUp);
-
 	renderer.domElement.addEventListener("touchstart", orbitMouseDown);
 	renderer.domElement.addEventListener("touchend", orbitMouseUp);
-
-
 
 	effect = new THREE.VREffect(renderer);
 
 	renderer.setSize(document.body.clientWidth, document.body.clientHeight);
 	renderer.setPixelRatio(window.devicePixelRatio);
 
-	const vrButton = document.getElementById('vrButton');
-
-	vrButton.onclick = function () {
-
+	document.getElementById('vrButton').onclick = function () {
 		effect.isPresenting ? effect.exitPresent() : effect.requestPresent();
-
 	};
-
 
 	window.addEventListener("resize", onWindowResize);
 	onWindowResize();
@@ -457,8 +441,11 @@ function incomingMessageHandler(data) {
 // Main initialization
 function init() {
 
+//	const mapCanvas = document.getElementById('mapCanvas');
+//	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/%zoom%/%x%/%y%.png', mapCanvas, mapZoom, '#87ceff');
+
 	const mapCanvas = document.getElementById('mapCanvas');
-	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/%zoom%/%x%/%y%.png', mapCanvas, mapZoom, '#87ceff');
+	mapTiles = new Tiles('https://b.tiles.mapbox.com/v4/mapbox.streets-satellite/%zoom%/%x%/%y%.pngraw?access_token=pk.eyJ1IjoiZnJhbmtvbGl2aWVyIiwiYSI6ImNqMHR3MGF1NTA0Z24ycW81dXR0dDIweDMifQ.SoQ9aqIfdOheISIYRqgR7w', mapCanvas, mapZoom, '#87ceff');
 
 	const terrainCanvas = document.getElementById('terrainCanvas');
 	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%zoom%/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, terrainZoom, '#00000000');
