@@ -155,13 +155,10 @@ function initGraphics() {
 		"elevation = elevation / 10000.0; " +
 		"vec3 p = position;" +
 		"p.z += elevation; " +
-		//"float tempX = max(smoothstep(uv.x, 0.0, 0.1), smoothstep(1.0 - uv.x, 0.0, 0.1));"+
 		"float temp1 = 1.0 - smoothstep(uv.x, 0.0, 0.05);"+
 		"float temp2 = 1.0 - smoothstep(uv.y, 0.0, 0.05);"+
 		"float temp3 = 1.0 - smoothstep(1.0 - uv.x, 0.0, 0.05);"+
 		"float temp4 = 1.0 - smoothstep(1.0 - uv.y, 0.0, 0.05);"+
-		//max(smoothstep(uv.y, 0.0, 0.1), smoothstep(1.0 - uv.y, 0.0, 0.1));"+
-		//"distance = max(tempX, tempY);" +
 		"float temp5 = max(temp1, temp2);" +
 		"float temp6 = max(temp3, temp4);" +
 		"hazeStrength = max(temp5, temp6);" +
