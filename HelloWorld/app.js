@@ -11,6 +11,8 @@
 // TODO http://wiki.openstreetmap.org/wiki/Zoom_levels Set correct zoom level on navigate
 // TODO Fix up URL with location, direction
 
+// allow hmd rotate?
+
 document.addEventListener("DOMContentLoaded", init); // initialization
 
 var frameCounter = 0;	// the frame being rendered in the output canvas
@@ -147,7 +149,7 @@ function initGraphics() {
 	*/
 	var meshComplexity = isMobile() ? 128 : 512;
 
-	geometry = new THREE.PlaneGeometry(8, 8, meshComplexity, meshComplexity);
+	geometry = new THREE.PlaneGeometry(10, 10, meshComplexity, meshComplexity);
 	terrainTexture = new THREE.Texture(terrainCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
 
@@ -158,14 +160,9 @@ function initGraphics() {
 		"elevation = elevation / 10000.0; " +
 		"vec3 p = position;" +
 		"p.z += elevation; " +
-		"float temp1 = 1.0 - smoothstep(uv.x, 0.0, 0.05);"+
-		"float temp2 = 1.0 - smoothstep(uv.y, 0.0, 0.05);"+
-		"float temp3 = 1.0 - smoothstep(1.0 - uv.x, 0.0, 0.05);"+
-		"float temp4 = 1.0 - smoothstep(1.0 - uv.y, 0.0, 0.05);"+
-		"float temp5 = max(temp1, temp2);" +
-		"float temp6 = max(temp3, temp4);" +
-		"hazeStrength = max(temp5, temp6);" +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
+		"float d = distance(gl_Position, vec4(0.0, 0.0, 0.0, 0.0));" +
+		"hazeStrength = smoothstep(4.1, 6.0, d);" +
 		"}";
 
 	var fragmentShader = "varying vec2 v; " +
@@ -381,6 +378,10 @@ function renderScene() {
 	friendPointer.setRotationFromQuaternion(friendPointerQuaternion);
 	*/
 
+    if (user.y < 0.1) user.y = 0.1;
+	if (user.y > 2) user.y = 2;
+	
+
 	effect.render(scene, camera);
 
 	frameCounter++;
@@ -445,7 +446,7 @@ function init() {
 //	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/%zoom%/%x%/%y%.png', mapCanvas, mapZoom, '#87ceff');
 
 	const mapCanvas = document.getElementById('mapCanvas');
-	mapTiles = new Tiles('https://b.tiles.mapbox.com/v4/mapbox.streets-satellite/%zoom%/%x%/%y%.pngraw?access_token=pk.eyJ1IjoiZnJhbmtvbGl2aWVyIiwiYSI6ImNqMHR3MGF1NTA0Z24ycW81dXR0dDIweDMifQ.SoQ9aqIfdOheISIYRqgR7w', mapCanvas, mapZoom, '#87ceff');
+	mapTiles = new Tiles('https://b.tiles.mapbox.com/v4/mapbox.satellite/%zoom%/%x%/%y%.pngraw?access_token=pk.eyJ1IjoiZnJhbmtvbGl2aWVyIiwiYSI6ImNqMHR3MGF1NTA0Z24ycW81dXR0dDIweDMifQ.SoQ9aqIfdOheISIYRqgR7w', mapCanvas, mapZoom, '#87ceff');
 
 	const terrainCanvas = document.getElementById('terrainCanvas');
 	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%zoom%/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, terrainZoom, '#00000000');
