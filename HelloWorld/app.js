@@ -8,6 +8,9 @@
 
 // bugbug http://www.thunderforest.com/maps/landscape/
 
+// TODO http://wiki.openstreetmap.org/wiki/Zoom_levels Set correct zoom level on navigate
+// TODO Fix up URL with location, direction
+
 document.addEventListener("DOMContentLoaded", init); // initialization
 
 var frameCounter = 0;	// the frame being rendered in the output canvas
