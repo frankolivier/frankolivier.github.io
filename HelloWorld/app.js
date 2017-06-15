@@ -119,11 +119,11 @@ function initGraphics() {
 
 	scene = new THREE.Scene();
 
-	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
 	camera.lookAt(new THREE.Vector3(0, -0.5, -1));
 
 	{
-		let pointerGeometry = new THREE.CylinderGeometry(0.01, 0.01, 0.001 /*100*/, 4); //bugbug top and bottom are swapped?
+		let pointerGeometry = new THREE.CylinderGeometry(0.01, 0.01, 100, 4); //bugbug top and bottom are swapped?
 		pointerGeometry.rotateX(0.25 * 2 * Math.PI);
 		let pointerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 		cylinder = new THREE.Mesh(pointerGeometry, pointerMaterial);
@@ -183,8 +183,6 @@ function initGraphics() {
 		fragmentShader: fragmentShader
 	});
 
-	//material = new THREE.MeshBasicMaterial( { color: 0x777777, wireframe: true } );
-
 	mesh = new THREE.Mesh(geometry, material);
 
 	mesh.lookAt(new THREE.Vector3(0, 1, 0));
@@ -202,7 +200,7 @@ function initGraphics() {
 	// non-VR controls
 	orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
 	orbitControls.maxPolarAngle = Math.PI * 0.7;
-	orbitControls.minDistance = 0.2;
+	orbitControls.minDistance = 1;
 	orbitControls.maxDistance = 2;
 	orbitControls.enableKeys = false;
 
@@ -411,8 +409,8 @@ function geocodeAddress() {
 	geocoder.geocode({ 'address': address }, function (results, status) {
 		if (status === 'OK') {
 
-			user.x = long2tile(results[0].geometry.location.lng(), mapZoom); //bugbug put zoom (10) in a var
-			user.z = lat2tile(results[0].geometry.location.lat(), mapZoom); //bugbug put zoom (10) in a var
+			user.x = long2tile(results[0].geometry.location.lng(), mapZoom); 
+			user.z = lat2tile(results[0].geometry.location.lat() - 0.152, mapZoom); // south... to put object in view
 
 			document.getElementById('vrCanvas').focus();
 
