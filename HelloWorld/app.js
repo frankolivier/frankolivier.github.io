@@ -3,20 +3,13 @@
 // https://en.wikipedia.org/wiki/Web_Mercator
 // http://mike.teczno.com/notes/osm-us-terrain-layer/foreground.html
 // https://www.mapbox.com/blog/3d-terrain-threejs/
-
 // bugbug feature detect webgl, fetch, web workers
-
 // bugbug http://www.thunderforest.com/maps/landscape/
-
 // TODO http://wiki.openstreetmap.org/wiki/Zoom_levels Set correct zoom level on navigate
-// TODO Fix up URL with location, direction
+// TODO Add location to URL
+// TODO Allow HMD rotate
 
-// allow hmd rotate?
-
-document.addEventListener("DOMContentLoaded", init); // initialization
-
-var frameCounter = 0;	// the frame being rendered in the output canvas
-var totalFrameTime = 0;
+document.addEventListener("DOMContentLoaded", init);
 
 var user = new THREE.Vector3(331.02, 0.55, 722.992);	// the point on the map we are currently above
 var friend;    // the other person in VR with us
@@ -161,8 +154,8 @@ function initGraphics() {
 		"vec3 p = position;" +
 		"p.z += elevation; " +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
-		"float d = distance(gl_Position, vec4(0.0, 0.0, 0.0, 0.0));" +
-		"hazeStrength = smoothstep(4.1, 6.0, d);" +
+		"float d = distance(gl_Position.xz, vec2(0.0, 0.0));" +
+		"hazeStrength = smoothstep(4.0, 6.2, d);" +
 		"}";
 
 	var fragmentShader = "varying vec2 v; " +
@@ -327,8 +320,6 @@ function handleController() {
 
 function renderScene() {
 
-	var t1 = window.performance.now();
-
 	handleController();
 
 	const fx = user.x;
@@ -378,12 +369,6 @@ function renderScene() {
 	if (user.y > 2) user.y = 2;
 
 	effect.render(scene, camera);
-
-	frameCounter++;
-
-	var t2 = window.performance.now();
-
-	totalFrameTime += (t2 - t1);
 
 	effect.requestAnimationFrame(renderScene);
 
