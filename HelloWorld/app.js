@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", init); // initialization
 var frameCounter = 0;	// the frame being rendered in the output canvas
 var totalFrameTime = 0;
 
-var user = new THREE.Vector3(330.502, 0.55, 722.952);	// the point on the map we are currently above
+var user = new THREE.Vector3(331.02, 0.55, 722.992);	// the point on the map we are currently above
 var friend;    // the other person in VR with us
 
 var friendData = new THREE.Vector3(10, 10, 10);
@@ -331,8 +331,8 @@ function renderScene() {
 
 	handleController();
 
-	const fx = user.x; //Math.floor(user.x);
-	const fz = user.z; //Math.floor(user.z);
+	const fx = user.x;
+	const fz = user.z;
 
 	const longtitude = tile2long(fx, mapZoom);
 	const latitude = tile2lat(fz, mapZoom);
@@ -343,11 +343,9 @@ function renderScene() {
 	terrainTiles.render(longtitude, latitude);
 	terrainTexture.needsUpdate = terrainTiles.checkUpdate();
 
-	const m = geometry.parameters.width / (mapCanvas.width / tileDimension); // mesh size / 8 tiles
-	//mesh.position.x = ((user.x - fx) - 0.5) * m * -1;
-	//mesh.position.z = ((user.z - fz) - 0.5) * m * -1;
-	mesh.position.x = -1 * (user.x % 1) * m;
-	mesh.position.z = -1 * (user.z % 1) * m;
+	const m = geometry.parameters.width / (mapCanvas.width / tileDimension); // mesh size / n tiles
+	mesh.position.x = ((-1 * (user.x % 1) + 0.5)) * m;
+	mesh.position.z = ((-1 * (user.z % 1) + 0.5)) * m;
 	mesh.position.y = user.y * -1;
 
 	//console.log(longtitude + " " + latitude + " " + fx + " " + fz + " " + mesh.position.x + " " + mesh.position.z + " " + yyy);
@@ -378,7 +376,6 @@ function renderScene() {
 
     if (user.y < 0.1) user.y = 0.1;
 	if (user.y > 2) user.y = 2;
-	
 
 	effect.render(scene, camera);
 
@@ -392,12 +389,10 @@ function renderScene() {
 
 }
 
-
 // Resize the WebGL canvas when the window size changes
 function onWindowResize() {
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
-
 	renderer.setSize(window.innerWidth, window.innerHeight);
 }
 

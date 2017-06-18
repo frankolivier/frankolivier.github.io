@@ -7,10 +7,10 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
     this.ctx = canvas.getContext('2d');
     this.zoom = zoom;
     this.fillStyle = fillStyle;
-    this.tileDimension = 256; 
+    this.tileDimension = 256;
 
-    this.longtitude = 0;  // bugbug init to better sentry values
-    this.latitude = 0;
+    this.x = -1;  // the last tile coords we rendered
+    this.y = -1;
 
     this.cachedTiles = [];
 
@@ -23,7 +23,7 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
 
     this.getTileId = function (x, y) {
         //return x + "." + y;
-        
+
         return x + y * Math.pow(2, zoom);
     }
 
@@ -61,18 +61,17 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
             url = url.replace('%y%', y);
             url = url.replace('%zoom%', zoom);
 
-            if (!!window.createImageBitmap){
+            if (!!window.createImageBitmap) {
                 fetch(url)
-                .then(response => response.blob())
-                .then(blob => createImageBitmap(blob))
-                .then(image => tile.image = image)
+                    .then(response => response.blob())
+                    .then(blob => createImageBitmap(blob))
+                    .then(image => tile.image = image)
             }
-            else
-            {
+            else {
                 // fallback path
                 fetch(url)
-                .then(response => response.blob())
-                .then(blob => { tile.image = new Image(); tile.image.src = URL.createObjectURL(blob) })
+                    .then(response => response.blob())
+                    .then(blob => { tile.image = new Image(); tile.image.src = URL.createObjectURL(blob) })
             }
 
             return null;
@@ -90,24 +89,25 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
         }
     }
 
-    this.render = function(longtitude, latitude) {
-
-        //if ((this.longtitude === longtitude) || (this.latitude === latitude)) {
-            let now = window.performance.now();
-        //     if (now - this.lastRenderTime < 1000) {  // No need to update if we've updated in the past second; let's wait on more network requests to complete
-        //        return;
-        //    }
-        //    else {
-                this.lastRenderTime = now;
-        //    }
-        //}
+    this.render = function (longtitude, latitude) {
 
         let x = long2tile(longtitude, zoom);
         let y = lat2tile(latitude, zoom);
-        var renderedID = this.getTileId(x, y);
 
-        this.longtitude = longtitude;
-        this.latitude = latitude;
+        let now = window.performance.now();
+
+        // No need to update if we've updated in the past second; let's wait on more network requests to complete
+        if ((this.x === x) && (this.y === y)) {
+            if (now - this.lastRenderTime < 1000) {
+                return;
+            }
+        }
+
+        this.lastRenderTime = now;
+        this.x = x;
+        this.y = y;
+
+        var renderedID = this.getTileId(x, y);
 
         this.ctx.fillStyle = this.fillStyle;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -132,10 +132,10 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
                     this.ctx.drawImage(tile.image, xx * tileDimension, yy * tileDimension);
                     renderedID += 0.001;
 
-                    
-                    if (this.url.indexOf('st amen')>0){
-                    
-                        this.ctx.fillStyle = 'rgb('+  (xx % 16) * 16 + ', 0, '+  (yy % 16) * 16 + ')';
+
+                    if (this.url.indexOf('st amen') > 0) {
+
+                        this.ctx.fillStyle = 'rgb(' + (xx % 16) * 16 + ', 0, ' + (yy % 16) * 16 + ')';
                         this.ctx.fillRect(xx * tileDimension, yy * tileDimension, tileDimension, tileDimension);
 
                         this.ctx.fillStyle = 'rgb(0, 0, 0)';
@@ -158,20 +158,16 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
     }
 
     //bugbug move this into render function? 
-    this.checkUpdate = function(){
-        if (this.renderedID === this.uploadedID)
-        {
+    this.checkUpdate = function () {
+        if (this.renderedID === this.uploadedID) {
             return false;
         }
-        else
-        {
+        else {
             this.uploadedID = this.renderedID;
-            if (this.url.indexOf('stamen')>0){
-                console.log("UPDATE NEEDED");
-            }
+            console.log("UPDATE NEEDED");
             return true;
         }
-    }   
+    }
 
 
 }
