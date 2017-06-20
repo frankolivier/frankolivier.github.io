@@ -268,8 +268,8 @@ function handleController() {
 
 				}
 				else {
-					cylinder.position.x = camera.position.x + 0.1; //bugbug
-					cylinder.position.y = camera.position.y - 0.1;
+					//cylinder.position.x = camera.position.x + 0.1; //bugbug
+					cylinder.position.y = camera.position.y - 0.2;
 					//cylinder.position.z = camera.position.z - 0.1;
 				}
 
