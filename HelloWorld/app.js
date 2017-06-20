@@ -122,7 +122,7 @@ function initGraphics() {
 		cylinder = new THREE.Mesh(pointerGeometry, pointerMaterial);
 	}
 	scene.add(cylinder);
-
+/*
 	{
 		let friendGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.1, 4); //bugbug top and bottom are swapped?
 		//geometry.rotateX(0.25 * 2 * Math.PI);
@@ -138,7 +138,7 @@ function initGraphics() {
 		friendPointer = new THREE.Mesh(friendPointerGeometry, friendPointerMaterial);
 	}
 	scene.add(friendPointer);
-
+*/
 	var meshComplexity = isMobile() ? 128 : 512;
 
 	geometry = new THREE.PlaneGeometry(10, 10, meshComplexity, meshComplexity);
@@ -347,7 +347,7 @@ function renderScene() {
 
 
 	controls.update();	// update HMD head position
-
+/*
 	friend.position.x = friendData.x - user.x;
 	friend.position.z = friendData.z - user.z;
 	friend.position.y = friendData.y - user.y;
@@ -356,7 +356,7 @@ function renderScene() {
 	friendPointer.position.z = friendPointerData.z - user.z;
 	friendPointer.position.y = friendPointerData.y - user.y;
 	friendPointer.setRotationFromQuaternion(friendPointerQuaternion);
-
+*/
 	if (user.y < 0.1) user.y = 0.1;
 	if (user.y > 2) user.y = 2;
 
@@ -392,7 +392,6 @@ function geocodeAddress() {
 	});
 }
 
-
 function incomingMessageHandler(data) {
 	friendData.x = data.x;
 	friendData.y = data.y;
@@ -407,7 +406,6 @@ function incomingMessageHandler(data) {
 	friendPointerQuaternion.z = data.qz;
 	friendPointerQuaternion.w = data.qw;
 }
-
 
 // Main initialization
 function init() {
@@ -428,7 +426,7 @@ function init() {
 		e.preventDefault();
 	});
 
-
+/*
 		peer = new Peer({
 			debug: 3,
 			host: 'thawing-depths-36140.herokuapp.com',
@@ -454,6 +452,6 @@ function init() {
 			conn.on('data', incomingMessageHandler);
 		});
 		sendFriend();   // Start main communication loop
-
+*/
 	renderScene();	// Start main rendering loop
 }
