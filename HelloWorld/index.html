@@ -92,13 +92,13 @@
             bottom: 10px;
         }
 
-        #address {
+        #address, #peerID {
             border: 0;
             border-bottom: 1px solid white;
-            background: transparent/* the important bit */
+            background: transparent
         }
 
-        input[type=submit], a, button {
+        input[type=submit], a, button, #connect {
             background: transparent;
             border: 1px solid transparent;
             color: white;
@@ -125,17 +125,15 @@
         <input type="submit" value='go'>
     </form>
 
-    <!--
     <div id='peerControls'>
-        <input id="peerID" type="textbox" value="">
-        <input id="connect" type="button" value="connect">
+        <div id='myID'></div>
+        <input id='peerID' type='textbox' value='peer'>
+        <input id='connect' type='button' value='connect'>
     </div>
-    -->
 
     <div id='instructions'>
         <a href='instructions.html'>instructions</a>
     </div>
-
 
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAxV93edgCGSHPg6uZryikDlY-OFRz2ew8"></script>
 

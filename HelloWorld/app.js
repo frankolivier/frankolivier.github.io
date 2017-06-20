@@ -123,23 +123,22 @@ function initGraphics() {
 	}
 	scene.add(cylinder);
 
-	/*
-		{
-			var geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.1, 4); //bugbug top and bottom are swapped?
-			//geometry.rotateX(0.25 * 2 * Math.PI);
-			var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-			friend = new THREE.Mesh(geometry, material);
-		}
-		scene.add(friend);
-	
-		{
-			var geometry = new THREE.CylinderGeometry(0.01, 0.01, 100, 4); //bugbug top and bottom are swapped?
-			geometry.rotateX(0.25 * 2 * Math.PI);
-			var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-			friendPointer = new THREE.Mesh(geometry, material);
-		}
-		scene.add(friendPointer);
-	*/
+	{
+		let friendGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.1, 4); //bugbug top and bottom are swapped?
+		//geometry.rotateX(0.25 * 2 * Math.PI);
+		var friendMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+		friend = new THREE.Mesh(friendGeometry, friendMaterial);
+	}
+	scene.add(friend);
+
+	{
+		let friendPointerGeometry = new THREE.CylinderGeometry(0.01, 0.01, 100, 4); //bugbug top and bottom are swapped?
+		friendPointerGeometry.rotateX(0.25 * 2 * Math.PI);
+		var friendPointerMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+		friendPointer = new THREE.Mesh(friendPointerGeometry, friendPointerMaterial);
+	}
+	scene.add(friendPointer);
+
 	var meshComplexity = isMobile() ? 128 : 512;
 
 	geometry = new THREE.PlaneGeometry(10, 10, meshComplexity, meshComplexity);
@@ -155,7 +154,7 @@ function initGraphics() {
 		"p.z += elevation; " +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
 		"float d = distance(gl_Position.xz, vec2(0.0, 0.0));" +
-		"hazeStrength = smoothstep(4.0, 6.2, d);" +
+		"hazeStrength = smoothstep(3.7, 4.7, d);" +
 		"}";
 
 	var fragmentShader = "varying vec2 v; " +
@@ -163,8 +162,8 @@ function initGraphics() {
 		"varying float hazeStrength; " +
 		"void main() { " +
 
-		"  gl_FragColor = texture2D(mapTexture, v); " +		
-				"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +		
+		"  gl_FragColor = texture2D(mapTexture, v); " +
+		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
 		"}";
 
 	var material = new THREE.ShaderMaterial({
@@ -256,7 +255,6 @@ function handleController() {
 			var controller = gamepads[i];
 
 			if (controller != null) {
-				// id = Daydream Controller bugbug
 
 				if (controller.pose.hasPosition == true) {
 					try {
@@ -270,11 +268,10 @@ function handleController() {
 
 				}
 				else {
-					//cylinder.position.x = camera.position.x - 0.1; //bugbug
+					cylinder.position.x = camera.position.x + 0.1; //bugbug
 					cylinder.position.y = camera.position.y - 0.1;
 					//cylinder.position.z = camera.position.z - 0.1;
 				}
-
 
 				var quaternion = new THREE.Quaternion().fromArray(controller.pose.orientation);
 				cylinder.setRotationFromQuaternion(quaternion);
@@ -284,7 +281,6 @@ function handleController() {
 				var vector = new THREE.Vector3(0, 0, -1);
 				vector.applyQuaternion(quaternion);
 
-				//bugbug sometime position is not availalbe?
 				//cylinder.position.set(mesh.position);
 
 				var pressed = controller.buttons[0].pressed;
@@ -339,11 +335,8 @@ function renderScene() {
 	mesh.position.z = ((-1 * (user.z % 1) + 0.5)) * m;
 	mesh.position.y = user.y * -1;
 
-	//console.log(longtitude + " " + latitude + " " + fx + " " + fz + " " + mesh.position.x + " " + mesh.position.z + " " + yyy);
-
 	if (true == moving) {
-		if (window.performance.now() - downTime > 1000)
-		{
+		if (window.performance.now() - downTime > 1000) {
 			// wait 1000ms before moving forward
 			// this gives the user time to turn
 			let vector = new THREE.Vector3(0, 0, -0.001);
@@ -354,7 +347,7 @@ function renderScene() {
 
 
 	controls.update();	// update HMD head position
-	/*
+
 	friend.position.x = friendData.x - user.x;
 	friend.position.z = friendData.z - user.z;
 	friend.position.y = friendData.y - user.y;
@@ -363,9 +356,8 @@ function renderScene() {
 	friendPointer.position.z = friendPointerData.z - user.z;
 	friendPointer.position.y = friendPointerData.y - user.y;
 	friendPointer.setRotationFromQuaternion(friendPointerQuaternion);
-	*/
 
-    if (user.y < 0.1) user.y = 0.1;
+	if (user.y < 0.1) user.y = 0.1;
 	if (user.y > 2) user.y = 2;
 
 	effect.render(scene, camera);
@@ -389,13 +381,13 @@ function geocodeAddress() {
 	geocoder.geocode({ 'address': address }, function (results, status) {
 		if (status === 'OK') {
 
-			user.x = long2tile(results[0].geometry.location.lng(), mapZoom); 
+			user.x = long2tile(results[0].geometry.location.lng(), mapZoom);
 			user.z = lat2tile(results[0].geometry.location.lat() - 0.152, mapZoom); // south... to put object in view
 
 			document.getElementById('vrCanvas').focus();
 
 		} else {
-			///bugbug alert('Geocode was not successful for the following reason: ' + status);
+			// Geocode was not successful for reason = status
 		}
 	});
 }
@@ -420,8 +412,8 @@ function incomingMessageHandler(data) {
 // Main initialization
 function init() {
 
-//	const mapCanvas = document.getElementById('mapCanvas');
-//	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/%zoom%/%x%/%y%.png', mapCanvas, mapZoom, '#87ceff');
+	//	const mapCanvas = document.getElementById('mapCanvas');
+	//	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/%zoom%/%x%/%y%.png', mapCanvas, mapZoom, '#87ceff');
 
 	const mapCanvas = document.getElementById('mapCanvas');
 	mapTiles = new Tiles('https://b.tiles.mapbox.com/v4/mapbox.satellite/%zoom%/%x%/%y%.pngraw?access_token=pk.eyJ1IjoiZnJhbmtvbGl2aWVyIiwiYSI6ImNqMHR3MGF1NTA0Z24ycW81dXR0dDIweDMifQ.SoQ9aqIfdOheISIYRqgR7w', mapCanvas, mapZoom, '#87ceff');
@@ -437,9 +429,7 @@ function init() {
 	});
 
 
-	/*
 		peer = new Peer({
-			id: 'frankodev',
 			debug: 3,
 			host: 'thawing-depths-36140.herokuapp.com',
 			port: 443,
@@ -448,6 +438,7 @@ function init() {
 	
 		peer.on('open', function (id) {
 			console.log('My peer ID is: ' + id);
+			document.getElementById('myID').innerHTML = id;
 	
 			peer.on('connection', function (connX) {
 				conn = connX;
@@ -463,7 +454,6 @@ function init() {
 			conn.on('data', incomingMessageHandler);
 		});
 		sendFriend();   // Start main communication loop
-	*/
 
 	renderScene();	// Start main rendering loop
 }
