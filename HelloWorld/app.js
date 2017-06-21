@@ -292,7 +292,7 @@ function handleController() {
 						input *= -1;	// for some reason the daydream controller values are swapped?
 					}
 
-					const scale = 0.05;
+					const scale = 0.01;
 
 					user.x += vector.x * input * scale;
 					user.z += vector.z * input * scale;
