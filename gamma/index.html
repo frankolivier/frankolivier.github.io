@@ -1,136 +1,126 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <meta charset="UTF-8"> 
-    <title>Gamma</title> 
+    <meta charset="UTF-8">
+    <title>Gamma...</title>
+    <link rel="icon" href="data:,">
+
+    <link href="/global.css" rel="stylesheet">
+    <style>
+        div {
+            padding-top: 1em;
+        }
+    </style>
+
 </head>
+
 <body>
+    <div>Web browsers don't handle gamma blending correctly.</div>
+    <div>Consider a simple image with red, green, blue areas: <code>rgb(127, 0, 0), rgb(0, 127, 0), rgb(0, 0, 127) </code></div>
+    <img src="rgb.png" />
+    <div>Apply a simple blur filter: <code>style="filter: blur(10px)"</code></div>
 
-<img src="rgb.png" />
-<img src="rgb.png" style="filter: blur(10px);display:block" />
+    <img src="rgb.png" style="filter: blur(10px);display:block" />
+    <div>Your browser probably (incorrectly) rendered the area between the colors with odd black bars:</div>
+    <canvas id='1' width="300" height="100" style="display:block"></canvas>
+    <div>The correct rendering is actually:</div>
+    <canvas id='2' width="300" height="100" style="display:block"></canvas>
+    <div>This happens because your browser (GPU) is naïvely blending together <a href='https://en.wikipedia.org/wiki/Gamma_correction#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas'>gamma-compressed</a> colors as though they are on a linear scale.</div>
+    <div>With non-linear gamma <code>rgb(127, 0, 0)</code> is not halfway (<code>127 / 256</code>) between between <code>rgb(0, 0, 0)</code> ('blackest red') and <code>rgb(255, 0, 0)</code>('reddest red'). Doing naïve averaging (blurring) of color values this way leads to rgb color values that are darker than intended.</div>
 
-<canvas id='1' width="300" height="100" style="display:block"></canvas>
-<canvas id='2' width="300" height="100" style="display:block"></canvas>
-
+    <div>As the web moves to content with more than just sRGB color, the mess causes by incorrectly blending gamma-compressed colors will probably worsen.</div>
 </body>
 
 <script>
+    let r = new Array(300);
+    let g = new Array(300);
+    let b = new Array(300);
 
-var r = new Array(300);
-var g = new Array(300);
-var b = new Array(300);
+    // 2.2 gamma is assumed
+    function toGammaByte(value) {
+        return Math.floor(Math.pow(value, 1 / 2.2) * 256); // pow(value, power)
+    }
 
-function toGammaByte(value)
-{
-    return Math.floor(Math.pow(value, 1 / 2.2) * 256);// pow(value, power)
-}
+    function toLinearFloat(value) {
+        return Math.pow(value / 256, 1 / 0.45); // pow(value, power)
+    }
 
-function toLinearFloat(value)
-{
-    return Math.pow(value / 256, 1 / 0.45);// pow(value, power)
-}
+    function drawGamma(ctx, correctGamma) {
+        let radius = 10;
 
-function drawGamma(ctx, correctGamma)
-{
-    var radius = 10;
+        for (let i = radius; i < 300 - radius; i++) {
 
-    for (var i = radius; i < 300 - radius; i++)
-    {
-        
-        //var color = i;
-        
-        //var g = 1 / gamma;
-        
-        //color = 255 * Math.pow(color / 255, g) // pow(value, power)
+            let rr = 0;
+            let gg = 0;
+            let bb = 0;
 
-        //color = Math.floor(color);
-        
-        var rr = 0;
-        var gg = 0;
-        var bb = 0;   
+            if (correctGamma == true) {
+                for (let j = 0; j < radius * 2; j++) {
+                    rr += toLinearFloat(r[i - radius + j]);
+                    gg += toLinearFloat(g[i - radius + j]);
+                    bb += toLinearFloat(b[i - radius + j]);
+                }
 
-        if (correctGamma == true)
-        {
-            for (var j = 0; j < radius * 2; j++)
-            {
-                rr += toLinearFloat(r[i - radius + j]);
-                gg += toLinearFloat(g[i - radius + j]);
-                bb += toLinearFloat(b[i - radius + j]);
+                rr /= (radius * 2);
+                gg /= (radius * 2);
+                bb /= (radius * 2);
+
+                rr = toGammaByte(rr);
+                gg = toGammaByte(gg);
+                bb = toGammaByte(bb);
+
+
+
+            }
+            else {
+                for (let j = 0; j < radius * 2; j++) {
+                    rr += r[i - radius + j];
+                    gg += g[i - radius + j];
+                    bb += b[i - radius + j];
+                }
+
+                rr /= (radius * 2);
+                gg /= (radius * 2);
+                bb /= (radius * 2);
             }
 
-            rr /= (radius * 2);
-            gg /= (radius * 2);
-            bb /= (radius * 2);
+            rr = Math.floor(rr);
+            gg = Math.floor(gg);
+            bb = Math.floor(bb);
+            
 
-            rr = toGammaByte(rr);
-            gg = toGammaByte(gg);
-            bb = toGammaByte(bb);
+            ctx.fillStyle = 'rgb(' + rr + ',' + gg + ',' + bb + ')';
 
+            const height = 100;
 
-
+            ctx.fillRect(i, 0, 1, height);
         }
-        else
-        {
-            for (var j = 0; j < radius * 2; j++)
-            {
-                rr += r[i - radius + j];
-                gg += g[i - radius + j];
-                bb += b[i - radius + j];
-            }
+    }
 
-            rr /= (radius * 2);
-            gg /= (radius * 2);
-            bb /= (radius * 2);
+    //todo fix
+    //Array.concat(Array(100.fill(foo value)))
+
+    for (let i = 0; i < 300; i++) {
+        r[i] = 0;
+        g[i] = 0;
+        b[i] = 0;
+
+        if (i < 100) {
+            r[i] = 127;
+        }
+        if ((i >= 100) && (i < 200)) {
+            g[i] = 127;
+        }
+        if ((i >= 200) && (i < 300)) {
+            b[i] = 127;
         }
 
-
-
-        console.log(rr + " " + gg + " " + bb );
-
-        ctx.fillStyle = 'rgb('+rr+','+gg+','+bb+')';
-
-        var height = 100;
-
-        ctx.fillRect(i, 0, 1, height);
-    }
-}
-
-//todo fix
-//Array.concat(Array(100.fill(foo value)))
-
-for (var i = 0; i < 300; i++)
-{
-    r[i] = 0;
-    g[i] = 0;
-    b[i] = 0;
-
-    if (i<100) {
-        r[i] = 150;
-    }
-    if ((i>=100)&&(i<200)) {
-        g[i] = 150;
-    }
-    if ((i>=200)&&(i<300)) {
-        b[i] = 150;
     }
 
-    if ((i<20)||(i>280))
-    {
-        r[i] = g[i]= b[i] = 255;
-    }
-
-
-}
-
-drawGamma(document.getElementById('1').getContext('2d'), false);
-drawGamma(document.getElementById('2').getContext('2d'), true);
-
-
-
-
-
-
-
+    drawGamma(document.getElementById('1').getContext('2d'), false);
+    drawGamma(document.getElementById('2').getContext('2d'), true);
 
 </script>
+
 </html>

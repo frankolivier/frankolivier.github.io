@@ -6,8 +6,8 @@
 </head>
 <body>
 
-<canvas id='1' width="1024" height="100"></canvas>
-<canvas id='2' width="1024" height="100"></canvas>
+<canvas id='1' width="1024" height="200"></canvas>
+<canvas id='2' width="1024" height="200"></canvas>
 
 <input id="range" type="range" min="0" max="4" step="0.1" value="1" onchange="onRangeChange()"/>
 
@@ -24,35 +24,36 @@
 
 function drawGamma(ctx, gamma)
 {
-    console.log('gamma = ' + gamma);
+    ctx.canvas.width = ctx.canvas.width; // clear the canvas
 
-    for (var i = 0; i < 256; i++)
+    const height = ctx.canvas.height;
+
+    for (let i = 0; i < 256; i++)
     {
-        var color = i;
+        let color = i;
 
-        var g = 1 / gamma;
-        color = 255 * Math.pow(color / 255, g) // pow(value, power)
+        color = 255 * Math.pow(color / 255, 1 / gamma) // pow(value, power)
 
         color = Math.floor(color);
 
         ctx.fillStyle = 'rgb('+color+','+color+','+color+')';
 
-        var scale = 4;
-        var height = 100;
+        let scale = 4;
+        let barHeight = color / 256 * height;
 
-        ctx.fillRect(i * scale, 0, scale, height);
+        ctx.fillRect(i * scale, height - barHeight, scale, barHeight);
     }
 }
 
 drawGamma(document.getElementById('1').getContext('2d'), 1.0);
 
-var demoCtx = document.getElementById('2').getContext('2d');
+let demoCtx = document.getElementById('2').getContext('2d');
 
-drawGamma(demoCtx, 2.2);
+drawGamma(demoCtx, 0.45);
 
 function onRangeChange()
 {
-    var gamma = document.getElementById('range').value; //bugbug sender
+    let gamma = document.getElementById('range').value; //bugbug sender
     document.getElementById('value').innerHTML = gamma;
     drawGamma(demoCtx, gamma);
 }
