@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"> 
+    <title>Gamma</title> 
+</head>
+<body>
+
+<canvas id='1' width="1024" height="100"></canvas>
+<canvas id='2' width="1024" height="100"></canvas>
+
+<input id="range" type="range" min="0" max="4" step="0.1" value="1" onchange="onRangeChange()"/>
+
+<div>
+
+<span id="value"></span>
+<img src="blocks.png" style="filter: blur(10px);" />
+
+</div>
+
+</body>
+
+<script>
+
+function drawGamma(ctx, gamma)
+{
+    console.log('gamma = ' + gamma);
+
+    for (var i = 0; i < 256; i++)
+    {
+        var color = i;
+
+        var g = 1 / gamma;
+        color = 255 * Math.pow(color / 255, g) // pow(value, power)
+
+        color = Math.floor(color);
+
+        ctx.fillStyle = 'rgb('+color+','+color+','+color+')';
+
+        var scale = 4;
+        var height = 100;
+
+        ctx.fillRect(i * scale, 0, scale, height);
+    }
+}
+
+drawGamma(document.getElementById('1').getContext('2d'), 1.0);
+
+var demoCtx = document.getElementById('2').getContext('2d');
+
+drawGamma(demoCtx, 2.2);
+
+function onRangeChange()
+{
+    var gamma = document.getElementById('range').value; //bugbug sender
+    document.getElementById('value').innerHTML = gamma;
+    drawGamma(demoCtx, gamma);
+}
+
+
+
+
+
+
+
+</script>
+</html>
