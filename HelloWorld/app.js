@@ -11,6 +11,11 @@
 
 document.addEventListener("DOMContentLoaded", init);
 
+let WindowIsActive = true;
+window.addEventListener('focus', () => { WindowIsActive = true })
+window.addEventListener('blur', () => { WindowIsActive = false })
+
+
 var user = new THREE.Vector3(331.02, 0.55, 722.992);	// the point on the map we are currently above
 var friend;    // the other person in VR with us
 
@@ -110,6 +115,23 @@ function orbitMouseUp() {
 
 function initGraphics() {
 
+	// Set up maps
+
+	//	const mapCanvas = document.getElementById('mapCanvas');
+	//	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/%zoom%/%x%/%y%.png', mapCanvas, mapZoom, '#87ceff');
+
+	//bugbug move complexity into another struct?
+
+	let canvasComplexity = isMobile() ? 2048 : 4096;
+
+	const mapCanvas = document.getElementById('mapCanvas');
+	mapCanvas.width = mapCanvas.height = canvasComplexity;
+	mapTiles = new Tiles('https://b.tiles.mapbox.com/v4/mapbox.satellite/%zoom%/%x%/%y%.pngraw?access_token=pk.eyJ1IjoiZnJhbmtvbGl2aWVyIiwiYSI6ImNqMHR3MGF1NTA0Z24ycW81dXR0dDIweDMifQ.SoQ9aqIfdOheISIYRqgR7w', mapCanvas, mapZoom, '#87ceff');
+
+	const terrainCanvas = document.getElementById('terrainCanvas');
+	terrainCanvas.width = terrainCanvas.height = canvasComplexity;
+	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%zoom%/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, terrainZoom, '#00000000');
+
 	scene = new THREE.Scene();
 
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
@@ -122,26 +144,11 @@ function initGraphics() {
 		cylinder = new THREE.Mesh(pointerGeometry, pointerMaterial);
 	}
 	scene.add(cylinder);
-/*
-	{
-		let friendGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.1, 4); //bugbug top and bottom are swapped?
-		//geometry.rotateX(0.25 * 2 * Math.PI);
-		var friendMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-		friend = new THREE.Mesh(friendGeometry, friendMaterial);
-	}
-	scene.add(friend);
 
-	{
-		let friendPointerGeometry = new THREE.CylinderGeometry(0.01, 0.01, 100, 4); //bugbug top and bottom are swapped?
-		friendPointerGeometry.rotateX(0.25 * 2 * Math.PI);
-		var friendPointerMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-		friendPointer = new THREE.Mesh(friendPointerGeometry, friendPointerMaterial);
-	}
-	scene.add(friendPointer);
-*/
 	var meshComplexity = isMobile() ? 128 : 512;
 
-	geometry = new THREE.PlaneGeometry(10, 10, meshComplexity, meshComplexity);
+	//bugbug mesh size
+	geometry = new THREE.PlaneGeometry(12, 12, meshComplexity, meshComplexity);
 	terrainTexture = new THREE.Texture(terrainCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
 
@@ -149,12 +156,12 @@ function initGraphics() {
 		"v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; " +
 		"float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
 		"elevation = clamp(elevation, 0.0, 10000.0); " +
-		"elevation = elevation / 10000.0; " +
+		"elevation = elevation / 15000.0; " +
 		"vec3 p = position;" +
 		"p.z += elevation; " +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
 		"float d = distance(gl_Position.xz, vec2(0.0, 0.0));" +
-		"hazeStrength = smoothstep(3.7, 4.7, d);" +
+		"hazeStrength = smoothstep(4.2, 5.0, d);" +
 		"}";
 
 	var fragmentShader = "varying vec2 v; " +
@@ -316,6 +323,10 @@ function handleController() {
 
 function renderScene() {
 
+	effect.requestAnimationFrame(renderScene);
+
+	if (!WindowIsActive) return; // Save power and performance by not rendering when window is in the background
+
 	handleController();
 
 	const fx = user.x;
@@ -345,24 +356,14 @@ function renderScene() {
 		}
 	}
 
-
 	controls.update();	// update HMD head position
-/*
-	friend.position.x = friendData.x - user.x;
-	friend.position.z = friendData.z - user.z;
-	friend.position.y = friendData.y - user.y;
 
-	friendPointer.position.x = friendPointerData.x - user.x;
-	friendPointer.position.z = friendPointerData.z - user.z;
-	friendPointer.position.y = friendPointerData.y - user.y;
-	friendPointer.setRotationFromQuaternion(friendPointerQuaternion);
-*/
-	if (user.y < 0.1) user.y = 0.1;
-	if (user.y > 2) user.y = 2;
+	// Shouldn't fly to high or too low...
+	///if (user.y < 0.1) user.y = 0.1;
+	///if (user.y > 2) user.y = 2;
 
 	effect.render(scene, camera);
 
-	effect.requestAnimationFrame(renderScene);
 
 }
 
@@ -392,32 +393,9 @@ function geocodeAddress() {
 	});
 }
 
-function incomingMessageHandler(data) {
-	friendData.x = data.x;
-	friendData.y = data.y;
-	friendData.z = data.z;
-
-	friendPointerData.x = data.px;
-	friendPointerData.y = data.py;
-	friendPointerData.z = data.pz;
-
-	friendPointerQuaternion.x = data.qx;
-	friendPointerQuaternion.y = data.qy;
-	friendPointerQuaternion.z = data.qz;
-	friendPointerQuaternion.w = data.qw;
-}
 
 // Main initialization
 function init() {
-
-	//	const mapCanvas = document.getElementById('mapCanvas');
-	//	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/%zoom%/%x%/%y%.png', mapCanvas, mapZoom, '#87ceff');
-
-	const mapCanvas = document.getElementById('mapCanvas');
-	mapTiles = new Tiles('https://b.tiles.mapbox.com/v4/mapbox.satellite/%zoom%/%x%/%y%.pngraw?access_token=pk.eyJ1IjoiZnJhbmtvbGl2aWVyIiwiYSI6ImNqMHR3MGF1NTA0Z24ycW81dXR0dDIweDMifQ.SoQ9aqIfdOheISIYRqgR7w', mapCanvas, mapZoom, '#87ceff');
-
-	const terrainCanvas = document.getElementById('terrainCanvas');
-	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%zoom%/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, terrainZoom, '#00000000');
 
 	initGraphics();
 
@@ -426,32 +404,5 @@ function init() {
 		e.preventDefault();
 	});
 
-/*
-		peer = new Peer({
-			debug: 3,
-			host: 'thawing-depths-36140.herokuapp.com',
-			port: 443,
-			secure: true,
-		});
-	
-		peer.on('open', function (id) {
-			console.log('My peer ID is: ' + id);
-			document.getElementById('myID').innerHTML = id;
-	
-			peer.on('connection', function (connX) {
-				conn = connX;
-				conn.on('data', incomingMessageHandler);
-			});
-		});
-		document.getElementById('connect').addEventListener('click', function () {
-			var peerID = document.getElementById('peerID').value;
-			conn = peer.connect(peerID);
-			conn.on('open', function () {
-				///conn.send('hi!');
-			});
-			conn.on('data', incomingMessageHandler);
-		});
-		sendFriend();   // Start main communication loop
-*/
 	renderScene();	// Start main rendering loop
 }
