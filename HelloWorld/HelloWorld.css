@@ -60,23 +60,17 @@ input,
             top: 10px;
         }
 
-        #peerControls {
-            position: absolute;
-            right: 10px;
-            top: 10px;
-        }
-
         #instructions {
             position: absolute;
             left: 12px;
             bottom: 10px;
         }
 
-        #address, #peerID {
+        #address {
             border: 0;
             border-bottom: 1px solid white;
             background: transparent;
-            width: 200px;
+            kkwidth: 15em;
         }
 
         input[type=submit], a, button, #connect {
