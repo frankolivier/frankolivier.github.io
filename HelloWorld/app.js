@@ -17,11 +17,6 @@ window.addEventListener('blur', () => { WindowIsActive = false })
 
 
 let user = new THREE.Vector3(331.02, 0.55, 722.992);	// the point on the map we are currently above
-let friend;    // the other person in VR with us
-
-let friendData = new THREE.Vector3(10, 10, 10);
-let friendPointerData = new THREE.Vector3(10, 10, 10);
-let friendPointerQuaternion = new THREE.Quaternion(0, 0, 0, 1);
 
 const tileDimension = 256;	// Tiles are 256 x 256 pixels
 
@@ -30,12 +25,6 @@ let mapTiles;		  // Tiles.js instance for color values
 
 const mapZoom = 11; // The zoom level of the slippy map we're using
 const terrainZoom = 11;
-
-let peer;
-let conn;	//connection to the client
-
-let myID;
-let friendID;
 
 function checkKey(e) {
 
