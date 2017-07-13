@@ -16,26 +16,26 @@ window.addEventListener('focus', () => { WindowIsActive = true })
 window.addEventListener('blur', () => { WindowIsActive = false })
 
 
-var user = new THREE.Vector3(331.02, 0.55, 722.992);	// the point on the map we are currently above
-var friend;    // the other person in VR with us
+let user = new THREE.Vector3(331.02, 0.55, 722.992);	// the point on the map we are currently above
+let friend;    // the other person in VR with us
 
-var friendData = new THREE.Vector3(10, 10, 10);
-var friendPointerData = new THREE.Vector3(10, 10, 10);
-var friendPointerQuaternion = new THREE.Quaternion(0, 0, 0, 1);
+let friendData = new THREE.Vector3(10, 10, 10);
+let friendPointerData = new THREE.Vector3(10, 10, 10);
+let friendPointerQuaternion = new THREE.Quaternion(0, 0, 0, 1);
 
 const tileDimension = 256;	// Tiles are 256 x 256 pixels
 
-var terrainTiles;	  // Tiles.js instance for elevation data
-var mapTiles;		  // Tiles.js instance for color values
+let terrainTiles;	  // Tiles.js instance for elevation data
+let mapTiles;		  // Tiles.js instance for color values
 
 const mapZoom = 11; // The zoom level of the slippy map we're using
 const terrainZoom = 11;
 
-var peer;
-var conn;	//connection to the client
+let peer;
+let conn;	//connection to the client
 
-var myID;
-var friendID;
+let myID;
+let friendID;
 
 function checkKey(e) {
 
@@ -77,16 +77,16 @@ document.onkeydown = checkKey;
 
 
 /// three js
-var scene, camera, renderer;
-var controls;
+let scene, camera, renderer;
+let controls;
 let orbitControls;
-var effect; // the webvr renderer
-var geometry, material, mesh;
-var terrainTexture, mapTexture;
+let effect; // the webvr renderer
+let geometry, material, mesh;
+let terrainTexture, mapTexture;
 
-var cylinder;  // the cursor / pointer we're drawing for the gamepad
+let cylinder;  // the cursor / pointer we're drawing for the gamepad
 
-var friendPointer;	//Mesh; our friend's pointer
+let friendPointer;	//Mesh; our friend's pointer
 
 function long2tile(lon, zoom) { return (Math.floor((lon + 180) / 360 * Math.pow(2, zoom))); }
 function lat2tile(lat, zoom) {
@@ -95,7 +95,7 @@ function lat2tile(lat, zoom) {
 }
 
 function tile2long(x, z) { return (x / Math.pow(2, z) * 360 - 180); }
-function tile2lat(y, z) { var n = Math.PI - 2 * Math.PI * y / Math.pow(2, z); return (180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)))); }
+function tile2lat(y, z) { let n = Math.PI - 2 * Math.PI * y / Math.pow(2, z); return (180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)))); }
 
 function isMobile() {
 	return (navigator.userAgent.toLowerCase().indexOf('mob') != -1);
@@ -145,14 +145,14 @@ function initGraphics() {
 	}
 	scene.add(cylinder);
 
-	var meshComplexity = isMobile() ? 128 : 512;
+	let meshComplexity = isMobile() ? 128 : 512;
 
 	//bugbug mesh size
 	geometry = new THREE.PlaneGeometry(12, 12, meshComplexity, meshComplexity);
 	terrainTexture = new THREE.Texture(terrainCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
 
-	var vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float hazeStrength; void main()	{ " +
+	let vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float hazeStrength; void main()	{ " +
 		"v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; " +
 		"float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
 		"elevation = clamp(elevation, 0.0, 10000.0); " +
@@ -164,7 +164,7 @@ function initGraphics() {
 		"hazeStrength = smoothstep(4.2, 5.0, d);" +
 		"}";
 
-	var fragmentShader = "varying vec2 v; " +
+	let fragmentShader = "varying vec2 v; " +
 		"uniform sampler2D mapTexture; " +
 		"varying float hazeStrength; " +
 		"void main() { " +
@@ -173,7 +173,7 @@ function initGraphics() {
 		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
 		"}";
 
-	var material = new THREE.ShaderMaterial({
+	let material = new THREE.ShaderMaterial({
 		uniforms: {
 			terrainTexture: { type: 't', value: terrainTexture },
 			mapTexture: { type: 't', value: mapTexture }
@@ -225,9 +225,9 @@ function initGraphics() {
 
 function sendFriend() {
 
-	var t1 = window.performance.now();
+	let t1 = window.performance.now();
 	if (!!conn) {
-		var data = {};
+		let data = {};
 		data.x = user.x;
 		data.z = user.z;
 		data.y = user.y;
@@ -256,10 +256,10 @@ function handleController() {
 
 	try {
 
-		var gamepads = navigator.getGamepads();
+		let gamepads = navigator.getGamepads();
 
-		for (var i = 0; i < gamepads.length; ++i) {
-			var controller = gamepads[i];
+		for (let i = 0; i < gamepads.length; ++i) {
+			let controller = gamepads[i];
 
 			if (controller != null) {
 
@@ -280,20 +280,20 @@ function handleController() {
 					//cylinder.position.z = camera.position.z - 0.1;
 				}
 
-				var quaternion = new THREE.Quaternion().fromArray(controller.pose.orientation);
+				let quaternion = new THREE.Quaternion().fromArray(controller.pose.orientation);
 				cylinder.setRotationFromQuaternion(quaternion);
 
 				hasPointerHardware = true;
 
-				var vector = new THREE.Vector3(0, 0, -1);
+				let vector = new THREE.Vector3(0, 0, -1);
 				vector.applyQuaternion(quaternion);
 
 				//cylinder.position.set(mesh.position);
 
-				var pressed = controller.buttons[0].pressed;
+				let pressed = controller.buttons[0].pressed;
 
 				if (pressed == true) {
-					var input = controller.axes[1];
+					let input = controller.axes[1];
 
 					if (controller.id == "Daydream Controller") {
 						input *= -1;	// for some reason the daydream controller values are swapped?
@@ -378,7 +378,7 @@ let geocoder;
 function geocodeAddress() {
 	geocoder = new google.maps.Geocoder()
 
-	var address = document.getElementById('address').value;
+	let address = document.getElementById('address').value;
 	geocoder.geocode({ 'address': address }, function (results, status) {
 		if (status === 'OK') {
 
