@@ -73,7 +73,7 @@ let effect; // the webvr renderer
 let geometry, material, mesh;
 let terrainTexture, mapTexture;
 
-let cylinder;  // the cursor / pointer we're drawing for the gamepad
+let laserPointer;  // the cursor / pointer we're drawing for the gamepad
 
 let friendPointer;	//Mesh; our friend's pointer
 
@@ -130,9 +130,9 @@ function initGraphics() {
 		let pointerGeometry = new THREE.CylinderGeometry(0.01, 0.01, 100, 4); //bugbug top and bottom are swapped?
 		pointerGeometry.rotateX(0.25 * 2 * Math.PI);
 		let pointerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-		cylinder = new THREE.Mesh(pointerGeometry, pointerMaterial);
+		laserPointer = new THREE.Mesh(pointerGeometry, pointerMaterial);
 	}
-	scene.add(cylinder);
+	scene.add(laserPointer);
 
 	let meshComplexity = isMobile() ? 128 : 512;
 
@@ -221,14 +221,14 @@ function sendFriend() {
 		data.z = user.z;
 		data.y = user.y;
 
-		data.px = user.x + cylinder.position.x; //bugbug need to put this in global coordinate space...
-		data.py = user.y + cylinder.position.y;
-		data.pz = user.z + cylinder.position.z;
+		data.px = user.x + laserPointer.position.x; //bugbug need to put this in global coordinate space...
+		data.py = user.y + laserPointer.position.y;
+		data.pz = user.z + laserPointer.position.z;
 
-		data.qx = cylinder.quaternion.x;
-		data.qy = cylinder.quaternion.y;
-		data.qz = cylinder.quaternion.z;
-		data.qw = cylinder.quaternion.w;
+		data.qx = laserPointer.quaternion.x;
+		data.qy = laserPointer.quaternion.y;
+		data.qz = laserPointer.quaternion.z;
+		data.qw = laserPointer.quaternion.w;
 
 		conn.send(data);
 		//bugbug maybe send timestamp as well?
@@ -254,9 +254,9 @@ function handleController() {
 
 				if (controller.pose.hasPosition == true) {
 					try {
-						cylinder.position.x = controller.pose.position[0];
-						cylinder.position.y = controller.pose.position[1];
-						cylinder.position.z = controller.pose.position[2];
+						laserPointer.position.x = controller.pose.position[0];
+						laserPointer.position.y = controller.pose.position[1];
+						laserPointer.position.z = controller.pose.position[2];
 					}
 					catch (e) {
 
@@ -264,20 +264,20 @@ function handleController() {
 
 				}
 				else {
-					//cylinder.position.x = camera.position.x + 0.1; //bugbug
-					cylinder.position.y = camera.position.y - 0.2;
-					//cylinder.position.z = camera.position.z - 0.1;
+					//laserPointer.position.x = camera.position.x + 0.1; //bugbug
+					laserPointer.position.y = camera.position.y - 0.2;
+					//laserPointer.position.z = camera.position.z - 0.1;
 				}
 
 				let quaternion = new THREE.Quaternion().fromArray(controller.pose.orientation);
-				cylinder.setRotationFromQuaternion(quaternion);
+				laserPointer.setRotationFromQuaternion(quaternion);
 
 				hasPointerHardware = true;
 
 				let vector = new THREE.Vector3(0, 0, -1);
 				vector.applyQuaternion(quaternion);
 
-				//cylinder.position.set(mesh.position);
+				//laserPointer.position.set(mesh.position);
 
 				let pressed = controller.buttons[0].pressed;
 
@@ -306,7 +306,7 @@ function handleController() {
 
 	}
 
-	cylinder.visible = hasPointerHardware;
+	laserPointer.visible = hasPointerHardware;
 
 }
 
