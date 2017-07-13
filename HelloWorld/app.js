@@ -188,8 +188,8 @@ function initGraphics() {
 	// non-VR controls
 	orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
 	orbitControls.maxPolarAngle = Math.PI * 0.7;
-	orbitControls.minDistance = 1;
-	orbitControls.maxDistance = 2;
+	orbitControls.minDistance = 1.2;
+	orbitControls.maxDistance = 2.4;
 	orbitControls.enableKeys = false;
 
 	renderer.domElement.addEventListener("mousedown", orbitMouseDown);

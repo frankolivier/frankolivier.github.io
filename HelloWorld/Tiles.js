@@ -164,7 +164,6 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
         }
         else {
             this.uploadedID = this.renderedID;
-            console.log("UPDATE NEEDED");
             return true;
         }
     }
