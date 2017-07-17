@@ -30,25 +30,25 @@ function checkKey(e) {
 
 	const step = 0.05;
 
-	e = e || window.event;
+	let vector = new THREE.Vector3(0, -step, 0);
 
+	e = e || window.event;
 	if (e.keyCode == '38') {
 		// up arrow
-		user.z -= step; // minus, as we are panning BUGBUG move to Panning.js?
+		vector.z = -step;
 	}
 	else if (e.keyCode == '40') {
 		// down arrow		     	
-		user.z += step; // minus, as we are panning BUGBUG move to Panning.js?
-
+		vector.z = step;
 	}
 	else if (e.keyCode == '37') {
 		// left arrow
-		user.x -= step; // minus, as we are panning BUGBUG move to Panning.js?
+		vector.x = -step;
 
 	}
 	else if (e.keyCode == '39') {
 		// right arrow	
-		user.x += step; // minus, as we are panning BUGBUG move to Panning.js?
+		vector.x = step;
 	}
 	else if (e.keyCode == '219') {
 		// [
@@ -59,6 +59,10 @@ function checkKey(e) {
 		user.y -= step;
 	}
 
+	vector.applyQuaternion(camera.quaternion);
+
+	user.x += vector.x;
+	user.z += vector.z;
 
 }
 document.onkeydown = checkKey;
