@@ -374,8 +374,13 @@ function init() {
 
 	initGraphics();
 
-	renderer.domElement.onkeydown = checkKey;
-	renderer.domElement.focus();
+	document.onkeydown = checkKey;
+
+	document.getElementById('address').onkeydown = function (e) {
+		e.stopPropagation();
+	};
+
+	renderer.domElement.onclick = function(e){e.srcElement.focus()};
 
 	document.getElementById('geoControls').addEventListener('submit', function (e) {
 		geocodeAddress();
