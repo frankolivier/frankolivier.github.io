@@ -15,13 +15,11 @@ let WindowIsActive = true;
 window.addEventListener('focus', () => { WindowIsActive = true })
 window.addEventListener('blur', () => { WindowIsActive = false })
 
-
 let user = new THREE.Vector3(331.02, 0.55, 722.992);	// the point on the map we are currently above
 
 const tileDimension = 256;	// Tiles are 256 x 256 pixels
-
-let terrainTiles;	  // Tiles.js instance for elevation data
-let mapTiles;		  // Tiles.js instance for color values
+let terrainTiles;	  		// Tiles.js instance for elevation data
+let mapTiles;		 		// Tiles.js instance for color values
 
 const mapZoom = 11; // The zoom level of the slippy map we're using
 const terrainZoom = 11;
@@ -30,7 +28,7 @@ function checkKey(e) {
 
 	const step = 0.05;
 
-	let vector = new THREE.Vector3(0, -step, 0);
+	let vector = new THREE.Vector3(0, 0, 0);
 
 	e = e || window.event;
 	if (e.keyCode == '38') {
@@ -65,7 +63,6 @@ function checkKey(e) {
 	user.z += vector.z;
 
 }
-document.onkeydown = checkKey;
 
 
 
@@ -145,38 +142,35 @@ function initGraphics() {
 	terrainTexture = new THREE.Texture(terrainCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
 
-	let vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float hazeStrength; varying float dd; void main() { " +
-		"v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; " +
+	let vertexShader = 
+	    "varying vec2 vUV; " +
+		"uniform sampler2D terrainTexture;" +
+	    "varying float vDistance; " +
+		"void main() { " +
+		"vUV = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; " +
 		"float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
 		"elevation = clamp(elevation, 0.0, 10000.0); " +
-		"elevation = elevation / 15000.0; " +
-		"vec3 p = position;" +
+		"elevation = elevation / 15000.0; " +   // TODO change this based on latitude 
+		"vec3 p = position;" + 					// 'position' is a built-in three.js construct
 		"p.z += elevation; " +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
-		"float d = distance(gl_Position.xz, vec2(0.0, 0.0));" +
-		"dd = d;" +
-		"hazeStrength = smoothstep(4.2, 5.0, d);" +
+		"vDistance = distance(gl_Position.xyz, vec3(0.0, 0.0, 0.0));" +
 		"}";
 
-	let fragmentShader = "varying vec2 v; " +
+	let fragmentShader = 
+	    "varying vec2 vUV; " +
 		"uniform sampler2D mapTexture; " +
 		"varying float hazeStrength; " +
-		"varying float dd;" +
+		"varying float vDistance;" +
 		"void main() { " +
 
-		"  gl_FragColor = texture2D(mapTexture, v); " +
-		"  if (dd < 2.0){" +
-	//	"    gl_FragColor += texture2D(mapTexture, v + vec2(1.0 / 8192.0, 0.0)); " +
-	//	"    gl_FragColor += texture2D(mapTexture, v + vec2(-1.0 / 8192.0, 0.0)); " +
-	//	"    gl_FragColor += texture2D(mapTexture, v + vec2(0.0, 1.0 / 8192.0)); " +
-	//	"    gl_FragColor += texture2D(mapTexture, v + vec2(0.0, -1.0 / 8192.0)); " +
-		"    gl_FragColor += texture2D(mapTexture, v + vec2(1.0 / 8192.0, 1.0 / 8192.0)); " +
-		"    gl_FragColor += texture2D(mapTexture, v + vec2(-1.0 / 8192.0, 1.0 / 8192.0)); " +
-		"    gl_FragColor += texture2D(mapTexture, v + vec2(1.0 / 8192.0, -1.0 / 8192.0)); " +
-		"    gl_FragColor += texture2D(mapTexture, v + vec2(-1.0 / 8192.0, -1.0 / 8192.0)); " +
-		//"    gl_FragColor += vec4(1.0, 0.0, 0.0, 0.5);" +
-		"    gl_FragColor = gl_FragColor / 5.0;" +
+		"  gl_FragColor = texture2D(mapTexture, vUV); " +
+		"  if (vDistance < 2.0){" +
+		"    gl_FragColor += texture2D(mapTexture, vUV + vec2(1.0 / 8192.0, 1.0 / 8192.0)); " +
+		"    gl_FragColor += texture2D(mapTexture, vUV + vec2(-1.0 / 8192.0, -1.0 / 8192.0)); " +
+		"    gl_FragColor = gl_FragColor / 3.0;" +
 		"  }" +
+		"float hazeStrength = smoothstep(4.2, 5.0, vDistance);" +
 		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
 
 		"}";
@@ -231,32 +225,6 @@ function initGraphics() {
 
 }
 
-function sendFriend() {
-
-	let t1 = window.performance.now();
-	if (!!conn) {
-		let data = {};
-		data.x = user.x;
-		data.z = user.z;
-		data.y = user.y;
-
-		data.px = user.x + laserPointer.position.x; //bugbug need to put this in global coordinate space...
-		data.py = user.y + laserPointer.position.y;
-		data.pz = user.z + laserPointer.position.z;
-
-		data.qx = laserPointer.quaternion.x;
-		data.qy = laserPointer.quaternion.y;
-		data.qz = laserPointer.quaternion.z;
-		data.qw = laserPointer.quaternion.w;
-
-		conn.send(data);
-		//bugbug maybe send timestamp as well?
-	}
-
-	window.setTimeout(sendFriend, 250);
-
-}
-
 function handleController() {
 	// Handle controller input
 
@@ -296,8 +264,6 @@ function handleController() {
 				let vector = new THREE.Vector3(0, 0, -1);
 				vector.applyQuaternion(quaternion);
 
-				//laserPointer.position.set(mesh.position);
-
 				let pressed = controller.buttons[0].pressed;
 
 				if (pressed == true) {
@@ -333,7 +299,8 @@ function renderScene() {
 
 	effect.requestAnimationFrame(renderScene);
 
-	if (!WindowIsActive) return; // Save power and performance by not rendering when window is in the background
+	// Save power and performance by not rendering when window is in the background
+	if (!WindowIsActive) return; 
 
 	handleController();
 
@@ -357,7 +324,7 @@ function renderScene() {
 	if (true == moving) {
 		if (window.performance.now() - downTime > 1000) {
 			// wait 1000ms before moving forward
-			// this gives the user time to turn
+			// this gives the user time to turn the camera
 			let vector = new THREE.Vector3(0, 0, -0.001);
 			vector.applyQuaternion(orbitControls.object.quaternion);
 			user.add(vector);
@@ -367,8 +334,8 @@ function renderScene() {
 	controls.update();	// update HMD head position
 
 	// Shouldn't fly to high or too low...
-	///if (user.y < 0.1) user.y = 0.1;
-	///if (user.y > 2) user.y = 2;
+	if (user.y < 0.1) user.y = 0.1;
+	if (user.y > 2) user.y = 2;
 
 	effect.render(scene, camera);
 
@@ -393,7 +360,7 @@ function geocodeAddress() {
 			user.x = long2tile(results[0].geometry.location.lng(), mapZoom);
 			user.z = lat2tile(results[0].geometry.location.lat() - 0.152, mapZoom); // south... to put object in view
 
-			document.getElementById('vrCanvas').focus();
+			renderer.domElement.focus();
 
 		} else {
 			// Geocode was not successful for reason = status
@@ -406,6 +373,9 @@ function geocodeAddress() {
 function init() {
 
 	initGraphics();
+
+	renderer.domElement.onkeydown = checkKey;
+	renderer.domElement.focus();
 
 	document.getElementById('geoControls').addEventListener('submit', function (e) {
 		geocodeAddress();
