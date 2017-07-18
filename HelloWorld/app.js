@@ -145,7 +145,7 @@ function initGraphics() {
 	terrainTexture = new THREE.Texture(terrainCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
 
-	let vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float hazeStrength; void main()	{ " +
+	let vertexShader = "varying vec2 v; uniform sampler2D terrainTexture; varying float hazeStrength; varying float dd; void main() { " +
 		"v = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; " +
 		"float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
 		"elevation = clamp(elevation, 0.0, 10000.0); " +
@@ -154,16 +154,31 @@ function initGraphics() {
 		"p.z += elevation; " +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
 		"float d = distance(gl_Position.xz, vec2(0.0, 0.0));" +
+		"dd = d;" +
 		"hazeStrength = smoothstep(4.2, 5.0, d);" +
 		"}";
 
 	let fragmentShader = "varying vec2 v; " +
 		"uniform sampler2D mapTexture; " +
 		"varying float hazeStrength; " +
+		"varying float dd;" +
 		"void main() { " +
 
 		"  gl_FragColor = texture2D(mapTexture, v); " +
+		"  if (dd < 2.0){" +
+	//	"    gl_FragColor += texture2D(mapTexture, v + vec2(1.0 / 8192.0, 0.0)); " +
+	//	"    gl_FragColor += texture2D(mapTexture, v + vec2(-1.0 / 8192.0, 0.0)); " +
+	//	"    gl_FragColor += texture2D(mapTexture, v + vec2(0.0, 1.0 / 8192.0)); " +
+	//	"    gl_FragColor += texture2D(mapTexture, v + vec2(0.0, -1.0 / 8192.0)); " +
+		"    gl_FragColor += texture2D(mapTexture, v + vec2(1.0 / 8192.0, 1.0 / 8192.0)); " +
+		"    gl_FragColor += texture2D(mapTexture, v + vec2(-1.0 / 8192.0, 1.0 / 8192.0)); " +
+		"    gl_FragColor += texture2D(mapTexture, v + vec2(1.0 / 8192.0, -1.0 / 8192.0)); " +
+		"    gl_FragColor += texture2D(mapTexture, v + vec2(-1.0 / 8192.0, -1.0 / 8192.0)); " +
+		//"    gl_FragColor += vec4(1.0, 0.0, 0.0, 0.5);" +
+		"    gl_FragColor = gl_FragColor / 5.0;" +
+		"  }" +
 		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
+
 		"}";
 
 	let material = new THREE.ShaderMaterial({
