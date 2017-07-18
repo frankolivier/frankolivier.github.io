@@ -166,9 +166,12 @@ function initGraphics() {
 
 		"  gl_FragColor = texture2D(mapTexture, vUV); " +
 		"  if (vDistance < 2.0){" +
-		"    gl_FragColor += texture2D(mapTexture, vUV + vec2(1.0 / 8192.0, 1.0 / 8192.0)); " +
-		"    gl_FragColor += texture2D(mapTexture, vUV + vec2(-1.0 / 8192.0, -1.0 / 8192.0)); " +
-		"    gl_FragColor = gl_FragColor / 3.0;" +
+		"    gl_FragColor += texture2D(mapTexture, vUV) * 4.0; " +
+		"    gl_FragColor += texture2D(mapTexture, vUV + vec2(1.0 / 8192.0, 1.0 / 8192.0)) * 0.75; " +
+		"    gl_FragColor += texture2D(mapTexture, vUV + vec2(-1.0 / 8192.0, -1.0 / 8192.0)) * 0.75; " +
+		"    gl_FragColor += texture2D(mapTexture, vUV + vec2(-1.0 / 8192.0, 1.0 / 8192.0)) * 0.75; " +
+		"    gl_FragColor += texture2D(mapTexture, vUV + vec2(1.0 / 8192.0, -1.0 / 8192.0)) * 0.75; " +
+		"    gl_FragColor = gl_FragColor / 8.0;" +
 		"  }" +
 		"float hazeStrength = smoothstep(4.2, 5.0, vDistance);" +
 		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
