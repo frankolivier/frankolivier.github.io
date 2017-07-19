@@ -15,7 +15,7 @@ let WindowIsActive = true;
 window.addEventListener('focus', () => { WindowIsActive = true })
 window.addEventListener('blur', () => { WindowIsActive = false })
 
-let user = new THREE.Vector3(331.02, 0.55, 722.992);	// the point on the map we are currently above
+let user = new THREE.Vector3(331.02, 1.55, 722.992);	// the point on the map we are currently above
 
 const tileDimension = 256;	// Tiles are 256 x 256 pixels
 let terrainTiles;	  		// Tiles.js instance for elevation data
@@ -103,6 +103,8 @@ function orbitMouseUp() {
 	moving = false;
 }
 
+// TODO move all desktop/mobile complexity const to a struct
+
 function initGraphics() {
 
 	// Set up maps
@@ -132,8 +134,10 @@ function initGraphics() {
 
 	let meshComplexity = isMobile() ? 128 : 512;
 
+	let mapSize = 20;
+
 	//bugbug mesh size
-	geometry = new THREE.PlaneGeometry(10, 10, meshComplexity, meshComplexity);
+	geometry = new THREE.PlaneGeometry(mapSize, mapSize, meshComplexity, meshComplexity);
 	terrainTexture = new THREE.Texture(terrainCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
 
@@ -144,8 +148,8 @@ function initGraphics() {
 		"void main() { " +
 		"vUV = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; " +
 		"float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
-		"elevation = clamp(elevation, 0.0, 10000.0); " +
-		"elevation = elevation / 30000.0; " +   // TODO change this based on latitude 
+		"elevation = clamp(elevation, 0.0, 10000.0); " +	// Clamp to sea level and Everest
+		"elevation = elevation / 20000.0; " +   // TODO change this based on latitude 
 		"vec3 p = position;" + 					// 'position' is a built-in three.js construct
 		"p.z += elevation; " +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
@@ -158,19 +162,9 @@ function initGraphics() {
 		"varying float hazeStrength; " +
 		"varying float vDistance;" +
 		"void main() { " +
-
 		"  gl_FragColor = texture2D(mapTexture, vUV); " +
-		//"  if (vDistance < 2.0){" +
-		//"    gl_FragColor += texture2D(mapTexture, vUV) * 4.0; " +
-		//"    gl_FragColor += texture2D(mapTexture, vUV + vec2(1.0 / 8192.0, 1.0 / 8192.0)) * 0.75; " +
-		//"    gl_FragColor += texture2D(mapTexture, vUV + vec2(-1.0 / 8192.0, -1.0 / 8192.0)) * 0.75; " +
-		//"    gl_FragColor += texture2D(mapTexture, vUV + vec2(-1.0 / 8192.0, 1.0 / 8192.0)) * 0.75; " +
-		//"    gl_FragColor += texture2D(mapTexture, vUV + vec2(1.0 / 8192.0, -1.0 / 8192.0)) * 0.75; " +
-		//"    gl_FragColor = gl_FragColor / 8.0;" +
-		//"  }" +
-		"float hazeStrength = smoothstep(8.0, 12.0, vDistance);" +
+		"  float hazeStrength = smoothstep(8.2, 9.6, vDistance);" +
 		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
-
 		"}";
 
 	let material = new THREE.ShaderMaterial({
@@ -308,7 +302,7 @@ function renderScene() {
 	const longtitude = tile2long(fx, mapZoom);
 	const latitude = tile2lat(fz, mapZoom);
 
-	let yyy = mapTiles.render(longtitude, latitude);
+	mapTiles.render(longtitude, latitude);
 	mapTexture.needsUpdate = mapTiles.checkUpdate();
 
 	terrainTiles.render(longtitude, latitude);
@@ -319,6 +313,8 @@ function renderScene() {
 	mesh.position.z = ((-1 * (user.z % 1) + 0.5)) * m;
 	mesh.position.y = user.y * -1;
 
+/*
+	disable moving to do some performance tests
 	if (true == moving) {
 		if (window.performance.now() - downTime > 1000) {
 			// wait 1000ms before moving forward
@@ -328,7 +324,7 @@ function renderScene() {
 			user.add(vector);
 		}
 	}
-
+*/
 	controls.update();	// update HMD head position
 
 	// Shouldn't fly to high or too low...
