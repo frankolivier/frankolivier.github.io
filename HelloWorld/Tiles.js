@@ -48,7 +48,7 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
         var tile = this.cachedTiles.find(this.checkId, id);
 
         if (tile === undefined) {
-            if (this.cachedTiles.length > 600) { // bugbug find best number
+            if (this.cachedTiles.length > 1200) { // bugbug find best number
                 this.cachedTiles.shift();
             }
 

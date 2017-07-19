@@ -107,12 +107,7 @@ function initGraphics() {
 
 	// Set up maps
 
-	//	const mapCanvas = document.getElementById('mapCanvas');
-	//	mapTiles = new Tiles('https://stamen-tiles.a.ssl.fastly.net/terrain/%zoom%/%x%/%y%.png', mapCanvas, mapZoom, '#87ceff');
-
-	//bugbug move complexity into another struct?
-
-	let canvasComplexity = isMobile() ? 2048 : 4096;
+	let canvasComplexity = isMobile() ? 2048 : 8192;
 
 	const mapCanvas = document.getElementById('mapCanvas');
 	mapCanvas.width = mapCanvas.height = canvasComplexity;
@@ -138,7 +133,7 @@ function initGraphics() {
 	let meshComplexity = isMobile() ? 128 : 512;
 
 	//bugbug mesh size
-	geometry = new THREE.PlaneGeometry(12, 12, meshComplexity, meshComplexity);
+	geometry = new THREE.PlaneGeometry(10, 10, meshComplexity, meshComplexity);
 	terrainTexture = new THREE.Texture(terrainCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
 
@@ -150,7 +145,7 @@ function initGraphics() {
 		"vUV = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; " +
 		"float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
 		"elevation = clamp(elevation, 0.0, 10000.0); " +
-		"elevation = elevation / 15000.0; " +   // TODO change this based on latitude 
+		"elevation = elevation / 30000.0; " +   // TODO change this based on latitude 
 		"vec3 p = position;" + 					// 'position' is a built-in three.js construct
 		"p.z += elevation; " +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
@@ -165,15 +160,15 @@ function initGraphics() {
 		"void main() { " +
 
 		"  gl_FragColor = texture2D(mapTexture, vUV); " +
-		"  if (vDistance < 2.0){" +
-		"    gl_FragColor += texture2D(mapTexture, vUV) * 4.0; " +
-		"    gl_FragColor += texture2D(mapTexture, vUV + vec2(1.0 / 8192.0, 1.0 / 8192.0)) * 0.75; " +
-		"    gl_FragColor += texture2D(mapTexture, vUV + vec2(-1.0 / 8192.0, -1.0 / 8192.0)) * 0.75; " +
-		"    gl_FragColor += texture2D(mapTexture, vUV + vec2(-1.0 / 8192.0, 1.0 / 8192.0)) * 0.75; " +
-		"    gl_FragColor += texture2D(mapTexture, vUV + vec2(1.0 / 8192.0, -1.0 / 8192.0)) * 0.75; " +
-		"    gl_FragColor = gl_FragColor / 8.0;" +
-		"  }" +
-		"float hazeStrength = smoothstep(4.2, 5.0, vDistance);" +
+		//"  if (vDistance < 2.0){" +
+		//"    gl_FragColor += texture2D(mapTexture, vUV) * 4.0; " +
+		//"    gl_FragColor += texture2D(mapTexture, vUV + vec2(1.0 / 8192.0, 1.0 / 8192.0)) * 0.75; " +
+		//"    gl_FragColor += texture2D(mapTexture, vUV + vec2(-1.0 / 8192.0, -1.0 / 8192.0)) * 0.75; " +
+		//"    gl_FragColor += texture2D(mapTexture, vUV + vec2(-1.0 / 8192.0, 1.0 / 8192.0)) * 0.75; " +
+		//"    gl_FragColor += texture2D(mapTexture, vUV + vec2(1.0 / 8192.0, -1.0 / 8192.0)) * 0.75; " +
+		//"    gl_FragColor = gl_FragColor / 8.0;" +
+		//"  }" +
+		"float hazeStrength = smoothstep(8.0, 12.0, vDistance);" +
 		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
 
 		"}";
