@@ -9,21 +9,20 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
     this.fillStyle = fillStyle;
     this.tileDimension = 256;
 
-    this.x = -1;  // the last tile coords we rendered
-    this.y = -1;
-
     this.cachedTiles = [];
 
-    this.renderedID = -1; // the unique id of the tile (id + version) of the tile rendered in the last pass
+    this.renderedID = -1; // the unique id of the tile rendered in the last pass
+    this.renderedVersion = -1; // the unique version tile rendered in the last pass
+
     this.uploadedID = -2; // the unique id of the tile (id +  and version) of the tile uploaded to the GPU
+    this.uploadedVersion = -2; // the unique id of the tile (id +  and version) of the tile uploaded to the GPU
+    
     this.lastRenderTime = 0; // only render occasionally
 
     //bugbug somehow this module should tell the others if the canvas is dirty or not
 
-
+    // Get a unique ID for the tile
     this.getTileId = function (x, y) {
-        //return x + "." + y;
-
         return x + y * Math.pow(2, zoom);
     }
 
@@ -93,77 +92,72 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
 
         let x = long2tile(longtitude, zoom);
         let y = lat2tile(latitude, zoom);
+        let id = this.getTileId(x, y);      // What is the ID of the tile we are supposed to draw?
 
-        let now = window.performance.now();
 
-        // No need to update if we've updated in the past second; let's wait on more network requests to complete
-        if ((this.x === x) && (this.y === y)) {
-            if (now - this.lastRenderTime < 1000) {
+        if (id === this.renderedID) {   // Did we move?
+            // We didn't move
+            // No need to update if we've rendered in the past second
+            // Let's wait on more network requests to complete
+            if (window.performance.now() - this.lastRenderTime < 1000) {
                 return;
             }
         }
+        else
+        {
+            // We moved
+            this.renderedVersion = 0;
+        }
 
-        this.lastRenderTime = now;
-        this.x = x;
-        this.y = y;
+        let version = 0;
 
-        var renderedID = this.getTileId(x, y);
-
-        this.ctx.fillStyle = this.fillStyle;
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-        this.ctx.save();
+        //this.ctx.fillStyle = this.fillStyle;
+        //this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         const tileCount = (this.canvas.width / tileDimension); // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
+
+        if (this.renderedVersion === tileCount * tileCount) return;   // We've already drawn the final version
+
         const halfTileCount = tileCount / 2; // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
 
         const translateX = (x - halfTileCount) * tileDimension;
         const translateY = (y - halfTileCount) * tileDimension;
-        this.ctx.translate(-translateX, -translateY);
-
+        
         const lowerX = Math.floor(x - halfTileCount);
         const lowerY = Math.floor(y - halfTileCount);
 
-        for (var yy = lowerY; yy <= lowerY + tileCount; yy++) {
-            for (var xx = lowerX; xx <= lowerX + tileCount; xx++) {
+        this.ctx.save();
+        this.ctx.translate(-translateX, -translateY);
+        for (var yy = lowerY; yy < lowerY + tileCount; yy++) {
+            for (var xx = lowerX; xx < lowerX + tileCount; xx++) {
 
                 const tile = this.getTile(xx, yy);
                 if (null != tile) {
                     this.ctx.drawImage(tile.image, xx * tileDimension, yy * tileDimension);
-                    renderedID += 0.001;
-
-
-                    if (this.url.indexOf('st amen') > 0) {
-
-                        this.ctx.fillStyle = 'rgb(' + (xx % 16) * 16 + ', 0, ' + (yy % 16) * 16 + ')';
-                        this.ctx.fillRect(xx * tileDimension, yy * tileDimension, tileDimension, tileDimension);
-
-                        this.ctx.fillStyle = 'rgb(0, 0, 0)';
-                        this.ctx.font = '40px serif';
-                        this.ctx.fillText(x + ' , ' + y, xx * tileDimension + 10, yy * tileDimension + (tileDimension / 2));
-                        this.ctx.fillText(tile.id, xx * tileDimension + 10, yy * tileDimension + (tileDimension / 3));
-
-                    }
-
+                    version++;
                 }
             }
         }
-
-        this.renderedID = renderedID; //updating;
-
         this.ctx.restore();
 
-        return y;
+        console.log('DREW VERSION ' + version);
+
+        this.renderedID = id; //updating;
+        this.renderedVersion = version;
+
+        this.lastRenderTime = window.performance.now();
 
     }
 
     //bugbug move this into render function? 
     this.checkUpdate = function () {
-        if (this.renderedID === this.uploadedID) {
+        if ((this.renderedID === this.uploadedID)&&(this.renderedVersion === this.uploadedVersion)) {
             return false;
         }
         else {
             this.uploadedID = this.renderedID;
+            this.uploadedVersion = this.renderedVersion;
+            console.log('NEEDS UPDATE');
             return true;
         }
     }

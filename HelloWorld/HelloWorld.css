@@ -37,7 +37,16 @@ input,
             top: 100px;
             width: 200px;
             height: 200px;
-            display: none;
+            displa y: none;
+        }
+
+        #smallMapCanvas {
+            position: absolute;
+            left: 10px;
+            top: 320px;
+            width: 200px;
+            height: 200px;
+            displa y: none;
         }
 
         #terrainCanvas {
@@ -46,7 +55,16 @@ input,
             top: 100px;
             width: 200px;
             height: 200px;
-            display: none;
+            displa y: none;
+        }
+
+        #smallTerrainCanvas {
+            position: absolute;
+            right: 10px;
+            top: 320px;
+            width: 200px;
+            height: 200px;
+            displa y: none;
         }
 
         #vrButton {

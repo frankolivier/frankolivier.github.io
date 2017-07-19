@@ -76,8 +76,6 @@ let terrainTexture, mapTexture;
 
 let laserPointer;  // the cursor / pointer we're drawing for the gamepad
 
-let friendPointer;	//Mesh; our friend's pointer
-
 function long2tile(lon, zoom) { return (Math.floor((lon + 180) / 360 * Math.pow(2, zoom))); }
 function lat2tile(lat, zoom) {
 	let f = Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180);
@@ -104,6 +102,9 @@ function orbitMouseUp() {
 }
 
 // TODO move all desktop/mobile complexity const to a struct
+
+let smallTerrainCanvas = null;
+let smallMapCanvas = null;
 
 function initGraphics() {
 
@@ -134,11 +135,19 @@ function initGraphics() {
 
 	let meshComplexity = isMobile() ? 128 : 512;
 
+	smallTerrainCanvas = document.getElementById('smallTerrainCanvas');
+	smallTerrainCanvas.width = smallTerrainCanvas.height = meshComplexity;
+
+	smallMapCanvas = document.getElementById('smallMapCanvas');
+	smallMapCanvas.width = smallMapCanvas.height = 1024;
+
 	let mapSize = 20;
 
 	//bugbug mesh size
 	geometry = new THREE.PlaneGeometry(mapSize, mapSize, meshComplexity, meshComplexity);
-	terrainTexture = new THREE.Texture(terrainCanvas);
+	terrainTexture = new THREE.Texture(smallTerrainCanvas);
+
+	//mapTexture = new THREE.Texture(smallMapCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
 
 	let vertexShader = 
@@ -303,11 +312,19 @@ function renderScene() {
 	const latitude = tile2lat(fz, mapZoom);
 
 	mapTiles.render(longtitude, latitude);
-	mapTexture.needsUpdate = mapTiles.checkUpdate();
+	if (true == mapTiles.checkUpdate())
+	{
+		//smallMapCanvas.getContext('2d').drawImage(mapCanvas, 0, 0, smallMapCanvas.width, smallMapCanvas.height);
+		mapTexture.needsUpdate = true;
+	}
 
 	terrainTiles.render(longtitude, latitude);
-	terrainTexture.needsUpdate = terrainTiles.checkUpdate();
-
+	if (true == terrainTiles.checkUpdate())
+	{
+		smallTerrainCanvas.getContext('2d').drawImage(terrainCanvas, 0, 0, smallTerrainCanvas.width, smallTerrainCanvas.height);
+		terrainTexture.needsUpdate = true;
+	}
+	
 	const m = geometry.parameters.width / (mapCanvas.width / tileDimension); // mesh size / n tiles
 	mesh.position.x = ((-1 * (user.x % 1) + 0.5)) * m;
 	mesh.position.z = ((-1 * (user.z % 1) + 0.5)) * m;
