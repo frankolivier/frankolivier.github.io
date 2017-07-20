@@ -50,11 +50,11 @@ function checkKey(e) {
 	}
 	else if (e.keyCode == '219') {
 		// [
-		user.y += step;
+		user.y -= step;
 	}
 	else if (e.keyCode == '221') {
 		// ]
-		user.y -= step;
+		user.y += step;
 	}
 
 	vector.applyQuaternion(camera.quaternion);
@@ -103,8 +103,8 @@ function orbitMouseUp() {
 
 // TODO move all desktop/mobile complexity const to a struct
 
-let smallTerrainCanvas = null;
-let smallMapCanvas = null;
+//let smallTerrainCanvas = null;
+//let smallMapCanvas = null;
 
 function initGraphics() {
 
@@ -134,18 +134,19 @@ function initGraphics() {
 	scene.add(laserPointer);
 
 	let meshComplexity = isMobile() ? 128 : 512;
-
+/*
 	smallTerrainCanvas = document.getElementById('smallTerrainCanvas');
 	smallTerrainCanvas.width = smallTerrainCanvas.height = meshComplexity;
 
 	smallMapCanvas = document.getElementById('smallMapCanvas');
 	smallMapCanvas.width = smallMapCanvas.height = 1024;
-
+*/
 	let mapSize = 10;
 
 	//bugbug mesh size
 	geometry = new THREE.PlaneGeometry(mapSize, mapSize, meshComplexity, meshComplexity);
-	terrainTexture = new THREE.Texture(smallTerrainCanvas);
+	//terrainTexture = new THREE.Texture(smallTerrainCanvas);
+	terrainTexture = new THREE.Texture(terrainCanvas);
 
 	//mapTexture = new THREE.Texture(smallMapCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
@@ -321,7 +322,7 @@ function renderScene() {
 	terrainTiles.render(longtitude, latitude);
 	if (true == terrainTiles.checkUpdate())
 	{
-		smallTerrainCanvas.getContext('2d').drawImage(terrainCanvas, 0, 0, smallTerrainCanvas.width, smallTerrainCanvas.height);
+		//smallTerrainCanvas.getContext('2d').drawImage(terrainCanvas, 0, 0, smallTerrainCanvas.width, smallTerrainCanvas.height);
 		terrainTexture.needsUpdate = true;
 	}
 	
