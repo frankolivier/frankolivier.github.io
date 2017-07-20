@@ -172,7 +172,7 @@ function initGraphics() {
 		"varying float vDistance;" +
 		"void main() { " +
 		"  gl_FragColor = texture2D(mapTexture, vUV); " +
-		"  float hazeStrength = smoothstep(8.2, 9.6, vDistance);" +
+		"  float hazeStrength = smoothstep(8.0, 10.0, vDistance);" +
 		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
 		"}";
 

@@ -4,12 +4,15 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
 
     this.url = url;
     this.canvas = canvas;
+
     this.ctx = canvas.getContext('2d');
+    this.tileDimension = 256;
+    this.tileCount = (this.canvas.width / tileDimension); // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
+
     this.zoom = zoom;
     this.fillStyle = fillStyle;
-    this.tileDimension = 256;
 
-    this.cachedTiles = [];
+    this.cachedTiles = new Array(this.tileCount ** 2 | 0); // Make an array somewhat larger than a square array
 
     this.renderedID = -1; // the unique id of the tile rendered in the last pass
     this.renderedVersion = -1; // the unique version tile rendered in the last pass
@@ -19,24 +22,38 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
     
     this.lastRenderTime = 0; // only render occasionally
 
-    //bugbug somehow this module should tell the others if the canvas is dirty or not
+    this.renderPass = 0;
+
 
     // Get a unique ID for the tile
     this.getTileId = function (x, y) {
         return x + y * Math.pow(2, zoom);
     }
 
+    
     this.makeTile = function (x, y, image) {
         return {
             id: this.getTileId(x, y),
             x: x,
             y: y,
-            image: image
+            image: image,
+            renderPass: 0
         };
     }
 
-    this.checkId = function (tile) {
-        return tile.id == this;
+    this.checkId = function (element, index, array) {
+        return ((element != undefined) && (element.id == this));
+    }
+
+    this.checkOld = function (element, index, array) {
+        return ((element === undefined) || (element.renderPass < this));
+    }
+
+    // Adds a tile
+    this.addTile = function (tile) {
+        let index = this.cachedTiles.findIndex(this.checkOld, this.renderPass);
+        //console.log('adding tile at ' + index);
+        this.cachedTiles[index] = tile;
     }
 
     // returns ? bugbug?
@@ -44,18 +61,16 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
 
         const id = this.getTileId(x, y);
 
-        var tile = this.cachedTiles.find(this.checkId, id);
+        //var tile = this.cachedTiles.find(this.checkId, id);
+        let tile = this.cachedTiles.find(this.checkId, id);
+        //console.log('found ' + tile);
 
-        if (tile === undefined) {
-            if (this.cachedTiles.length > 1200) { // bugbug find best number
-                this.cachedTiles.shift();
-            }
+        if (tile === undefined) { // Not found in the array
 
-            var tile = this.makeTile(x, y, null);
-            this.cachedTiles.push(tile);
+            tile = this.makeTile(x, y, null);
+            this.addTile(tile);
 
             var url = this.url;
-
             url = url.replace('%x%', x);
             url = url.replace('%y%', y);
             url = url.replace('%zoom%', zoom);
@@ -114,38 +129,36 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
         //this.ctx.fillStyle = this.fillStyle;
         //this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-        const tileCount = (this.canvas.width / tileDimension); // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
 
-        if (this.renderedVersion === tileCount * tileCount) return;   // We've already drawn the final version
+        if (this.renderedVersion === this.tileCount * this.tileCount) return;   // We've already drawn the final version
 
-        const halfTileCount = tileCount / 2; // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
+        const halfTileCount = this.tileCount / 2; // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
 
         const translateX = (x - halfTileCount) * tileDimension;
         const translateY = (y - halfTileCount) * tileDimension;
         
         const lowerX = Math.floor(x - halfTileCount);
         const lowerY = Math.floor(y - halfTileCount);
-
+        
         this.ctx.save();
         this.ctx.translate(-translateX, -translateY);
-        for (var yy = lowerY; yy < lowerY + tileCount; yy++) {
-            for (var xx = lowerX; xx < lowerX + tileCount; xx++) {
+        for (var yy = lowerY; yy < lowerY + this.tileCount; yy++) {
+            for (var xx = lowerX; xx < lowerX + this.tileCount; xx++) {
 
                 const tile = this.getTile(xx, yy);
                 if (null != tile) {
                     this.ctx.drawImage(tile.image, xx * tileDimension, yy * tileDimension);
+                    tile.renderPass = this.renderPass;
                     version++;
                 }
             }
         }
         this.ctx.restore();
 
-        console.log('DREW VERSION ' + version);
-
-        this.renderedID = id; //updating;
+        this.renderedID = id;
         this.renderedVersion = version;
-
         this.lastRenderTime = window.performance.now();
+        this.renderPass++;
 
     }
 
@@ -157,7 +170,6 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
         else {
             this.uploadedID = this.renderedID;
             this.uploadedVersion = this.renderedVersion;
-            console.log('NEEDS UPDATE');
             return true;
         }
     }
