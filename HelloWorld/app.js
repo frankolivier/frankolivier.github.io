@@ -110,7 +110,7 @@ function initGraphics() {
 
 	// Set up maps
 
-	let canvasComplexity = isMobile() ? 2048 : 8192;
+	let canvasComplexity = isMobile() ? 2048 : 4096;
 
 	const mapCanvas = document.getElementById('mapCanvas');
 	mapCanvas.width = mapCanvas.height = canvasComplexity;
@@ -141,7 +141,7 @@ function initGraphics() {
 	smallMapCanvas = document.getElementById('smallMapCanvas');
 	smallMapCanvas.width = smallMapCanvas.height = 1024;
 
-	let mapSize = 20;
+	let mapSize = 10;
 
 	//bugbug mesh size
 	geometry = new THREE.PlaneGeometry(mapSize, mapSize, meshComplexity, meshComplexity);
@@ -172,7 +172,7 @@ function initGraphics() {
 		"varying float vDistance;" +
 		"void main() { " +
 		"  gl_FragColor = texture2D(mapTexture, vUV); " +
-		"  float hazeStrength = smoothstep(8.0, 10.0, vDistance);" +
+		"  float hazeStrength = smoothstep(4.0, 5.0, vDistance);" +
 		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
 		"}";
 

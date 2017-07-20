@@ -12,7 +12,8 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
     this.zoom = zoom;
     this.fillStyle = fillStyle;
 
-    this.cachedTiles = new Array(this.tileCount ** 2 | 0); // Make an array somewhat larger than a square array
+    this.cachedTiles = []; // Make an array somewhat larger than a square array
+    const ArrayMax = this.tileCount ** 2.2 | 0;
 
     this.renderedID = -1; // the unique id of the tile rendered in the last pass
     this.renderedVersion = -1; // the unique version tile rendered in the last pass
@@ -31,13 +32,13 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
     }
 
     
-    this.makeTile = function (x, y, image) {
+    this.makeTile = function (x, y, image, renderPass) {
         return {
             id: this.getTileId(x, y),
             x: x,
             y: y,
             image: image,
-            renderPass: 0
+            renderPass: renderPass
         };
     }
 
@@ -51,23 +52,34 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
 
     // Adds a tile
     this.addTile = function (tile) {
-        let index = this.cachedTiles.findIndex(this.checkOld, this.renderPass);
-        //console.log('adding tile at ' + index);
-        this.cachedTiles[index] = tile;
+        if (this.cachedTiles.length < ArrayMax)
+        {
+            this.cachedTiles.push(tile);
+        }
+        else
+        {
+            let index = this.cachedTiles.reduce(function(answer, value, index, array)
+                { 
+                    //console.log(answer + ' ' + value + ' ' + index + ' ' + array[index].renderPass + ' '+ array[answer].renderPass);
+                    return (array[answer].renderPass < array[index].renderPass ? answer : index); }
+                , 0);
+            //console.log('adding tile at ' + index);
+            this.cachedTiles[index] = tile;
+        }
     }
 
     // returns ? bugbug?
-    this.getTile = function (x, y) {
+    this.getTile = function (x, y, renderPass) {
 
         const id = this.getTileId(x, y);
 
         //var tile = this.cachedTiles.find(this.checkId, id);
         let tile = this.cachedTiles.find(this.checkId, id);
-        //console.log('found ' + tile);
+        ////console.log('found ' + tile);
 
         if (tile === undefined) { // Not found in the array
 
-            tile = this.makeTile(x, y, null);
+            tile = this.makeTile(x, y, null, renderPass);
             this.addTile(tile);
 
             var url = this.url;
@@ -92,7 +104,7 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
         }
         else {
             if (null == tile.image) {
-                //console.log('Found ...... tile! cache size = ' + this.cachedTiles.length);
+                //console.log('Found ///\\\ tile! cache size = ' + this.cachedTiles.length);
                 return null;
 
             }
@@ -109,11 +121,13 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
         let y = lat2tile(latitude, zoom);
         let id = this.getTileId(x, y);      // What is the ID of the tile we are supposed to draw?
 
-
         if (id === this.renderedID) {   // Did we move?
             // We didn't move
             // No need to update if we've rendered in the past second
             // Let's wait on more network requests to complete
+
+            if (this.renderedVersion === this.tileCount * this.tileCount) return;   // We've already rendered the final version
+
             if (window.performance.now() - this.lastRenderTime < 1000) {
                 return;
             }
@@ -122,15 +136,11 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
         {
             // We moved
             this.renderedVersion = 0;
+            //this.ctx.fillStyle = this.fillStyle;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
 
         let version = 0;
-
-        //this.ctx.fillStyle = this.fillStyle;
-        //this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-
-        if (this.renderedVersion === this.tileCount * this.tileCount) return;   // We've already drawn the final version
 
         const halfTileCount = this.tileCount / 2; // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
 
@@ -145,7 +155,7 @@ function Tiles(url, canvas, zoom, fillStyle) {			//bugbug move to util class fil
         for (var yy = lowerY; yy < lowerY + this.tileCount; yy++) {
             for (var xx = lowerX; xx < lowerX + this.tileCount; xx++) {
 
-                const tile = this.getTile(xx, yy);
+                const tile = this.getTile(xx, yy, this.renderPass);
                 if (null != tile) {
                     this.ctx.drawImage(tile.image, xx * tileDimension, yy * tileDimension);
                     tile.renderPass = this.renderPass;
