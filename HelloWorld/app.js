@@ -134,33 +134,33 @@ function initGraphics() {
 	scene.add(laserPointer);
 
 	let meshComplexity = isMobile() ? 128 : 512;
-/*
-	smallTerrainCanvas = document.getElementById('smallTerrainCanvas');
-	smallTerrainCanvas.width = smallTerrainCanvas.height = meshComplexity;
 
-	smallMapCanvas = document.getElementById('smallMapCanvas');
-	smallMapCanvas.width = smallMapCanvas.height = 1024;
-*/
 	let mapSize = 10;
 
-	//bugbug mesh size
 	geometry = new THREE.PlaneGeometry(mapSize, mapSize, meshComplexity, meshComplexity);
-	//terrainTexture = new THREE.Texture(smallTerrainCanvas);
-	terrainTexture = new THREE.Texture(terrainCanvas);
 
-	//mapTexture = new THREE.Texture(smallMapCanvas);
+	terrainTexture = new THREE.Texture(terrainCanvas);
 	mapTexture = new THREE.Texture(mapCanvas);
+
+	terrainTexture.wrapS = THREE.RepeatWrapping;
+	terrainTexture.wrapT = THREE.RepeatWrapping;
+
+
+	mapTexture.wrapS = THREE.RepeatWrapping;
+	mapTexture.wrapT = THREE.RepeatWrapping;
+
 
 	let vertexShader = 
 	    "varying vec2 vUV; " +
 		"uniform sampler2D terrainTexture;" +
+		"uniform vec2 terrainTextureOffset; " +
 	    "varying float vDistance; " +
 		"void main() { " +
-		"vUV = uv; vec4 q = texture2D(terrainTexture, uv) * 256.0; " +
+		"vUV = uv; vec4 q = texture2D(terrainTexture, uv + terrainTextureOffset) * 256.0; " +
 		"float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
-		"elevation = clamp(elevation, 0.0, 10000.0); " +	// Clamp to sea level and Everest
-		"elevation = elevation / 20000.0; " +   // TODO change this based on latitude 
-		"vec3 p = position;" + 					// 'position' is a built-in three.js construct
+		"elevation = clamp(elevation, 0.0, 10000.0); " +					// Clamp to sea level and Everest
+		"elevation = elevation / 20000.0; " +   							// TODO change this based on latitude 
+		"vec3 p = position;" + 												// 'position' is a built-in three.js construct
 		"p.z += elevation; " +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
 		"vDistance = distance(gl_Position.xyz, vec3(0.0, 0.0, 0.0));" +
@@ -169,18 +169,21 @@ function initGraphics() {
 	let fragmentShader = 
 	    "varying vec2 vUV; " +
 		"uniform sampler2D mapTexture; " +
+		"uniform vec2 mapTextureOffset; " +
 		"varying float hazeStrength; " +
 		"varying float vDistance;" +
 		"void main() { " +
-		"  gl_FragColor = texture2D(mapTexture, vUV); " +
-		"  float hazeStrength = smoothstep(4.0, 5.0, vDistance);" +
-		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
+		"  gl_FragColor = texture2D(mapTexture, vUV + mapTextureOffset); " +
+		//"  float hazeStrength = smoothstep(4.0, 5.0, vDistance);" +
+		//"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
 		"}";
 
-	let material = new THREE.ShaderMaterial({
+	material = new THREE.ShaderMaterial({
 		uniforms: {
 			terrainTexture: { type: 't', value: terrainTexture },
-			mapTexture: { type: 't', value: mapTexture }
+			terrainTextureOffset: { value: new THREE.Vector2() },
+			mapTexture: { type: 't', value: mapTexture },
+			mapTextureOffset: { value: new THREE.Vector2() }
 		},
 		vertexShader: vertexShader,
 		fragmentShader: fragmentShader
@@ -316,6 +319,11 @@ function renderScene() {
 	if (true == mapTiles.checkUpdate())
 	{
 		//smallMapCanvas.getContext('2d').drawImage(mapCanvas, 0, 0, smallMapCanvas.width, smallMapCanvas.height);
+		//let offset = new THREE.Vector2(mapTiles.getNormalizedOffsetX(), mapTiles.getNormalizedOffsetY());
+
+		material.uniforms.mapTextureOffset.value.x = mapTiles.getNormalizedOffsetX();
+		material.uniforms.mapTextureOffset.value.y = mapTiles.getNormalizedOffsetY();
+
 		mapTexture.needsUpdate = true;
 	}
 
@@ -323,6 +331,15 @@ function renderScene() {
 	if (true == terrainTiles.checkUpdate())
 	{
 		//smallTerrainCanvas.getContext('2d').drawImage(terrainCanvas, 0, 0, smallTerrainCanvas.width, smallTerrainCanvas.height);
+		//let offset = new THREE.Vector2(terrainTiles.getNormalizedOffsetX(), terrainTiles.getNormalizedOffsetY());
+		//terrainTexture.transformUv(offset);
+		//terrainTexture.offset.x += 0.1;
+
+		material.uniforms.terrainTextureOffset.value.x = terrainTiles.getNormalizedOffsetX();
+		material.uniforms.terrainTextureOffset.value.y = terrainTiles.getNormalizedOffsetY();
+		material.uniforms.terrainTexture.value.needsUpdate = true;
+
+
 		terrainTexture.needsUpdate = true;
 	}
 	
@@ -346,8 +363,9 @@ function renderScene() {
 	controls.update();	// update HMD head position
 
 	// Shouldn't fly to high or too low...
-	if (user.y < 0.1) user.y = 0.1;
-	if (user.y > 2) user.y = 2;
+	//if (user.y < 0.1) user.y = 0.1;
+	//if (user.y > 2) user.y = 2;
+
 
 	effect.render(scene, camera);
 
