@@ -342,9 +342,8 @@ function renderScene() {
 
 	const longtitude = tile2long(fx, mapZoom);
 	const latitude = tile2lat(fz, mapZoom);
-	terrainTiles.render(longtitude, latitude);
 
-	//if (true == terrainTiles.checkUpdate())
+	terrainTiles.render(longtitude, latitude);
 	{
 		//smallTerrainCanvas.getContext('2d').drawImage(terrainCanvas, 0, 0, smallTerrainCanvas.width, smallTerrainCanvas.height);
 		//let offset = new THREE.Vector2(terrainTiles.getNormalizedOffsetX(), terrainTiles.getNormalizedOffsetY());
@@ -374,7 +373,6 @@ function renderScene() {
 	}
 
 	mapTiles.render(longtitude, latitude);
-	//if (true == mapTiles.checkUpdate())
 	{
 		//smallMapCanvas.getContext('2d').drawImage(mapCanvas, 0, 0, smallMapCanvas.width, smallMapCanvas.height);
 		//let offset = new THREE.Vector2(mapTiles.getNormalizedOffsetX(), mapTiles.getNormalizedOffsetY());
