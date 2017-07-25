@@ -72,7 +72,14 @@ let controls;
 let orbitControls;
 let effect; // the webvr renderer
 let geometry, material, mesh;
-let terrainTexture, mapTexture;
+
+//let terrainTexture;
+//mapTexture;
+let fMapTexture;
+let fMapTextureUniform;
+
+let fTerrainTexture;
+let fTerrainTextureUniform;
 
 let laserPointer;  // the cursor / pointer we're drawing for the gamepad
 
@@ -103,24 +110,19 @@ function orbitMouseUp() {
 
 // TODO move all desktop/mobile complexity const to a struct
 
-//let smallTerrainCanvas = null;
-//let smallMapCanvas = null;
-
 function initGraphics() {
 
 	// Set up maps
 
-	let canvasComplexity = isMobile() ? 2048 : 4096;
-
-	const mapCanvas = document.getElementById('mapCanvas');
-	mapCanvas.width = mapCanvas.height = canvasComplexity;
-	mapTiles = new Tiles('https://b.tiles.mapbox.com/v4/mapbox.satellite/%zoom%/%x%/%y%.pngraw?access_token=pk.eyJ1IjoiZnJhbmtvbGl2aWVyIiwiYSI6ImNqMHR3MGF1NTA0Z24ycW81dXR0dDIweDMifQ.SoQ9aqIfdOheISIYRqgR7w', mapCanvas, mapZoom, '#87ceff');
-
-	const terrainCanvas = document.getElementById('terrainCanvas');
-	terrainCanvas.width = terrainCanvas.height = canvasComplexity;
-	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%zoom%/%x%/%y%.png?api_key=mapzen-JcyHAc8', terrainCanvas, terrainZoom, '#00000000');
-
 	scene = new THREE.Scene();
+
+	renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('vrCanvas'), preserveDrawingBuffer: true }); //bugbug this might kill mobile perf?
+	renderer.setClearColor(0x87ceff, 1);
+
+	effect = new THREE.VREffect(renderer);
+
+	//redundant renderer.setSize(document.body.clientWidth, document.body.clientHeight);
+	renderer.setPixelRatio(window.devicePixelRatio);
 
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
 	camera.lookAt(new THREE.Vector3(0, -0.5, -1));
@@ -134,21 +136,50 @@ function initGraphics() {
 	scene.add(laserPointer);
 
 	let meshComplexity = isMobile() ? 128 : 512;
-
+	let canvasComplexity = isMobile() ? 2048 : 4096;
 	let mapSize = 10;
 
 	geometry = new THREE.PlaneGeometry(mapSize, mapSize, meshComplexity, meshComplexity);
 
-	terrainTexture = new THREE.Texture(terrainCanvas);
-	mapTexture = new THREE.Texture(mapCanvas);
+	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%zoom%/%x%/%y%.png?api_key=mapzen-JcyHAc8', canvasComplexity, terrainZoom);
+	mapTiles = new Tiles('https://b.tiles.mapbox.com/v4/mapbox.satellite/%zoom%/%x%/%y%.pngraw?access_token=pk.eyJ1IjoiZnJhbmtvbGl2aWVyIiwiYSI6ImNqMHR3MGF1NTA0Z24ycW81dXR0dDIweDMifQ.SoQ9aqIfdOheISIYRqgR7w', canvasComplexity, mapZoom);
 
-	terrainTexture.wrapS = THREE.RepeatWrapping;
-	terrainTexture.wrapT = THREE.RepeatWrapping;
+	const gl = renderer.context;
+
+	document.getElementById('terrainCanvas').width = document.getElementById('terrainCanvas').height = canvasComplexity;
+	document.getElementById('mapCanvas').width = document.getElementById('mapCanvas').height = canvasComplexity;
+	
+
+	fTerrainTexture = gl.createTexture();
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture(gl.TEXTURE_2D, fTerrainTexture);
+	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+	// Set the parameters so we can render any size image.
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	// Upload the image into the texture.
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById('terrainCanvas'));
+
+	fMapTexture = gl.createTexture();
+	gl.activeTexture(gl.TEXTURE1);
+	gl.bindTexture(gl.TEXTURE_2D, fMapTexture);
+	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+	// Set the parameters so we can render any size image.
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	// Upload the image into the texture.
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById('mapCanvas'));
 
 
-	mapTexture.wrapS = THREE.RepeatWrapping;
-	mapTexture.wrapT = THREE.RepeatWrapping;
+	//terrainTexture.wrapS = THREE.RepeatWrapping;
+	//terrainTexture.wrapT = THREE.RepeatWrapping;
 
+//	mapTexture.wrapS = THREE.RepeatWrapping;
+//	mapTexture.wrapT = THREE.RepeatWrapping;
 
 	let vertexShader = 
 	    "varying vec2 vUV; " +
@@ -180,9 +211,9 @@ function initGraphics() {
 
 	material = new THREE.ShaderMaterial({
 		uniforms: {
-			terrainTexture: { type: 't', value: terrainTexture },
+			terrainTexture: { type: 't', value: fTerrainTexture },
 			terrainTextureOffset: { value: new THREE.Vector2() },
-			mapTexture: { type: 't', value: mapTexture },
+			mapTexture: { type: 't', value: fMapTexture },
 			mapTextureOffset: { value: new THREE.Vector2() }
 		},
 		vertexShader: vertexShader,
@@ -194,11 +225,6 @@ function initGraphics() {
 	mesh.lookAt(new THREE.Vector3(0, 1, 0));
 
 	scene.add(mesh);
-
-	const vrCanvas = document.getElementById('vrCanvas');
-	renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, preserveDrawingBuffer: true }); //bugbug this might kill mobile perf?
-
-	renderer.setClearColor(0x87ceff, 1);
 
 	controls = new THREE.VRControls(camera);
 	controls.standing = false;
@@ -216,14 +242,16 @@ function initGraphics() {
 	renderer.domElement.addEventListener("touchstart", orbitMouseDown);
 	renderer.domElement.addEventListener("touchend", orbitMouseUp);
 
-	effect = new THREE.VREffect(renderer);
-
-	renderer.setSize(document.body.clientWidth, document.body.clientHeight);
-	renderer.setPixelRatio(window.devicePixelRatio);
-
 	document.getElementById('vrButton').onclick = function () {
 		effect.isPresenting ? effect.exitPresent() : effect.requestPresent();
 	};
+
+	// Set up uniforms
+	//fMapTextureUniform = gl.getUniformLocation(this.pictureprogram, "terrainTexture");
+
+	// Set the texture to use
+	//gl.uniform1i(fMapTextureUniform, 1);
+
 
 	window.addEventListener("resize", onWindowResize);
 	onWindowResize();
@@ -314,21 +342,9 @@ function renderScene() {
 
 	const longtitude = tile2long(fx, mapZoom);
 	const latitude = tile2lat(fz, mapZoom);
-
-	mapTiles.render(longtitude, latitude);
-	if (true == mapTiles.checkUpdate())
-	{
-		//smallMapCanvas.getContext('2d').drawImage(mapCanvas, 0, 0, smallMapCanvas.width, smallMapCanvas.height);
-		//let offset = new THREE.Vector2(mapTiles.getNormalizedOffsetX(), mapTiles.getNormalizedOffsetY());
-
-		material.uniforms.mapTextureOffset.value.x = mapTiles.getNormalizedOffsetX();
-		material.uniforms.mapTextureOffset.value.y = mapTiles.getNormalizedOffsetY();
-
-		mapTexture.needsUpdate = true;
-	}
-
 	terrainTiles.render(longtitude, latitude);
-	if (true == terrainTiles.checkUpdate())
+
+	//if (true == terrainTiles.checkUpdate())
 	{
 		//smallTerrainCanvas.getContext('2d').drawImage(terrainCanvas, 0, 0, smallTerrainCanvas.width, smallTerrainCanvas.height);
 		//let offset = new THREE.Vector2(terrainTiles.getNormalizedOffsetX(), terrainTiles.getNormalizedOffsetY());
@@ -337,11 +353,54 @@ function renderScene() {
 
 		material.uniforms.terrainTextureOffset.value.x = terrainTiles.getNormalizedOffsetX();
 		material.uniforms.terrainTextureOffset.value.y = terrainTiles.getNormalizedOffsetY();
-		material.uniforms.terrainTexture.value.needsUpdate = true;
+		material.uniforms.terrainTextureOffset.value.needsUpdate = true;
 
+		///const gl = renderer.context;
+		///gl.activeTexture(gl.TEXTURE_2D, terrainTexture.id);
+		///gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById('terrainCanvas'));
 
-		terrainTexture.needsUpdate = true;
+		//terrainTexture.needsUpdate = true;
+
+		const gl = renderer.context;
+		gl.activeTexture(gl.TEXTURE0);
+		gl.bindTexture(gl.TEXTURE_2D, fTerrainTexture);
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+
+		let tile = terrainTiles.getRenderTile();
+		if (!!tile)
+		{
+			gl.texSubImage2D(gl.TEXTURE_2D, 0, tile.drawX, tile.drawY, gl.RGBA, gl.UNSIGNED_BYTE, tile.image);		
+		}
 	}
+
+	mapTiles.render(longtitude, latitude);
+	//if (true == mapTiles.checkUpdate())
+	{
+		//smallMapCanvas.getContext('2d').drawImage(mapCanvas, 0, 0, smallMapCanvas.width, smallMapCanvas.height);
+		//let offset = new THREE.Vector2(mapTiles.getNormalizedOffsetX(), mapTiles.getNormalizedOffsetY());
+
+		material.uniforms.mapTextureOffset.value.x = mapTiles.getNormalizedOffsetX();
+		material.uniforms.mapTextureOffset.value.y = mapTiles.getNormalizedOffsetY();
+		material.uniforms.mapTextureOffset.value.needsUpdate = true;
+
+		//mapTexture.needsUpdate = true;
+
+		const gl = renderer.context;
+		gl.activeTexture(gl.TEXTURE1);
+		gl.bindTexture(gl.TEXTURE_2D, fMapTexture);
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+
+
+		let tile = mapTiles.getRenderTile();
+		if (!!tile)
+		{
+			gl.texSubImage2D(gl.TEXTURE_2D, 0, tile.drawX, tile.drawY, gl.RGBA, gl.UNSIGNED_BYTE, tile.image);		
+		}
+
+
+	}
+
+
 	
 	const m = geometry.parameters.width / (mapCanvas.width / tileDimension); // mesh size / n tiles
 	mesh.position.x = ((-1 * (user.x % 1) + 0.5)) * m;

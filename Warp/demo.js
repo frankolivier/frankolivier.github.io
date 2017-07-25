@@ -850,11 +850,7 @@ function init2(image) {
 		}
 	}
 
-	/*
-    for (var i = 0; i < c.length; i = i + 2) {
-    	log(i + " " + c[i] + " " + c[i+1]);
-    }
-	*/
+	//bugbug need to reuse existing texture when loading a new one
 
 	gl.bufferData(gl.ARRAY_BUFFER, c, gl.STATIC_DRAW);
 

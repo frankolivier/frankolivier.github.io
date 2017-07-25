@@ -37,7 +37,7 @@ input,
             top: 100px;
             width: 200px;
             height: 200px;
-            displa y: none;
+            display: none;
         }
 
         #terrainCanvas {
@@ -46,9 +46,9 @@ input,
             top: 100px;
             width: 200px;
             height: 200px;
-            displa y: none;
+            display: none;
         }
-\
+
         #vrButton {
             position: absolute;
             right: 3px;
