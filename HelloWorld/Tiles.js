@@ -2,17 +2,23 @@
 
 function Tiles(url, textureWidth, zoom) {
 
-    this.url = url;     // The URL pattern to use when downloading tiles
+    // The URL pattern to use when downloading tiles
+    // must contain %x%  %y% and %zoom%
+    // %x% is replaced with slippy map x
+    // %y% is replaced with slippy map y
+    // %zoom% is replaced with zoom level
+    this.url = url;
+
+    // Size of the (square) texture to fill with tiles
     this.textureWidth = textureWidth;
-    this.tileDimension = 256;
-    this.tileCount = (this.textureWidth / tileDimension); // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
+
+    // We are drawing 256x256 pixel tiles
+    const tileDimension = 256;
+
+    // Zoom level of the slippy map
     this.zoom = zoom;
 
-    this.renderedID = -1; // the unique id of the tile rendered in the last pass
-    this.renderedVersion = -1; // the unique version tile rendered in the last pass
-
-    this.uploadedID = -2; // the unique id of the tile (id +  and version) of the tile uploaded to the GPU
-    this.uploadedVersion = -2; // the unique id of the tile (id +  and version) of the tile uploaded to the GPU
+    this.tileCount = (this.textureWidth / tileDimension); // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
 
     this.lastRenderTime = 0; // only render occasionally
     this.renderPass = 0;

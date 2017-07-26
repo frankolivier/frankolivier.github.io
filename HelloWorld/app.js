@@ -137,7 +137,7 @@ function initGraphics() {
 
 	let meshComplexity = isMobile() ? 128 : 512;
 	let canvasComplexity = isMobile() ? 2048 : 4096;
-	let mapSize = 10;
+	let mapSize = 24;
 
 	geometry = new THREE.PlaneGeometry(mapSize, mapSize, meshComplexity, meshComplexity);
 
@@ -190,7 +190,7 @@ function initGraphics() {
 		"vUV = uv; vec4 q = texture2D(terrainTexture, uv + terrainTextureOffset) * 256.0; " +
 		"float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
 		"elevation = clamp(elevation, 0.0, 10000.0); " +					// Clamp to sea level and Everest
-		"elevation = elevation / 20000.0; " +   							// TODO change this based on latitude 
+		"elevation = elevation / 10000.0; " +   							// TODO change this based on latitude 
 		"vec3 p = position;" + 												// 'position' is a built-in three.js construct
 		"p.z += elevation; " +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
@@ -205,8 +205,8 @@ function initGraphics() {
 		"varying float vDistance;" +
 		"void main() { " +
 		"  gl_FragColor = texture2D(mapTexture, vUV + mapTextureOffset); " +
-		//"  float hazeStrength = smoothstep(4.0, 5.0, vDistance);" +
-		//"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
+		"  float hazeStrength = smoothstep(" + mapSize * 0.287 + ", " +  + mapSize * 0.499 + ", vDistance);" +
+		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
 		"}";
 
 	material = new THREE.ShaderMaterial({
@@ -368,7 +368,10 @@ function renderScene() {
 		let tile = terrainTiles.getRenderTile();
 		if (!!tile)
 		{
-			gl.texSubImage2D(gl.TEXTURE_2D, 0, tile.drawX, tile.drawY, gl.RGBA, gl.UNSIGNED_BYTE, tile.image);		
+			gl.texSubImage2D(gl.TEXTURE_2D, 0, tile.drawX, tile.drawY, gl.RGBA, gl.UNSIGNED_BYTE, tile.image);
+			//gl.generateMipmap(gl.TEXTURE_2D);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl. NEAREST);
+      		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 		}
 	}
 
@@ -392,7 +395,11 @@ function renderScene() {
 		let tile = mapTiles.getRenderTile();
 		if (!!tile)
 		{
-			gl.texSubImage2D(gl.TEXTURE_2D, 0, tile.drawX, tile.drawY, gl.RGBA, gl.UNSIGNED_BYTE, tile.image);		
+			gl.texSubImage2D(gl.TEXTURE_2D, 0, tile.drawX, tile.drawY, gl.RGBA, gl.UNSIGNED_BYTE, tile.image);
+			gl.generateMipmap(gl.TEXTURE_2D);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+			//gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);  
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 		}
 
 
