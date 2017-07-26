@@ -73,13 +73,12 @@ let orbitControls;
 let effect; // the webvr renderer
 let geometry, material, mesh;
 
-//let terrainTexture;
-//mapTexture;
-let fMapTexture;
-let fMapTextureUniform;
-
-let fTerrainTexture;
-let fTerrainTextureUniform;
+let terrainTexture;
+let mapTexture;
+////let fMapTexture;
+////let fMapTextureUniform;
+////let fTerrainTexture;
+////let fTerrainTextureUniform;
 
 let laserPointer;  // the cursor / pointer we're drawing for the gamepad
 
@@ -110,6 +109,8 @@ function orbitMouseUp() {
 
 // TODO move all desktop/mobile complexity const to a struct
 
+let canvasComplexity;
+
 function initGraphics() {
 
 	// Set up maps
@@ -136,7 +137,7 @@ function initGraphics() {
 	scene.add(laserPointer);
 
 	let meshComplexity = isMobile() ? 128 : 512;
-	let canvasComplexity = isMobile() ? 2048 : 4096;
+	canvasComplexity = isMobile() ? 2048 : 4096;
 	let mapSize = 24;
 
 	geometry = new THREE.PlaneGeometry(mapSize, mapSize, meshComplexity, meshComplexity);
@@ -146,10 +147,12 @@ function initGraphics() {
 
 	const gl = renderer.context;
 
-	document.getElementById('terrainCanvas').width = document.getElementById('terrainCanvas').height = canvasComplexity;
-	document.getElementById('mapCanvas').width = document.getElementById('mapCanvas').height = canvasComplexity;
-	
+	//document.getElementById('terrainCanvas').width = document.getElementById('terrainCanvas').height = canvasComplexity;
+	//document.getElementById('mapCanvas').width = document.getElementById('mapCanvas').height = canvasComplexity;
 
+
+////
+/*
 	fTerrainTexture = gl.createTexture();
 	gl.activeTexture(gl.TEXTURE0);
 	gl.bindTexture(gl.TEXTURE_2D, fTerrainTexture);
@@ -173,7 +176,7 @@ function initGraphics() {
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 	// Upload the image into the texture.
 	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById('mapCanvas'));
-
+*/
 
 	//terrainTexture.wrapS = THREE.RepeatWrapping;
 	//terrainTexture.wrapT = THREE.RepeatWrapping;
@@ -187,7 +190,7 @@ function initGraphics() {
 		"uniform vec2 terrainTextureOffset; " +
 	    "varying float vDistance; " +
 		"void main() { " +
-		"vUV = uv; vec4 q = texture2D(terrainTexture, uv + terrainTextureOffset) * 256.0; " +
+		"vUV = vec2(uv.x, 1.0 - uv.y); vec4 q = texture2D(terrainTexture, vUV + terrainTextureOffset) * 256.0; " +
 		"float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
 		"elevation = clamp(elevation, 0.0, 10000.0); " +					// Clamp to sea level and Everest
 		"elevation = elevation / 10000.0; " +   							// TODO change this based on latitude 
@@ -205,15 +208,32 @@ function initGraphics() {
 		"varying float vDistance;" +
 		"void main() { " +
 		"  gl_FragColor = texture2D(mapTexture, vUV + mapTextureOffset); " +
-		"  float hazeStrength = smoothstep(" + mapSize * 0.287 + ", " +  + mapSize * 0.499 + ", vDistance);" +
+		"  float hazeStrength = smoothstep(" + mapSize * 0.307 + ", " +  + mapSize * 0.499 + ", vDistance);" +
+		//" hazeStrength = 0.0; " +
 		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
 		"}";
 
+	
+	terrainTexture = new UpdatableTexture();
+	terrainTexture.setRenderer( renderer );
+	terrainTexture.minFilter = terrainTexture.magFilter = THREE.NearestFilter;
+	terrainTexture.wrapS = terrainTexture.wrapT = THREE.RepeatWrapping;
+	terrainTexture.generateMipmaps = false;
+	
+	mapTexture = new UpdatableTexture();
+	mapTexture.setRenderer( renderer );
+	mapTexture.minFilter = mapTexture.magFilter = THREE.NearestMipMapLinearFilter;
+	mapTexture.wrapS = mapTexture.wrapT = THREE.RepeatWrapping;
+	mapTexture.generateMipmaps = false;
+	mapTexture.flipY = false;
+
+
+
 	material = new THREE.ShaderMaterial({
 		uniforms: {
-			terrainTexture: { type: 't', value: fTerrainTexture },
+			terrainTexture: { type: 't', value: terrainTexture },
 			terrainTextureOffset: { value: new THREE.Vector2() },
-			mapTexture: { type: 't', value: fMapTexture },
+			mapTexture: { type: 't', value: mapTexture },
 			mapTextureOffset: { value: new THREE.Vector2() }
 		},
 		vertexShader: vertexShader,
@@ -252,6 +272,10 @@ function initGraphics() {
 	// Set the texture to use
 	//gl.uniform1i(fMapTextureUniform, 1);
 
+	effect.render(scene, camera); // Need to call this at least once to init texture system
+
+	terrainTexture.setSize( canvasComplexity, canvasComplexity );
+	mapTexture.setSize( canvasComplexity, canvasComplexity );
 
 	window.addEventListener("resize", onWindowResize);
 	onWindowResize();
@@ -360,6 +384,13 @@ function renderScene() {
 
 		//terrainTexture.needsUpdate = true;
 
+		let tile = terrainTiles.getRenderTile();
+		if (!!tile)
+		{
+			terrainTexture.update( tile.image, tile.drawX, tile.drawY );
+		}
+
+		/*
 		const gl = renderer.context;
 		gl.activeTexture(gl.TEXTURE0);
 		gl.bindTexture(gl.TEXTURE_2D, fTerrainTexture);
@@ -373,6 +404,8 @@ function renderScene() {
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl. NEAREST);
       		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 		}
+		*/
+
 	}
 
 	mapTiles.render(longtitude, latitude);
@@ -386,28 +419,19 @@ function renderScene() {
 
 		//mapTexture.needsUpdate = true;
 
-		const gl = renderer.context;
-		gl.activeTexture(gl.TEXTURE1);
-		gl.bindTexture(gl.TEXTURE_2D, fMapTexture);
-		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-
-
 		let tile = mapTiles.getRenderTile();
 		if (!!tile)
 		{
-			gl.texSubImage2D(gl.TEXTURE_2D, 0, tile.drawX, tile.drawY, gl.RGBA, gl.UNSIGNED_BYTE, tile.image);
-			gl.generateMipmap(gl.TEXTURE_2D);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-			//gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);  
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+			mapTexture.update( tile.image, tile.drawX, tile.drawY );
 		}
+
 
 
 	}
 
 
 	
-	const m = geometry.parameters.width / (mapCanvas.width / tileDimension); // mesh size / n tiles
+	const m = geometry.parameters.width / (canvasComplexity / tileDimension); // mesh size / n tiles
 	mesh.position.x = ((-1 * (user.x % 1) + 0.5)) * m;
 	mesh.position.z = ((-1 * (user.z % 1) + 0.5)) * m;
 	mesh.position.y = user.y * -1;

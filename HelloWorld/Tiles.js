@@ -39,7 +39,7 @@ function Tiles(url, textureWidth, zoom) {
     }
 
     this.getNormalizedOffsetY = function () {
-        return 1 - this.offsetY / this.tileCount;
+        return this.offsetY / this.tileCount;
     }
 
     // Our render list:
@@ -96,7 +96,7 @@ function Tiles(url, textureWidth, zoom) {
         if (!!window.createImageBitmap) {
             fetch(url)
                 .then(response => response.blob())
-                .then(blob => createImageBitmap(blob, { imageOrientation: 'flipY' }))
+                .then(blob => createImageBitmap(blob))
                 .then(image => { tile.image = image; this.renderTiles.push(tile); })
         }
         else {
