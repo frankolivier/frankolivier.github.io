@@ -34,27 +34,34 @@ function checkKey(e) {
 	if (e.keyCode == '38') {
 		// up arrow
 		vector.z = -step;
+		e.stopPropagation();
 	}
 	else if (e.keyCode == '40') {
 		// down arrow		     	
 		vector.z = step;
+		e.stopPropagation();
 	}
 	else if (e.keyCode == '37') {
 		// left arrow
 		vector.x = -step;
+		e.stopPropagation();
 
 	}
 	else if (e.keyCode == '39') {
 		// right arrow	
 		vector.x = step;
+		e.stopPropagation();
 	}
+
 	else if (e.keyCode == '219') {
 		// [
 		user.y -= step;
+		e.stopPropagation();
 	}
 	else if (e.keyCode == '221') {
 		// ]
 		user.y += step;
+		e.stopPropagation();
 	}
 
 	vector.applyQuaternion(camera.quaternion);
