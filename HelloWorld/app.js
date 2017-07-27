@@ -143,9 +143,9 @@ function initGraphics() {
 	}
 	scene.add(laserPointer);
 
-	let meshComplexity = isMobile() ? 128 : 512;
+	let meshComplexity = isMobile() ? 128 : 1024;
 	canvasComplexity = isMobile() ? 2048 : 8192;
-	let mapSize = 28;
+	let mapSize = 20;
 
 	geometry = new THREE.PlaneGeometry(mapSize, mapSize, meshComplexity, meshComplexity);
 
@@ -200,7 +200,7 @@ function initGraphics() {
 		"vUV = vec2(uv.x, 1.0 - uv.y); vec4 q = texture2D(terrainTexture, vUV + terrainTextureOffset) * 256.0; " +
 		"float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
 		"elevation = clamp(elevation, 0.0, 10000.0); " +					// Clamp to sea level and Everest
-		"elevation = elevation / 10000.0; " +   							// TODO change this based on latitude 
+		"elevation = elevation / 17000.0; " +   							// TODO change this based on latitude 
 		"vec3 p = position;" + 												// 'position' is a built-in three.js construct
 		"p.z += elevation; " +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
