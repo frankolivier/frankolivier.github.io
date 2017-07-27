@@ -218,13 +218,16 @@ function initGraphics() {
 	terrainTexture.setRenderer( renderer );
 	terrainTexture.minFilter = terrainTexture.magFilter = THREE.NearestFilter;
 	terrainTexture.wrapS = terrainTexture.wrapT = THREE.RepeatWrapping;
+	terrainTexture.anisotropy = 1;
 	terrainTexture.generateMipmaps = false;
 	
 	mapTexture = new UpdatableTexture();
 	mapTexture.setRenderer( renderer );
-	mapTexture.minFilter = mapTexture.magFilter = THREE.NearestMipMapLinearFilter;
+	mapTexture.minFilter = mapTexture.magFilter = THREE.LinearFilter;
 	mapTexture.wrapS = mapTexture.wrapT = THREE.RepeatWrapping;
 	mapTexture.generateMipmaps = false;
+	terrainTexture.anisotropy = renderer.getMaxAnisotropy();
+
 	mapTexture.flipY = false;
 
 
