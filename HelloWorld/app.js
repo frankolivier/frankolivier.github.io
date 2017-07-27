@@ -230,10 +230,11 @@ function initGraphics() {
 	
 	mapTexture = new UpdatableTexture();
 	mapTexture.setRenderer( renderer );
-	mapTexture.minFilter = mapTexture.magFilter = THREE.LinearFilter;
+	mapTexture.minFilter = THREE.LinearMipMapLinearFilter;
+	mapTexture.magFilter = THREE.LinearFilter;
 	mapTexture.wrapS = mapTexture.wrapT = THREE.RepeatWrapping;
-	mapTexture.generateMipmaps = false;
-	terrainTexture.anisotropy = renderer.getMaxAnisotropy();
+	mapTexture.generateMipmaps = true;
+	terrainTexture.anisotropy = 1; //renderer.getMaxAnisotropy();
 
 	mapTexture.flipY = false;
 
