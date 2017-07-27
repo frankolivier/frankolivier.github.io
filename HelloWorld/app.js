@@ -144,8 +144,8 @@ function initGraphics() {
 	scene.add(laserPointer);
 
 	let meshComplexity = isMobile() ? 128 : 512;
-	canvasComplexity = isMobile() ? 2048 : 4096;
-	let mapSize = 24;
+	canvasComplexity = isMobile() ? 2048 : 8192;
+	let mapSize = 28;
 
 	geometry = new THREE.PlaneGeometry(mapSize, mapSize, meshComplexity, meshComplexity);
 
