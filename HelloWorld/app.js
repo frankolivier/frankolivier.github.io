@@ -71,8 +71,6 @@ function checkKey(e) {
 
 }
 
-
-
 /// three js
 let scene, camera, renderer;
 let controls;
@@ -82,10 +80,6 @@ let geometry, material, mesh;
 
 let terrainTexture;
 let mapTexture;
-////let fMapTexture;
-////let fMapTextureUniform;
-////let fTerrainTexture;
-////let fTerrainTextureUniform;
 
 let laserPointer;  // the cursor / pointer we're drawing for the gamepad
 
@@ -145,7 +139,7 @@ function initGraphics() {
 
 	let meshComplexity = isMobile() ? 128 : 1024;
 	canvasComplexity = isMobile() ? 2048 : 8192;
-	let mapSize = 20;
+	let mapSize = 10;
 
 	geometry = new THREE.PlaneGeometry(mapSize, mapSize, meshComplexity, meshComplexity);
 
@@ -153,43 +147,6 @@ function initGraphics() {
 	mapTiles = new Tiles('https://b.tiles.mapbox.com/v4/mapbox.satellite/%zoom%/%x%/%y%.pngraw?access_token=pk.eyJ1IjoiZnJhbmtvbGl2aWVyIiwiYSI6ImNqMHR3MGF1NTA0Z24ycW81dXR0dDIweDMifQ.SoQ9aqIfdOheISIYRqgR7w', canvasComplexity, mapZoom);
 
 	const gl = renderer.context;
-
-	//document.getElementById('terrainCanvas').width = document.getElementById('terrainCanvas').height = canvasComplexity;
-	//document.getElementById('mapCanvas').width = document.getElementById('mapCanvas').height = canvasComplexity;
-
-
-////
-/*
-	fTerrainTexture = gl.createTexture();
-	gl.activeTexture(gl.TEXTURE0);
-	gl.bindTexture(gl.TEXTURE_2D, fTerrainTexture);
-	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-	// Set the parameters so we can render any size image.
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-	// Upload the image into the texture.
-	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById('terrainCanvas'));
-
-	fMapTexture = gl.createTexture();
-	gl.activeTexture(gl.TEXTURE1);
-	gl.bindTexture(gl.TEXTURE_2D, fMapTexture);
-	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-	// Set the parameters so we can render any size image.
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-	// Upload the image into the texture.
-	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById('mapCanvas'));
-*/
-
-	//terrainTexture.wrapS = THREE.RepeatWrapping;
-	//terrainTexture.wrapT = THREE.RepeatWrapping;
-
-//	mapTexture.wrapS = THREE.RepeatWrapping;
-//	mapTexture.wrapT = THREE.RepeatWrapping;
 
 	let vertexShader = 
 	    "varying vec2 vUV; " +
@@ -200,7 +157,7 @@ function initGraphics() {
 		"vUV = vec2(uv.x, 1.0 - uv.y); vec4 q = texture2D(terrainTexture, vUV + terrainTextureOffset) * 256.0; " +
 		"float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
 		"elevation = clamp(elevation, 0.0, 10000.0); " +					// Clamp to sea level and Everest
-		"elevation = elevation / 17000.0; " +   							// TODO change this based on latitude 
+		"elevation = elevation / 28000.0; " +   							// TODO change this based on latitude 
 		"vec3 p = position;" + 												// 'position' is a built-in three.js construct
 		"p.z += elevation; " +
 		"gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
@@ -400,23 +357,6 @@ function renderScene() {
 		{
 			terrainTexture.update( tile.image, tile.drawX, tile.drawY );
 		}
-
-		/*
-		const gl = renderer.context;
-		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, fTerrainTexture);
-		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-
-		let tile = terrainTiles.getRenderTile();
-		if (!!tile)
-		{
-			gl.texSubImage2D(gl.TEXTURE_2D, 0, tile.drawX, tile.drawY, gl.RGBA, gl.UNSIGNED_BYTE, tile.image);
-			//gl.generateMipmap(gl.TEXTURE_2D);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl. NEAREST);
-      		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-		}
-		*/
-
 	}
 
 	mapTiles.render(longtitude, latitude);
