@@ -451,7 +451,7 @@ function init() {
 		e.stopPropagation();
 	};
 
-	renderer.domElement.onclick = function (e) { e.srcElement.focus() };
+	renderer.domElement.onclick = function (e) { renderer.domElement.focus() };
 
 	document.getElementById('geoControls').addEventListener('submit', function (e) {
 		geocodeAddress();
