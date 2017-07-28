@@ -3,7 +3,6 @@
 // https://en.wikipedia.org/wiki/Web_Mercator
 // http://mike.teczno.com/notes/osm-us-terrain-layer/foreground.html
 // https://www.mapbox.com/blog/3d-terrain-threejs/
-// bugbug feature detect webgl, fetch, web workers
 // bugbug http://www.thunderforest.com/maps/landscape/
 // TODO http://wiki.openstreetmap.org/wiki/Zoom_levels Set correct zoom level on navigate
 // TODO Add location to URL
@@ -18,7 +17,7 @@ window.addEventListener('blur', () => { WindowIsActive = false })
 let user = new THREE.Vector3(331.02, 1.55, 722.992);	// the point on the map we are currently above
 
 const tileDimension = 256;	// Tiles are 256 x 256 pixels
-let terrainTiles;	  		// Tiles.js instance for elevation data
+//let terrainTiles;	  		// Tiles.js instance for elevation data
 let mapTiles;		 		// Tiles.js instance for color values
 
 const mapZoom = 11; // The zoom level of the slippy map we're using
@@ -143,16 +142,16 @@ function initGraphics() {
 
 	geometry = new THREE.PlaneGeometry(mapSize, mapSize, meshComplexity, meshComplexity);
 
-	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%zoom%/%x%/%y%.png?api_key=mapzen-JcyHAc8', canvasComplexity, terrainZoom);
+	//if (!!terrainTiles) terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%zoom%/%x%/%y%.png?api_key=mapzen-JcyHAc8', canvasComplexity, terrainZoom);
 	mapTiles = new Tiles('https://b.tiles.mapbox.com/v4/mapbox.satellite/%zoom%/%x%/%y%.pngraw?access_token=pk.eyJ1IjoiZnJhbmtvbGl2aWVyIiwiYSI6ImNqMHR3MGF1NTA0Z24ycW81dXR0dDIweDMifQ.SoQ9aqIfdOheISIYRqgR7w', canvasComplexity, mapZoom);
 
 	const gl = renderer.context;
 
-	let vertexShader = 
-	    "varying vec2 vUV; " +
+	let vertexShader =
+		"varying vec2 vUV; " +
 		"uniform sampler2D terrainTexture;" +
 		"uniform vec2 terrainTextureOffset; " +
-	    "varying float vDistance; " +
+		"varying float vDistance; " +
 		"void main() { " +
 		"vUV = vec2(uv.x, 1.0 - uv.y); vec4 q = texture2D(terrainTexture, vUV + terrainTextureOffset) * 256.0; " +
 		"float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
@@ -164,34 +163,34 @@ function initGraphics() {
 		"vDistance = distance(gl_Position.xyz, vec3(0.0, 0.0, 0.0));" +
 		"}";
 
-	let fragmentShader = 
-	    "varying vec2 vUV; " +
+	let fragmentShader =
+		"varying vec2 vUV; " +
 		"uniform sampler2D mapTexture; " +
 		"uniform vec2 mapTextureOffset; " +
 		"varying float hazeStrength; " +
 		"varying float vDistance;" +
 		"void main() { " +
 		"  gl_FragColor = texture2D(mapTexture, vUV + mapTextureOffset); " +
-		"  float hazeStrength = smoothstep(" + mapSize * 0.307 + ", " +  + mapSize * 0.499 + ", vDistance);" +
+		"  float hazeStrength = smoothstep(" + mapSize * 0.307 + ", " + + mapSize * 0.499 + ", vDistance);" +
 		//" hazeStrength = 0.0; " +
 		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
 		"}";
 
-	
+/*
 	terrainTexture = new UpdatableTexture();
-	terrainTexture.setRenderer( renderer );
+	terrainTexture.setRenderer(renderer);
 	terrainTexture.minFilter = terrainTexture.magFilter = THREE.NearestFilter;
 	terrainTexture.wrapS = terrainTexture.wrapT = THREE.RepeatWrapping;
 	terrainTexture.anisotropy = 1;
 	terrainTexture.generateMipmaps = false;
-	
+*/
 	mapTexture = new UpdatableTexture();
-	mapTexture.setRenderer( renderer );
+	mapTexture.setRenderer(renderer);
 	mapTexture.minFilter = THREE.LinearMipMapLinearFilter;
 	mapTexture.magFilter = THREE.LinearFilter;
 	mapTexture.wrapS = mapTexture.wrapT = THREE.RepeatWrapping;
 	mapTexture.generateMipmaps = true;
-	terrainTexture.anisotropy = 1; //renderer.getMaxAnisotropy();
+	mapTexture.anisotropy = 1; //renderer.getMaxAnisotropy();
 
 	mapTexture.flipY = false;
 
@@ -242,8 +241,8 @@ function initGraphics() {
 
 	effect.render(scene, camera); // Need to call this at least once to init texture system
 
-	terrainTexture.setSize( canvasComplexity, canvasComplexity );
-	mapTexture.setSize( canvasComplexity, canvasComplexity );
+	//terrainTexture.setSize(canvasComplexity, canvasComplexity);
+	mapTexture.setSize(canvasComplexity, canvasComplexity);
 
 	window.addEventListener("resize", onWindowResize);
 	onWindowResize();
@@ -325,7 +324,7 @@ function renderScene() {
 	effect.requestAnimationFrame(renderScene);
 
 	// Save power and performance by not rendering when window is in the background
-	if (!WindowIsActive) return; 
+	if (!WindowIsActive) return;
 
 	handleController();
 
@@ -335,29 +334,33 @@ function renderScene() {
 	const longtitude = tile2long(fx, mapZoom);
 	const latitude = tile2lat(fz, mapZoom);
 
-	terrainTiles.render(longtitude, latitude);
-	{
-		//smallTerrainCanvas.getContext('2d').drawImage(terrainCanvas, 0, 0, smallTerrainCanvas.width, smallTerrainCanvas.height);
-		//let offset = new THREE.Vector2(terrainTiles.getNormalizedOffsetX(), terrainTiles.getNormalizedOffsetY());
-		//terrainTexture.transformUv(offset);
-		//terrainTexture.offset.x += 0.1;
-
-		material.uniforms.terrainTextureOffset.value.x = terrainTiles.getNormalizedOffsetX();
-		material.uniforms.terrainTextureOffset.value.y = terrainTiles.getNormalizedOffsetY();
-		material.uniforms.terrainTextureOffset.value.needsUpdate = true;
-
-		///const gl = renderer.context;
-		///gl.activeTexture(gl.TEXTURE_2D, terrainTexture.id);
-		///gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById('terrainCanvas'));
-
-		//terrainTexture.needsUpdate = true;
-
-		let tile = terrainTiles.getRenderTile();
-		if (!!tile)
+	/*
+	if (!!terrainTiles) {
+		terrainTiles.render(longtitude, latitude);
 		{
-			terrainTexture.update( tile.image, tile.drawX, tile.drawY );
+			//smallTerrainCanvas.getContext('2d').drawImage(terrainCanvas, 0, 0, smallTerrainCanvas.width, smallTerrainCanvas.height);
+			//let offset = new THREE.Vector2(terrainTiles.getNormalizedOffsetX(), terrainTiles.getNormalizedOffsetY());
+			//terrainTexture.transformUv(offset);
+			//terrainTexture.offset.x += 0.1;
+
+			material.uniforms.terrainTextureOffset.value.x = terrainTiles.getNormalizedOffsetX();
+			material.uniforms.terrainTextureOffset.value.y = terrainTiles.getNormalizedOffsetY();
+			material.uniforms.terrainTextureOffset.value.needsUpdate = true;
+
+			///const gl = renderer.context;
+			///gl.activeTexture(gl.TEXTURE_2D, terrainTexture.id);
+			///gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById('terrainCanvas'));
+
+			//terrainTexture.needsUpdate = true;
+
+			let tile = terrainTiles.getRenderTile();
+			if (!!tile) {
+				terrainTexture.update(tile.image, tile.drawX, tile.drawY);
+			}
 		}
 	}
+	*/
+
 
 	mapTiles.render(longtitude, latitude);
 	{
@@ -371,9 +374,8 @@ function renderScene() {
 		//mapTexture.needsUpdate = true;
 
 		let tile = mapTiles.getRenderTile();
-		if (!!tile)
-		{
-			mapTexture.update( tile.image, tile.drawX, tile.drawY );
+		if (!!tile) {
+			mapTexture.update(tile.image, tile.drawX, tile.drawY);
 		}
 
 
@@ -381,24 +383,24 @@ function renderScene() {
 	}
 
 
-	
+
 	const m = geometry.parameters.width / (canvasComplexity / tileDimension); // mesh size / n tiles
 	mesh.position.x = ((-1 * (user.x % 1) + 0.5)) * m;
 	mesh.position.z = ((-1 * (user.z % 1) + 0.5)) * m;
 	mesh.position.y = user.y * -1;
 
-/*
-	disable moving to do some performance tests
-	if (true == moving) {
-		if (window.performance.now() - downTime > 1000) {
-			// wait 1000ms before moving forward
-			// this gives the user time to turn the camera
-			let vector = new THREE.Vector3(0, 0, -0.001);
-			vector.applyQuaternion(orbitControls.object.quaternion);
-			user.add(vector);
+	/*
+		disable moving to do some performance tests
+		if (true == moving) {
+			if (window.performance.now() - downTime > 1000) {
+				// wait 1000ms before moving forward
+				// this gives the user time to turn the camera
+				let vector = new THREE.Vector3(0, 0, -0.001);
+				vector.applyQuaternion(orbitControls.object.quaternion);
+				user.add(vector);
+			}
 		}
-	}
-*/
+	*/
 	controls.update();	// update HMD head position
 
 	// Shouldn't fly to high or too low...
@@ -449,7 +451,7 @@ function init() {
 		e.stopPropagation();
 	};
 
-	renderer.domElement.onclick = function(e){e.srcElement.focus()};
+	renderer.domElement.onclick = function (e) { e.srcElement.focus() };
 
 	document.getElementById('geoControls').addEventListener('submit', function (e) {
 		geocodeAddress();
