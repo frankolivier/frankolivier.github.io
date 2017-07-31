@@ -17,11 +17,14 @@ window.addEventListener('blur', () => { WindowIsActive = false })
 let user = new THREE.Vector3(331.02, 1.55, 722.992);	// the point on the map we are currently above
 
 const tileDimension = 256;	// Tiles are 256 x 256 pixels
-//let terrainTiles;	  		// Tiles.js instance for elevation data
+let terrainTiles;	  		// Tiles.js instance for elevation data
 let mapTiles;		 		// Tiles.js instance for color values
 
 const mapZoom = 11; // The zoom level of the slippy map we're using
 const terrainZoom = 11;
+
+let fly = false;
+let flyVector = new THREE.Vector3(0, 0, 0);
 
 function checkKey(e) {
 
@@ -30,6 +33,20 @@ function checkKey(e) {
 	let vector = new THREE.Vector3(0, 0, 0);
 
 	e = e || window.event;
+
+	if (e.key == 'f') {
+		fly = !fly;
+		if (fly) {
+			flyVector.x = flyVector.y = 0;
+			flyVector.z = -0.001;
+			flyVector.applyQuaternion(camera.quaternion);
+			flyVector.y = 0; // don't lose altitude
+		}
+		else {
+			flyVector.x = flyVector.y = flyVector.z = 0;
+		}
+	}
+
 	if (e.keyCode == '38') {
 		// up arrow
 		vector.z = -step;
@@ -136,13 +153,13 @@ function initGraphics() {
 	}
 	scene.add(laserPointer);
 
-	let meshComplexity = isMobile() ? 128 : 1024;
-	canvasComplexity = isMobile() ? 2048 : 8192;
+	let meshComplexity = isMobile() ? 128 : 512;
+	canvasComplexity = isMobile() ? 2048 : 4096;
 	let mapSize = 10;
 
 	geometry = new THREE.PlaneGeometry(mapSize, mapSize, meshComplexity, meshComplexity);
 
-	//if (!!terrainTiles) terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%zoom%/%x%/%y%.png?api_key=mapzen-JcyHAc8', canvasComplexity, terrainZoom);
+	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%zoom%/%x%/%y%.png?api_key=mapzen-JcyHAc8', canvasComplexity, terrainZoom);
 	mapTiles = new Tiles('https://b.tiles.mapbox.com/v4/mapbox.satellite/%zoom%/%x%/%y%.pngraw?access_token=pk.eyJ1IjoiZnJhbmtvbGl2aWVyIiwiYSI6ImNqMHR3MGF1NTA0Z24ycW81dXR0dDIweDMifQ.SoQ9aqIfdOheISIYRqgR7w', canvasComplexity, mapZoom);
 
 	const gl = renderer.context;
@@ -176,19 +193,22 @@ function initGraphics() {
 		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
 		"}";
 
-/*
+
 	terrainTexture = new UpdatableTexture();
 	terrainTexture.setRenderer(renderer);
-	terrainTexture.minFilter = terrainTexture.magFilter = THREE.NearestFilter;
-	terrainTexture.wrapS = terrainTexture.wrapT = THREE.RepeatWrapping;
+	terrainTexture.minFilter = THREE.NearestFilter;
+	terrainTexture.magFilter = THREE.NearestFilter;
+	terrainTexture.wrapS = THREE.RepeatWrapping;
+	terrainTexture.wrapT = THREE.RepeatWrapping;
 	terrainTexture.anisotropy = 1;
 	terrainTexture.generateMipmaps = false;
-*/
+
 	mapTexture = new UpdatableTexture();
 	mapTexture.setRenderer(renderer);
 	mapTexture.minFilter = THREE.LinearMipMapLinearFilter;
 	mapTexture.magFilter = THREE.LinearFilter;
-	mapTexture.wrapS = mapTexture.wrapT = THREE.RepeatWrapping;
+	mapTexture.wrapS = THREE.RepeatWrapping;
+	mapTexture.wrapT = THREE.RepeatWrapping;
 	mapTexture.generateMipmaps = true;
 	mapTexture.anisotropy = 1; //renderer.getMaxAnisotropy();
 
@@ -241,7 +261,7 @@ function initGraphics() {
 
 	effect.render(scene, camera); // Need to call this at least once to init texture system
 
-	//terrainTexture.setSize(canvasComplexity, canvasComplexity);
+	terrainTexture.setSize(canvasComplexity, canvasComplexity);
 	mapTexture.setSize(canvasComplexity, canvasComplexity);
 
 	window.addEventListener("resize", onWindowResize);
@@ -321,6 +341,8 @@ function handleController() {
 
 function renderScene() {
 
+	user.add(flyVector);
+
 	effect.requestAnimationFrame(renderScene);
 
 	// Save power and performance by not rendering when window is in the background
@@ -334,32 +356,32 @@ function renderScene() {
 	const longtitude = tile2long(fx, mapZoom);
 	const latitude = tile2lat(fz, mapZoom);
 
-	/*
-	if (!!terrainTiles) {
-		terrainTiles.render(longtitude, latitude);
-		{
-			//smallTerrainCanvas.getContext('2d').drawImage(terrainCanvas, 0, 0, smallTerrainCanvas.width, smallTerrainCanvas.height);
-			//let offset = new THREE.Vector2(terrainTiles.getNormalizedOffsetX(), terrainTiles.getNormalizedOffsetY());
-			//terrainTexture.transformUv(offset);
-			//terrainTexture.offset.x += 0.1;
 
-			material.uniforms.terrainTextureOffset.value.x = terrainTiles.getNormalizedOffsetX();
-			material.uniforms.terrainTextureOffset.value.y = terrainTiles.getNormalizedOffsetY();
-			material.uniforms.terrainTextureOffset.value.needsUpdate = true;
 
-			///const gl = renderer.context;
-			///gl.activeTexture(gl.TEXTURE_2D, terrainTexture.id);
-			///gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById('terrainCanvas'));
+	terrainTiles.render(longtitude, latitude);
+	{
+		//smallTerrainCanvas.getContext('2d').drawImage(terrainCanvas, 0, 0, smallTerrainCanvas.width, smallTerrainCanvas.height);
+		//let offset = new THREE.Vector2(terrainTiles.getNormalizedOffsetX(), terrainTiles.getNormalizedOffsetY());
+		//terrainTexture.transformUv(offset);
+		//terrainTexture.offset.x += 0.1;
 
-			//terrainTexture.needsUpdate = true;
+		material.uniforms.terrainTextureOffset.value.x = terrainTiles.getNormalizedOffsetX();
+		material.uniforms.terrainTextureOffset.value.y = terrainTiles.getNormalizedOffsetY();
+		material.uniforms.terrainTextureOffset.value.needsUpdate = true;
 
-			let tile = terrainTiles.getRenderTile();
-			if (!!tile) {
-				terrainTexture.update(tile.image, tile.drawX, tile.drawY);
-			}
+		///const gl = renderer.context;
+		///gl.activeTexture(gl.TEXTURE_2D, terrainTexture.id);
+		///gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById('terrainCanvas'));
+
+		//terrainTexture.needsUpdate = true;
+
+		let tile = terrainTiles.getRenderTile();
+		if (!!tile) {
+			terrainTexture.update(tile.image, tile.drawX, tile.drawY);
 		}
 	}
-	*/
+
+
 
 
 	mapTiles.render(longtitude, latitude);
