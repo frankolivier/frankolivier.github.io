@@ -10,9 +10,12 @@
 
 document.addEventListener("DOMContentLoaded", init);
 
+let fly = false;
+let flyVector = new THREE.Vector3(0, 0, 0);
+
 let WindowIsActive = true;
 window.addEventListener('focus', () => { WindowIsActive = true })
-window.addEventListener('blur', () => { WindowIsActive = false })
+window.addEventListener('blur', () => { if (!fly) { WindowIsActive = false }} )
 
 let user = new THREE.Vector3(331.02, 1.55, 722.992);	// the point on the map we are currently above
 
@@ -23,8 +26,7 @@ let mapTiles;		 		// Tiles.js instance for color values
 const mapZoom = 11; // The zoom level of the slippy map we're using
 const terrainZoom = 11;
 
-let fly = false;
-let flyVector = new THREE.Vector3(0, 0, 0);
+
 
 function checkKey(e) {
 
@@ -38,7 +40,7 @@ function checkKey(e) {
 		fly = !fly;
 		if (fly) {
 			flyVector.x = flyVector.y = 0;
-			flyVector.z = -0.001;
+			flyVector.z = -0.003;
 			flyVector.applyQuaternion(camera.quaternion);
 			flyVector.y = 0; // don't lose altitude
 		}
