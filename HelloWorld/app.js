@@ -15,7 +15,7 @@ let flyVector = new THREE.Vector3(0, 0, 0);
 
 let WindowIsActive = true;
 window.addEventListener('focus', () => { WindowIsActive = true })
-window.addEventListener('blur', () => { if (!fly) { WindowIsActive = false }} )
+window.addEventListener('blur', () => { if (!fly) { WindowIsActive = false } })
 
 let user = new THREE.Vector3(331.02, 1.55, 722.992);	// the point on the map we are currently above
 
@@ -190,6 +190,12 @@ function initGraphics() {
 		"varying float vDistance;" +
 		"void main() { " +
 		"  gl_FragColor = texture2D(mapTexture, vUV + mapTextureOffset); " +
+		"  if (vDistance < 1.0) {" + // Blur texture if close to the camera
+		"  gl_FragColor += texture2D(mapTexture, vUV + mapTextureOffset + vec2(1.0 / " + canvasComplexity + ".0, 1.0 / " + canvasComplexity + ".0)); " +
+		"  gl_FragColor += texture2D(mapTexture, vUV + mapTextureOffset - vec2(1.0 / " + canvasComplexity + ".0, 1.0 / " + canvasComplexity + ".0)); " +
+		//"  gl_FragColor.r += 1.0;" +
+		"  gl_FragColor /= 3.0;" +
+		"  }" +
 		"  float hazeStrength = smoothstep(" + mapSize * 0.307 + ", " + + mapSize * 0.499 + ", vDistance);" +
 		//" hazeStrength = 0.0; " +
 		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
