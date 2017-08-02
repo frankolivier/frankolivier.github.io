@@ -26,6 +26,22 @@ const terrainZoom = 11; // TODO we can use a lower texture resolution & higher z
 
 let coolPlaces = [
 {
+	// everest
+	lat: 28.981259082440634,
+	long: 86.8987579332611,
+	altitude: 0.2,
+	x: 0.04412079812160909,
+	y: 0.407682868650855,
+	z: -0.9120570342810701
+},{
+	// taranaki
+	lat: -39.497514052713164,
+	long: 173.26214310553706,
+	altitude: 0.2,
+	x: -1.03636448474885,
+	y: 0.9688781772202125,
+	z: 0.1943444831548005
+},{
 	// kilimanjaro
 	lat: -3.388293006768995,
 	long: 37.694583068492136,
@@ -328,7 +344,7 @@ function initGraphics() {
 	// non-VR controls
 	orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
 	orbitControls.maxPolarAngle = Math.PI * 0.7;
-	orbitControls.minDistance = 1;
+	orbitControls.minDistance = 0.1;
 	orbitControls.maxDistance = 10;
 	orbitControls.enableKeys = false;
 
@@ -357,12 +373,6 @@ function initGraphics() {
 
 		}
 	};
-
-	// Set up uniforms
-	//fMapTextureUniform = gl.getUniformLocation(this.pictureprogram, "terrainTexture");
-
-	// Set the texture to use
-	//gl.uniform1i(fMapTextureUniform, 1);
 
 	effect.render(scene, camera); // Need to call this at least once to init texture system
 
@@ -462,33 +472,17 @@ function renderScene() {
 	const longtitude = tile2long(fx, mapZoom);
 	const latitude = tile2lat(fz, mapZoom);
 
-
-
 	terrainTiles.render(longtitude, latitude);
 	{
-		//smallTerrainCanvas.getContext('2d').drawImage(terrainCanvas, 0, 0, smallTerrainCanvas.width, smallTerrainCanvas.height);
-		//let offset = new THREE.Vector2(terrainTiles.getNormalizedOffsetX(), terrainTiles.getNormalizedOffsetY());
-		//terrainTexture.transformUv(offset);
-		//terrainTexture.offset.x += 0.1;
-
 		material.uniforms.terrainTextureOffset.value.x = terrainTiles.getNormalizedOffsetX();
 		material.uniforms.terrainTextureOffset.value.y = terrainTiles.getNormalizedOffsetY();
 		material.uniforms.terrainTextureOffset.value.needsUpdate = true;
-
-		///const gl = renderer.context;
-		///gl.activeTexture(gl.TEXTURE_2D, terrainTexture.id);
-		///gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById('terrainCanvas'));
-
-		//terrainTexture.needsUpdate = true;
 
 		let tile = terrainTiles.getRenderTile();
 		if (!!tile) {
 			terrainTexture.update(tile.image, tile.drawX, tile.drawY);
 		}
 	}
-
-
-
 
 	mapTiles.render(longtitude, latitude);
 	{
@@ -537,9 +531,7 @@ function renderScene() {
 	//if (user.y < 0.1) user.y = 0.1;
 	//if (user.y > 2) user.y = 2;
 
-
 	effect.render(scene, camera);
-
 
 }
 
