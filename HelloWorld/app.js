@@ -26,6 +26,14 @@ const terrainZoom = 11; // TODO we can use a lower texture resolution & higher z
 
 let coolPlaces = [
 {
+	// kilimanjaro
+	lat: -3.388293006768995,
+	long: 37.694583068492136,
+	altitude: 0.3,
+	x: 0.7298929322802403,
+	y: 0.6943702114948183,
+	z: 0.30518774187903275
+},{
 	// denali
 	lat: 63.5339147484756,
 	long: -149.00247516698886,
@@ -111,16 +119,19 @@ function checkKey(e) {
 		case 'f': //flying
 			setFlyMode(!flying);
 			break;
-
+		case 'Up':
 		case 'ArrowUp':
 			vector.z = -step;
 			break;
+		case 'Down':
 		case 'ArrowDown':
 			vector.z = step;
 			break;
+		case 'Left':
 		case 'ArrowLeft':
 			vector.x = -step;
 			break;
+		case 'Right':
 		case 'ArrowRight':
 			vector.x = step;
 			break;
