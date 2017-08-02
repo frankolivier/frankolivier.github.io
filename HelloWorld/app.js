@@ -24,6 +24,25 @@ let mapTiles;		 		// Tiles.js instance for color values
 const mapZoom = 11;
 const terrainZoom = 11; // TODO we can use a lower texture resolution & higher zoom here and save memory
 
+let coolPlaces = [{
+	// fractal lake
+	lat: 23.722306617661523,
+	long: 32.964605191783505,
+	altitude: 0.2,
+	x: 0.14156320405053108,
+	y: 0.8650418997772855,
+	z: -0.4813131734002848
+},
+{
+	// cape town
+	lat: -34.42967306621232,
+	long: 18.680925276611077,
+	altitude: 0.2,
+	x: -0.1216409382680244,
+	y: 0.6663093574533964,
+	z: 0.7356869730444578
+}];
+
 function setFlyMode(setting) {
 	if (setting === true) {
 		flyingVector.x = flyingVector.y = 0;
@@ -36,6 +55,21 @@ function setFlyMode(setting) {
 		flyingVector.x = flyingVector.y = flyingVector.z = 0;
 		flying = false;
 	}
+}
+
+function GotoRandomCoolPlace() {
+	let p = coolPlaces[Math.floor(Math.random() * coolPlaces.length)]
+
+	user.z = lat2tile(p.lat, mapZoom);
+	user.x = long2tile(p.long, mapZoom);
+	user.y = p.altitude;
+
+	camera.position.x = p.x;
+	camera.position.y = p.y;
+	camera.position.z = p.z;
+	camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+	setFlyMode(true);
 }
 
 function checkKey(e) {
@@ -75,26 +109,7 @@ function checkKey(e) {
 			console.log(camera.position.x + ' ' + camera.position.y + ' ' + camera.position.z);
 			break;
 		case '2':
-			let p = {
-				lat: 23.722306617661523,
-				long: 32.964605191783505,
-				altitude: 0.2,
-				x: 0.14156320405053108,
-				y: 0.8650418997772855,
-				z: -0.4813131734002848
-			}
-
-			user.z = lat2tile(p.lat, mapZoom);
-			user.x = long2tile(p.long, mapZoom);
-			user.y = p.altitude;
-
-			camera.position.x = p.x;
-			camera.position.y = p.y;
-			camera.position.z = p.z;
-			camera.lookAt(new THREE.Vector3(0, 0, 0));
-
-			setFlyMode(true);
-
+			GotoRandomCoolPlace();
 			break;
 
 		default:
@@ -522,6 +537,8 @@ function init() {
 		geocodeAddress();
 		e.preventDefault();
 	});
+
+	GotoRandomCoolPlace();
 
 	renderScene();	// Start main rendering loop
 }
