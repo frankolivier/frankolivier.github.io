@@ -26,6 +26,15 @@ const terrainZoom = 11; // TODO we can use a lower texture resolution & higher z
 
 let coolPlaces = [
 {
+	// denali
+	lat: 63.5339147484756,
+	long: -149.00247516698886,
+	altitude: 0.75,
+	x: 0.38637821825866064,
+	y: 0.8868423401837369,
+	z: -0.2534216567554871
+},
+{
 	// grand canyon
 	lat: 36.309510819387796 ,
 	long: -111.11374090546788,
