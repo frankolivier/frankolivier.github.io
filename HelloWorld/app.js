@@ -41,7 +41,17 @@ let coolPlaces = [{
 	x: -0.1216409382680244,
 	y: 0.6663093574533964,
 	z: 0.7356869730444578
-}];
+},
+{
+	// mt fuji
+	lat: 35.338586760120926,
+	long: 138.8921871397833,
+	altitude: 0.15,
+	x: 0.9005882030186811,
+	y: 0.4006935633615168,
+	z: -0.16848013789237243
+}
+];
 
 function setFlyMode(setting) {
 	if (setting === true) {
@@ -204,20 +214,21 @@ function initGraphics() {
 		"uniform vec2 terrainTextureOffset; " +
 		"varying float vDistance; " +
 		"void main() { " +
-		"vUV = vec2(uv.x, 1.0 - uv.y); vec4 q = texture2D(terrainTexture, vUV + terrainTextureOffset) * 256.0; " +
-		"float elevation = q.r * 256.0 + q.g + q.b / 256.0 - 32768.0; " +
-		"elevation = clamp(elevation, 0.0, 10000.0); " +					// Clamp to sea level and Everest
-		"elevation = elevation / 28000.0; " +   							// TODO change this based on latitude 
-		"vec3 p = position;" + 												// 'position' is a built-in three.js construct
-		"p.z += elevation; " +
-		"gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
-		"vDistance = distance(gl_Position.xyz, vec3(0.0, 0.0, 0.0));" +
+		"  vUV = vec2(uv.x, 1.0 - uv.y); vec4 s = texture2D(terrainTexture, vUV + terrainTextureOffset) * 256.0; " +
+		"  float elevation = s.r * 256.0 + s.g + s.b / 256.0 - 32768.0; " +
+		"  elevation = clamp(elevation, 0.0, 10000.0); " +					// Clamp to sea level and Everest
+		"  elevation = elevation / 28000.0; " +   							// TODO change this based on latitude 
+		"  vec3 p = position;" + 												// 'position' is a built-in three.js construct
+		"  p.z += elevation; " +
+		"  gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
+		"  vDistance = distance(gl_Position.xyz, vec3(0.0, 0.0, 0.0));" +
 		"}";
 
 	let fragmentShader =
 		"varying vec2 vUV; " +
 		"uniform sampler2D mapTexture; " +
 		"uniform vec2 mapTextureOffset; " +
+		"uniform vec2 mapPosition; " +
 		"varying float hazeStrength; " +
 		"varying float vDistance;" +
 		"void main() { " +
@@ -227,9 +238,17 @@ function initGraphics() {
 		//"  gl_FragColor.r += 1.0;" +
 		"  gl_FragColor /= 2.0;" +
 		"  }" +
-		"  float hazeStrength = smoothstep(" + mapSize * 0.307 + ", " + + mapSize * 0.499 + ", vDistance);" +
+        "  float fDistance = distance(mapPosition, vUV);" + 
+		"  float hazeStrength = smoothstep(0.25, 0.46, fDistance);" + //TODO tileCount / 8 * 7.5
 		//" hazeStrength = 0.0; " +
 		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
+		//"  gl_FragColor = mix(gl_FragColor, vec4(1.0, 1.0, 1.0, 1.0), hazeStrength); " +
+
+		//"	{" +
+		//" gl_FragColor.r = 1.0;" +
+		//" gl_FragColor.g = 1.0;" +
+		//" gl_FragColor.b = 1.0;" +
+		//"	}" +
 		"}";
 
 
@@ -260,7 +279,8 @@ function initGraphics() {
 			terrainTexture: { type: 't', value: terrainTexture },
 			terrainTextureOffset: { value: new THREE.Vector2() },
 			mapTexture: { type: 't', value: mapTexture },
-			mapTextureOffset: { value: new THREE.Vector2() }
+			mapTextureOffset: { value: new THREE.Vector2() },
+			mapPosition: { value: new THREE.Vector2() }
 		},
 		vertexShader: vertexShader,
 		fragmentShader: fragmentShader
@@ -278,8 +298,8 @@ function initGraphics() {
 	// non-VR controls
 	orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
 	orbitControls.maxPolarAngle = Math.PI * 0.7;
-	orbitControls.minDistance = 1.2;
-	orbitControls.maxDistance = 2.4;
+	orbitControls.minDistance = 1;
+	orbitControls.maxDistance = 10;
 	orbitControls.enableKeys = false;
 
 	orbitControls.autoRotate = true;
@@ -287,8 +307,6 @@ function initGraphics() {
 	orbitControls.enableDamping = true;
 	orbitControls.dampingFactor = 0.1;
 	orbitControls.rotateSpeed = 0.1;
-	orbitControls.minDistance = 1;
-	orbitControls.maxDistance = 200;
 	orbitControls.maxPolarAngle = Math.PI / 2 - .04;
 	//orbitControls.target.set(0, 5, 0);
 
@@ -444,14 +462,10 @@ function renderScene() {
 
 	mapTiles.render(longtitude, latitude);
 	{
-		//smallMapCanvas.getContext('2d').drawImage(mapCanvas, 0, 0, smallMapCanvas.width, smallMapCanvas.height);
-		//let offset = new THREE.Vector2(mapTiles.getNormalizedOffsetX(), mapTiles.getNormalizedOffsetY());
-
+		// TODO optimize
 		material.uniforms.mapTextureOffset.value.x = mapTiles.getNormalizedOffsetX();
 		material.uniforms.mapTextureOffset.value.y = mapTiles.getNormalizedOffsetY();
 		material.uniforms.mapTextureOffset.value.needsUpdate = true;
-
-		//mapTexture.needsUpdate = true;
 
 		let tile = mapTiles.getRenderTile();
 		if (!!tile) {
@@ -462,12 +476,18 @@ function renderScene() {
 
 	}
 
-
-
 	const m = geometry.parameters.width / (canvasComplexity / tileDimension); // mesh size / n tiles
-	mesh.position.x = ((-1 * (user.x % 1) + 0.5)) * m;
-	mesh.position.z = ((-1 * (user.z % 1) + 0.5)) * m;
+
+	const offsetX = ((-1 * (user.x % 1) + 0.5));
+	const offsetZ = ((-1 * (user.z % 1) + 0.5));
+
+	mesh.position.x = offsetX * m;
+	mesh.position.z = offsetZ * m;
 	mesh.position.y = user.y * -1;
+
+	material.uniforms.mapPosition.value.x = 0.5 - offsetX / (canvasComplexity / tileDimension);
+	material.uniforms.mapPosition.value.y = 0.5 - offsetZ / (canvasComplexity / tileDimension);
+	material.uniforms.mapPosition.value.needsUpdate = true;
 
 	/*
 		disable moving to do some performance tests
