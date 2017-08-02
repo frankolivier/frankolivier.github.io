@@ -24,7 +24,17 @@ let mapTiles;		 		// Tiles.js instance for color values
 const mapZoom = 11;
 const terrainZoom = 11; // TODO we can use a lower texture resolution & higher zoom here and save memory
 
-let coolPlaces = [{
+let coolPlaces = [
+{
+	// grand canyon
+	lat: 36.309510819387796 ,
+	long: -111.11374090546788,
+	altitude: 0.4,
+	x: 0.665384046849869,
+	y: 0.7443277479452758,
+	z: -0.05692340323983429
+},
+{
 	// fractal lake
 	lat: 23.722306617661523,
 	long: 32.964605191783505,
