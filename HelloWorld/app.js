@@ -26,8 +26,6 @@ let mapTiles;		 		// Tiles.js instance for color values
 const mapZoom = 11; // The zoom level of the slippy map we're using
 const terrainZoom = 11;
 
-
-
 function checkKey(e) {
 
 	const step = 0.05;
@@ -190,11 +188,10 @@ function initGraphics() {
 		"varying float vDistance;" +
 		"void main() { " +
 		"  gl_FragColor = texture2D(mapTexture, vUV + mapTextureOffset); " +
-		"  if (vDistance < 1.0) {" + // Blur texture if close to the camera
+		"  if (vDistance < 0.8) {" + // Blur texture if close to the camera
 		"  gl_FragColor += texture2D(mapTexture, vUV + mapTextureOffset + vec2(1.0 / " + canvasComplexity + ".0, 1.0 / " + canvasComplexity + ".0)); " +
-		"  gl_FragColor += texture2D(mapTexture, vUV + mapTextureOffset - vec2(1.0 / " + canvasComplexity + ".0, 1.0 / " + canvasComplexity + ".0)); " +
 		//"  gl_FragColor.r += 1.0;" +
-		"  gl_FragColor /= 3.0;" +
+		"  gl_FragColor /= 2.0;" +
 		"  }" +
 		"  float hazeStrength = smoothstep(" + mapSize * 0.307 + ", " + + mapSize * 0.499 + ", vDistance);" +
 		//" hazeStrength = 0.0; " +
@@ -258,7 +255,13 @@ function initGraphics() {
 	renderer.domElement.addEventListener("touchend", orbitMouseUp);
 
 	document.getElementById('vrButton').onclick = function () {
-		effect.isPresenting ? effect.exitPresent() : effect.requestPresent();
+		if (window.VRDisplay === undefined) {
+			renderer.domElement.webkitRequestFullscreen();
+		}
+		else {
+			effect.isPresenting ? effect.exitPresent() : effect.requestPresent();
+
+		}
 	};
 
 	// Set up uniforms
