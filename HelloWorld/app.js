@@ -24,6 +24,20 @@ let mapTiles;		 		// Tiles.js instance for color values
 const mapZoom = 11;
 const terrainZoom = 11; // TODO we can use a lower texture resolution & higher zoom here and save memory
 
+function setFlyMode(setting) {
+	if (setting === true) {
+		flyingVector.x = flyingVector.y = 0;
+		flyingVector.z = -0.003;
+		flyingVector.applyQuaternion(camera.quaternion);
+		flyingVector.y = 0; // don't lose altitude
+		flying = true;
+	}
+	else {
+		flyingVector.x = flyingVector.y = flyingVector.z = 0;
+		flying = false;
+	}
+}
+
 function checkKey(e) {
 
 	const step = 0.05;
@@ -32,16 +46,7 @@ function checkKey(e) {
 
 	switch (e.key) {
 		case 'f': //flying
-			flying = !flying;
-			if (flying) {
-				flyingVector.x = flyingVector.y = 0;
-				flyingVector.z = -0.003;
-				flyingVector.applyQuaternion(camera.quaternion);
-				flyingVector.y = 0; // don't lose altitude
-			}
-			else {
-				flyingVector.x = flyingVector.y = flyingVector.z = 0;
-			}
+			setFlyMode(!flying);
 			break;
 
 		case 'ArrowUp':
@@ -64,6 +69,34 @@ function checkKey(e) {
 		case ']':
 			user.y += step;
 			break;
+		case '1':
+			console.log(tile2lat(user.z, mapZoom) + ' ' + tile2long(user.x, mapZoom));
+			console.log(user.y);
+			console.log(camera.position.x + ' ' + camera.position.y + ' ' + camera.position.z);
+			break;
+		case '2':
+			let p = {
+				lat: 23.722306617661523,
+				long: 32.964605191783505,
+				altitude: 0.2,
+				x: 0.14156320405053108,
+				y: 0.8650418997772855,
+				z: -0.4813131734002848
+			}
+
+			user.z = lat2tile(p.lat, mapZoom);
+			user.x = long2tile(p.long, mapZoom);
+			user.y = p.altitude;
+
+			camera.position.x = p.x;
+			camera.position.y = p.y;
+			camera.position.z = p.z;
+			camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+			setFlyMode(true);
+
+			break;
+
 		default:
 	}
 
@@ -234,6 +267,18 @@ function initGraphics() {
 	orbitControls.maxDistance = 2.4;
 	orbitControls.enableKeys = false;
 
+	orbitControls.autoRotate = true;
+	orbitControls.autoRotateSpeed = 0.03;
+	orbitControls.enableDamping = true;
+	orbitControls.dampingFactor = 0.1;
+	orbitControls.rotateSpeed = 0.1;
+	orbitControls.minDistance = 1;
+	orbitControls.maxDistance = 200;
+	orbitControls.maxPolarAngle = Math.PI / 2 - .04;
+	//orbitControls.target.set(0, 5, 0);
+
+	orbitControls.update();
+
 	renderer.domElement.addEventListener("mousedown", orbitMouseDown);
 	renderer.domElement.addEventListener("mouseup", orbitMouseUp);
 	renderer.domElement.addEventListener("mouseout", orbitMouseUp);
@@ -338,12 +383,13 @@ function handleController() {
 
 function renderScene() {
 
-	user.add(flyingVector);
 
 	effect.requestAnimationFrame(renderScene);
 
 	// Save power and performance by not rendering when window is in the background
 	if (!windowIsActive) return;
+
+	user.add(flyingVector);
 
 	handleController();
 
