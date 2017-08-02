@@ -1,87 +1,73 @@
 "use strict";
 
-// https://en.wikipedia.org/wiki/Web_Mercator
-// http://mike.teczno.com/notes/osm-us-terrain-layer/foreground.html
-// https://www.mapbox.com/blog/3d-terrain-threejs/
-// bugbug http://www.thunderforest.com/maps/landscape/
-// TODO http://wiki.openstreetmap.org/wiki/Zoom_levels Set correct zoom level on navigate
 // TODO Add location to URL
-// TODO Allow HMD rotate
+// TODO Allow HMD rotate in WebVR
 
 document.addEventListener("DOMContentLoaded", init);
 
-let fly = false;
-let flyVector = new THREE.Vector3(0, 0, 0);
+// autoflyinging mode
+let flying = false;
+let flyingVector = new THREE.Vector3(0, 0, 0);
 
-let WindowIsActive = true;
-window.addEventListener('focus', () => { WindowIsActive = true })
-window.addEventListener('blur', () => { if (!fly) { WindowIsActive = false } })
+let windowIsActive = true;
+window.addEventListener('focus', () => { windowIsActive = true })
+window.addEventListener('blur', () => { if (!flying) { windowIsActive = false } })
 
-let user = new THREE.Vector3(331.02, 1.55, 722.992);	// the point on the map we are currently above
+// the point on the map we are currently above
+let user = new THREE.Vector3(331.02, 1.55, 722.992);
 
 const tileDimension = 256;	// Tiles are 256 x 256 pixels
 let terrainTiles;	  		// Tiles.js instance for elevation data
 let mapTiles;		 		// Tiles.js instance for color values
 
-const mapZoom = 11; // The zoom level of the slippy map we're using
-const terrainZoom = 11;
+// The zoom level of the slippy map we're using
+const mapZoom = 11;
+const terrainZoom = 11; // TODO we can use a lower texture resolution & higher zoom here and save memory
 
 function checkKey(e) {
 
 	const step = 0.05;
-
 	let vector = new THREE.Vector3(0, 0, 0);
-
 	e = e || window.event;
 
-	if (e.key == 'f') {
-		fly = !fly;
-		if (fly) {
-			flyVector.x = flyVector.y = 0;
-			flyVector.z = -0.003;
-			flyVector.applyQuaternion(camera.quaternion);
-			flyVector.y = 0; // don't lose altitude
-		}
-		else {
-			flyVector.x = flyVector.y = flyVector.z = 0;
-		}
-	}
+	switch (e.key) {
+		case 'f': //flying
+			flying = !flying;
+			if (flying) {
+				flyingVector.x = flyingVector.y = 0;
+				flyingVector.z = -0.003;
+				flyingVector.applyQuaternion(camera.quaternion);
+				flyingVector.y = 0; // don't lose altitude
+			}
+			else {
+				flyingVector.x = flyingVector.y = flyingVector.z = 0;
+			}
+			break;
 
-	if (e.keyCode == '38') {
-		// up arrow
-		vector.z = -step;
-		e.stopPropagation();
-	}
-	else if (e.keyCode == '40') {
-		// down arrow		     	
-		vector.z = step;
-		e.stopPropagation();
-	}
-	else if (e.keyCode == '37') {
-		// left arrow
-		vector.x = -step;
-		e.stopPropagation();
-
-	}
-	else if (e.keyCode == '39') {
-		// right arrow	
-		vector.x = step;
-		e.stopPropagation();
-	}
-
-	else if (e.keyCode == '219') {
-		// [
-		user.y -= step;
-		e.stopPropagation();
-	}
-	else if (e.keyCode == '221') {
-		// ]
-		user.y += step;
-		e.stopPropagation();
+		case 'ArrowUp':
+			vector.z = -step;
+			break;
+		case 'ArrowDown':
+			vector.z = step;
+			break;
+		case 'ArrowLeft':
+			vector.x = -step;
+			break;
+		case 'ArrowRight':
+			vector.x = step;
+			break;
+		case '[':
+		case 'PageDown':
+			user.y -= step;
+			break;
+		case 'PageUp':
+		case ']':
+			user.y += step;
+			break;
+		default:
 	}
 
 	vector.applyQuaternion(camera.quaternion);
-
 	user.x += vector.x;
 	user.z += vector.z;
 
@@ -352,12 +338,12 @@ function handleController() {
 
 function renderScene() {
 
-	user.add(flyVector);
+	user.add(flyingVector);
 
 	effect.requestAnimationFrame(renderScene);
 
 	// Save power and performance by not rendering when window is in the background
-	if (!WindowIsActive) return;
+	if (!windowIsActive) return;
 
 	handleController();
 
@@ -436,7 +422,7 @@ function renderScene() {
 	*/
 	controls.update();	// update HMD head position
 
-	// Shouldn't fly to high or too low...
+	// Shouldn't flying to high or too low...
 	//if (user.y < 0.1) user.y = 0.1;
 	//if (user.y > 2) user.y = 2;
 
