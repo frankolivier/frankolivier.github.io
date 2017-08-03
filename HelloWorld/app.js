@@ -26,6 +26,23 @@ const terrainZoom = 11; // TODO we can use a lower texture resolution & higher z
 
 let coolPlaces = [
 {
+	// calgary
+	lat: 51.00792117737652,
+	long: -113.72016281041633,
+	altitude: 0.7,
+	x: 0.5192160218387453,
+	y: 1.111386550103285,
+	z: -0.13997011027038148
+},{
+	// baja
+	lat: 32.57489142452417,
+	long: -117.55620298853591,
+	altitude: 0.35,
+	x: -0.4672378333309644,
+	y: 0.9604801073466033,
+	z: -0.6192929382362446
+
+},{
 	// everest
 	lat: 28.981259082440634,
 	long: 86.8987579332611,
