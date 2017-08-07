@@ -58,6 +58,8 @@ function Tiles(url, textureWidth, zoom) {
         return (tile.drawX == this.drawX && tile.drawY == this.drawY);
     }
 
+    //TODO remove fetchCount? check if 8k x 8k mode needs a limit
+
     this.addRenderTile = function (tile) {
 
         let i = this.renderTiles.findIndex(this.sameDrawXY, tile);
@@ -150,7 +152,7 @@ function Tiles(url, textureWidth, zoom) {
 
 
                 if (this.tiles[xx][yy].requested == false) {
-                    if (this.fetchCount < 100) { // Limit the number of outstanding requests
+                    //if (this.fetchCount < 100) { // Limit the number of outstanding requests
                         // Find best tile to request
                         let testX = xx > this.offsetX ? xx : xx + this.tileCount;
                         let testY = yy > this.offsetY ? yy : yy + this.tileCount;
@@ -166,7 +168,7 @@ function Tiles(url, textureWidth, zoom) {
                         //this.tiles[xx][yy].requested = true;
 
                         //console.log('fetchCoutn == ' + this.fetchCount);
-                    }
+                    //}
                 }
 
 

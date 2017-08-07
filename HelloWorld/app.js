@@ -1,28 +1,31 @@
 "use strict";
 
-// TODO Add location to URL
+// TODO Add location to URL when focus changes away from content
 // TODO Allow HMD rotate in WebVR
+// TODO add back 8k mode for Edge
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", init); // main init
 
-// autoflyinging mode
+// autoflying mode
 let flying = false;
 let flyingVector = new THREE.Vector3(0, 0, 0);
 
 let windowIsActive = true;
 window.addEventListener('focus', () => { windowIsActive = true })
-window.addEventListener('blur', () => { if (!flying) { windowIsActive = false } })
+window.addEventListener('blur', () => { if (flying===false) { windowIsActive = false } })
 
-// the point on the map we are currently above
+// the (slippy tile) location on the map (x, z) we are currently above (y)
 let user = new THREE.Vector3(331.02, 1.55, 722.992);
 
-const tileDimension = 256;	// Tiles are 256 x 256 pixels
+const tileDimension = 256;	// Slippy map tiles are 256 x 256 pixels
 let terrainTiles;	  		// Tiles.js instance for elevation data
-let mapTiles;		 		// Tiles.js instance for color values
+let mapTiles;		 		// Tiles.js instance for pixel color values
 
 // The zoom level of the slippy map we're using
 const mapZoom = 11;
-const terrainZoom = 11; // TODO we can use a lower texture resolution & higher zoom here and save memory
+const terrainZoom = 11; 
+// TODO we can use a lower texture resolution & higher zoom for terrain and save memory, GPU bandwidth
+// The terrain texture only has to match the mesh complexity (currenyly 512x512 )
 
 let coolPlaces = [
 {
@@ -119,6 +122,7 @@ function setFlyMode(setting) {
 		flyingVector.z = -0.003;
 		flyingVector.applyQuaternion(camera.quaternion);
 		flyingVector.y = 0; // don't lose altitude
+		// BUGBUG TODO Normalize the vector so that we alway fly at a constant speed
 		flying = true;
 	}
 	else {
@@ -128,7 +132,7 @@ function setFlyMode(setting) {
 }
 
 function GotoRandomCoolPlace() {
-	let p = coolPlaces[Math.floor(Math.random() * coolPlaces.length)]
+	let p = coolPlaces[Math.floor(Math.random() * coolPlaces.length)];
 
 	user.z = lat2tile(p.lat, mapZoom);
 	user.x = long2tile(p.long, mapZoom);
@@ -142,7 +146,7 @@ function GotoRandomCoolPlace() {
 	setFlyMode(true);
 }
 
-function checkKey(e) {
+function handleKey(e) {
 
 	const step = 0.05;
 	let vector = new THREE.Vector3(0, 0, 0);
@@ -155,36 +159,44 @@ function checkKey(e) {
 		case 'Up':
 		case 'ArrowUp':
 			vector.z = -step;
+			setFlyMode(false);
 			break;
 		case 'Down':
 		case 'ArrowDown':
 			vector.z = step;
+			setFlyMode(false);
 			break;
 		case 'Left':
 		case 'ArrowLeft':
 			vector.x = -step;
+			setFlyMode(false);
 			break;
 		case 'Right':
 		case 'ArrowRight':
 			vector.x = step;
+			setFlyMode(false);
 			break;
 		case '[':
 		case 'PageDown':
 			user.y -= step;
+			setFlyMode(false);
 			break;
 		case 'PageUp':
 		case ']':
 			user.y += step;
+			setFlyMode(false);
 			break;
 		case '1':
+			// Dump location data to console so that we can add a cool place
 			console.log(tile2lat(user.z, mapZoom) + ' ' + tile2long(user.x, mapZoom));
 			console.log(user.y);
 			console.log(camera.position.x + ' ' + camera.position.y + ' ' + camera.position.z);
 			break;
 		case '2':
+		case 'r':
+		case 'R':
 			GotoRandomCoolPlace();
 			break;
-
 		default:
 	}
 
@@ -192,11 +204,12 @@ function checkKey(e) {
 	user.x += vector.x;
 	user.z += vector.z;
 
+	// TODO To avoid 'janky' key movement, add an animation system 
 }
 
-/// three js
+/// three js:
 let scene, camera, renderer;
-let controls;
+let vrControls;
 let orbitControls;
 let effect; // the webvr renderer
 let geometry, material, mesh;
@@ -232,10 +245,187 @@ function orbitMouseUp() {
 }
 
 // TODO move all desktop/mobile complexity const to a struct
-
 let canvasComplexity;
 
-function initGraphics() {
+function handleController() {
+	// Handle controller input
+
+	let hasPointerHardware = false;
+
+	try {
+
+		let gamepads = navigator.getGamepads();
+
+		for (let i = 0; i < gamepads.length; ++i) {
+			let controller = gamepads[i];
+
+			if (controller != null) {
+
+				if (controller.pose.hasPosition == true) {
+					try {
+						laserPointer.position.x = controller.pose.position[0];
+						laserPointer.position.y = controller.pose.position[1];
+						laserPointer.position.z = controller.pose.position[2];
+					}
+					catch (e) {
+
+					}
+
+				}
+				else {
+					//laserPointer.position.x = camera.position.x + 0.1; //bugbug
+					laserPointer.position.y = camera.position.y - 0.2;
+					//laserPointer.position.z = camera.position.z - 0.1;
+				}
+
+				let quaternion = new THREE.Quaternion().fromArray(controller.pose.orientation);
+				laserPointer.setRotationFromQuaternion(quaternion);
+
+				hasPointerHardware = true;
+
+				let vector = new THREE.Vector3(0, 0, -1);
+				vector.applyQuaternion(quaternion);
+
+				let pressed = controller.buttons[0].pressed;
+
+				if (pressed == true) {
+					let input = controller.axes[1];
+
+					if (controller.id == "Daydream Controller") {
+						input *= -1;	// for some reason the daydream controller values are swapped?
+					}
+
+					const scale = 0.01;
+
+					user.x += vector.x * input * scale;
+					user.z += vector.z * input * scale;
+					user.y += vector.y * input * scale;
+				}
+
+
+
+			}
+
+		}
+
+	}
+	catch (e) {
+
+	}
+
+	laserPointer.visible = hasPointerHardware;
+
+}
+
+function renderFrame() {
+
+	effect.requestAnimationFrame(renderFrame);
+
+	// Save power and performance by not rendering when window is in the background
+	if (!windowIsActive) return;
+
+	user.add(flyingVector);
+
+	handleController();
+
+	const fx = user.x;
+	const fz = user.z;
+
+	const longtitude = tile2long(fx, mapZoom);
+	const latitude = tile2lat(fz, mapZoom);
+
+	terrainTiles.render(longtitude, latitude);
+	{
+		material.uniforms.terrainTextureOffset.value.x = terrainTiles.getNormalizedOffsetX();
+		material.uniforms.terrainTextureOffset.value.y = terrainTiles.getNormalizedOffsetY();
+		material.uniforms.terrainTextureOffset.value.needsUpdate = true;
+
+		let tile = terrainTiles.getRenderTile();
+		if (!!tile) {
+			terrainTexture.update(tile.image, tile.drawX, tile.drawY);
+		}
+	}
+
+	mapTiles.render(longtitude, latitude);
+	{
+		// TODO optimize
+		material.uniforms.mapTextureOffset.value.x = mapTiles.getNormalizedOffsetX();
+		material.uniforms.mapTextureOffset.value.y = mapTiles.getNormalizedOffsetY();
+		material.uniforms.mapTextureOffset.value.needsUpdate = true;
+
+		let tile = mapTiles.getRenderTile();
+		if (!!tile) {
+			mapTexture.update(tile.image, tile.drawX, tile.drawY);
+		}
+
+
+
+	}
+
+	const m = geometry.parameters.width / (canvasComplexity / tileDimension); // mesh size / n tiles
+
+	const offsetX = ((-1 * (user.x % 1) + 0.5));
+	const offsetZ = ((-1 * (user.z % 1) + 0.5));
+
+	mesh.position.x = offsetX * m;
+	mesh.position.z = offsetZ * m;
+	mesh.position.y = user.y * -1;
+
+	material.uniforms.mapPosition.value.x = 0.5 - offsetX / (canvasComplexity / tileDimension);
+	material.uniforms.mapPosition.value.y = 0.5 - offsetZ / (canvasComplexity / tileDimension);
+	material.uniforms.mapPosition.value.needsUpdate = true;
+
+	/*
+		disable moving to do some performance tests
+		if (true == moving) {
+			if (window.performance.now() - downTime > 1000) {
+				// wait 1000ms before moving forward
+				// this gives the user time to turn the camera
+				let vector = new THREE.Vector3(0, 0, -0.001);
+				vector.applyQuaternion(orbitControls.object.quaternion);
+				user.add(vector);
+			}
+		}
+	*/
+	vrControls.update();	// update HMD head position
+
+	// Shouldn't flying to high or too low...
+	//if (user.y < 0.1) user.y = 0.1;
+	//if (user.y > 2) user.y = 2;
+	// BUGBUG TODO move this to keyboard handler? Avoid jank
+
+	effect.render(scene, camera);
+
+}
+
+// Resize the WebGL canvas when the window size changes
+function onWindowResize() {
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+	renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+let geocoder;
+function geocodeAddress() {
+	geocoder = new google.maps.Geocoder()
+
+	let address = document.getElementById('address').value;
+	geocoder.geocode({ 'address': address }, function (results, status) {
+		if (status === 'OK') {
+
+			user.x = long2tile(results[0].geometry.location.lng(), mapZoom);
+			user.z = lat2tile(results[0].geometry.location.lat() - 0.152, mapZoom); // south... to put object in view
+
+			renderer.domElement.focus();
+
+		} else {
+			// Geocode was not successful for reason = status
+		}
+	});
+}
+
+// Main initialization
+function init() {
 
 	// Set up maps
 
@@ -355,8 +545,8 @@ function initGraphics() {
 
 	scene.add(mesh);
 
-	controls = new THREE.VRControls(camera);
-	controls.standing = false;
+	vrControls = new THREE.VRControls(camera);
+	vrControls.standing = false;
 
 	// non-VR controls
 	orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -399,192 +589,7 @@ function initGraphics() {
 	window.addEventListener("resize", onWindowResize);
 	onWindowResize();
 
-}
-
-function handleController() {
-	// Handle controller input
-
-	let hasPointerHardware = false;
-
-	try {
-
-		let gamepads = navigator.getGamepads();
-
-		for (let i = 0; i < gamepads.length; ++i) {
-			let controller = gamepads[i];
-
-			if (controller != null) {
-
-				if (controller.pose.hasPosition == true) {
-					try {
-						laserPointer.position.x = controller.pose.position[0];
-						laserPointer.position.y = controller.pose.position[1];
-						laserPointer.position.z = controller.pose.position[2];
-					}
-					catch (e) {
-
-					}
-
-				}
-				else {
-					//laserPointer.position.x = camera.position.x + 0.1; //bugbug
-					laserPointer.position.y = camera.position.y - 0.2;
-					//laserPointer.position.z = camera.position.z - 0.1;
-				}
-
-				let quaternion = new THREE.Quaternion().fromArray(controller.pose.orientation);
-				laserPointer.setRotationFromQuaternion(quaternion);
-
-				hasPointerHardware = true;
-
-				let vector = new THREE.Vector3(0, 0, -1);
-				vector.applyQuaternion(quaternion);
-
-				let pressed = controller.buttons[0].pressed;
-
-				if (pressed == true) {
-					let input = controller.axes[1];
-
-					if (controller.id == "Daydream Controller") {
-						input *= -1;	// for some reason the daydream controller values are swapped?
-					}
-
-					const scale = 0.01;
-
-					user.x += vector.x * input * scale;
-					user.z += vector.z * input * scale;
-					user.y += vector.y * input * scale;
-				}
-
-
-
-			}
-
-		}
-
-	}
-	catch (e) {
-
-	}
-
-	laserPointer.visible = hasPointerHardware;
-
-}
-
-function renderScene() {
-
-
-	effect.requestAnimationFrame(renderScene);
-
-	// Save power and performance by not rendering when window is in the background
-	if (!windowIsActive) return;
-
-	user.add(flyingVector);
-
-	handleController();
-
-	const fx = user.x;
-	const fz = user.z;
-
-	const longtitude = tile2long(fx, mapZoom);
-	const latitude = tile2lat(fz, mapZoom);
-
-	terrainTiles.render(longtitude, latitude);
-	{
-		material.uniforms.terrainTextureOffset.value.x = terrainTiles.getNormalizedOffsetX();
-		material.uniforms.terrainTextureOffset.value.y = terrainTiles.getNormalizedOffsetY();
-		material.uniforms.terrainTextureOffset.value.needsUpdate = true;
-
-		let tile = terrainTiles.getRenderTile();
-		if (!!tile) {
-			terrainTexture.update(tile.image, tile.drawX, tile.drawY);
-		}
-	}
-
-	mapTiles.render(longtitude, latitude);
-	{
-		// TODO optimize
-		material.uniforms.mapTextureOffset.value.x = mapTiles.getNormalizedOffsetX();
-		material.uniforms.mapTextureOffset.value.y = mapTiles.getNormalizedOffsetY();
-		material.uniforms.mapTextureOffset.value.needsUpdate = true;
-
-		let tile = mapTiles.getRenderTile();
-		if (!!tile) {
-			mapTexture.update(tile.image, tile.drawX, tile.drawY);
-		}
-
-
-
-	}
-
-	const m = geometry.parameters.width / (canvasComplexity / tileDimension); // mesh size / n tiles
-
-	const offsetX = ((-1 * (user.x % 1) + 0.5));
-	const offsetZ = ((-1 * (user.z % 1) + 0.5));
-
-	mesh.position.x = offsetX * m;
-	mesh.position.z = offsetZ * m;
-	mesh.position.y = user.y * -1;
-
-	material.uniforms.mapPosition.value.x = 0.5 - offsetX / (canvasComplexity / tileDimension);
-	material.uniforms.mapPosition.value.y = 0.5 - offsetZ / (canvasComplexity / tileDimension);
-	material.uniforms.mapPosition.value.needsUpdate = true;
-
-	/*
-		disable moving to do some performance tests
-		if (true == moving) {
-			if (window.performance.now() - downTime > 1000) {
-				// wait 1000ms before moving forward
-				// this gives the user time to turn the camera
-				let vector = new THREE.Vector3(0, 0, -0.001);
-				vector.applyQuaternion(orbitControls.object.quaternion);
-				user.add(vector);
-			}
-		}
-	*/
-	controls.update();	// update HMD head position
-
-	// Shouldn't flying to high or too low...
-	//if (user.y < 0.1) user.y = 0.1;
-	//if (user.y > 2) user.y = 2;
-
-	effect.render(scene, camera);
-
-}
-
-// Resize the WebGL canvas when the window size changes
-function onWindowResize() {
-	camera.aspect = window.innerWidth / window.innerHeight;
-	camera.updateProjectionMatrix();
-	renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-let geocoder;
-function geocodeAddress() {
-	geocoder = new google.maps.Geocoder()
-
-	let address = document.getElementById('address').value;
-	geocoder.geocode({ 'address': address }, function (results, status) {
-		if (status === 'OK') {
-
-			user.x = long2tile(results[0].geometry.location.lng(), mapZoom);
-			user.z = lat2tile(results[0].geometry.location.lat() - 0.152, mapZoom); // south... to put object in view
-
-			renderer.domElement.focus();
-
-		} else {
-			// Geocode was not successful for reason = status
-		}
-	});
-}
-
-
-// Main initialization
-function init() {
-
-	initGraphics();
-
-	document.onkeydown = checkKey;
+	document.onkeydown = handleKey;
 
 	document.getElementById('address').onkeydown = function (e) {
 		e.stopPropagation();
@@ -599,5 +604,5 @@ function init() {
 
 	GotoRandomCoolPlace();
 
-	renderScene();	// Start main rendering loop
+	renderFrame();	// Start main rendering loop
 }
