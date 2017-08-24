@@ -11,8 +11,8 @@ let flying = false;
 let flyingVector = new THREE.Vector3(0, 0, 0);
 
 let windowIsActive = true;
-window.addEventListener('focus', () => { windowIsActive = true })
-window.addEventListener('blur', () => { if (flying===false) { windowIsActive = false } })
+window.addEventListener('xfocus', () => { windowIsActive = true })
+window.addEventListener('xblur', () => { if (flying===false) { windowIsActive = false } })
 
 // the (slippy tile) location on the map (x, z) we are currently above (y)
 let user = new THREE.Vector3(331.02, 1.55, 722.992);
@@ -26,6 +26,9 @@ const mapZoom = 11;
 const terrainZoom = 11; 
 // TODO we can use a lower texture resolution & higher zoom for terrain and save memory, GPU bandwidth
 // The terrain texture only has to match the mesh complexity (currenyly 512x512 )
+
+let zFactor = 1;
+let mapSize;
 
 let coolPlaces = [
 {
@@ -133,6 +136,22 @@ function setFlyMode(setting) {
 
 function GotoRandomCoolPlace() {
 	let p = coolPlaces[Math.floor(Math.random() * coolPlaces.length)];
+
+	//p.lat = Math.random() * 170 - 85;
+	//p.long = Math.random() * 360 - 180;
+	
+	const radLad = p.lat  * (Math.PI / 180);
+
+	let metersPerPixel = (156543.03 * Math.cos(radLad) / Math.pow(2, mapZoom));
+
+	zFactor = 10000 / (metersPerPixel * canvasComplexity / mesh.geometry.parameters.width);
+		
+	material.uniforms.zFactor.value = zFactor; // * mesh.geometry.parameters.width;
+
+	//zFactor = 28000;
+	//material.uniforms.zFactor = zFactor;
+	
+
 
 	user.z = lat2tile(p.lat, mapZoom);
 	user.x = long2tile(p.long, mapZoom);
@@ -452,7 +471,7 @@ function init() {
 
 	let meshComplexity = isMobile() ? 128 : 512;
 	canvasComplexity = isMobile() ? 2048 : 4096;
-	let mapSize = 10;
+ 	mapSize = 10;
 
 	geometry = new THREE.PlaneGeometry(mapSize, mapSize, meshComplexity, meshComplexity);
 
@@ -465,12 +484,15 @@ function init() {
 		"varying vec2 vUV; " +
 		"uniform sampler2D terrainTexture;" +
 		"uniform vec2 terrainTextureOffset; " +
+		"uniform float zFactor; " +		
 		"varying float vDistance; " +
 		"void main() { " +
 		"  vUV = vec2(uv.x, 1.0 - uv.y); vec4 s = texture2D(terrainTexture, vUV + terrainTextureOffset) * 256.0; " +
 		"  float elevation = s.r * 256.0 + s.g + s.b / 256.0 - 32768.0; " +
 		"  elevation = clamp(elevation, 0.0, 10000.0); " +					// Clamp to sea level and Everest
-		"  elevation = elevation / 28000.0; " +   							// TODO change this based on latitude 
+		"  elevation = elevation / 10000.0; " +  
+		"  elevation = elevation * zFactor; " +   							// TODO change this based on latitude 
+		//"  elevation = elevation / 14000.0; " +   							// TODO change this based on latitude 
 		"  vec3 p = position;" + 												// 'position' is a built-in three.js construct
 		"  p.z += elevation; " +
 		"  gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
@@ -531,6 +553,7 @@ function init() {
 		uniforms: {
 			terrainTexture: { type: 't', value: terrainTexture },
 			terrainTextureOffset: { value: new THREE.Vector2() },
+			zFactor: { type: 'f', value: 1.0 },
 			mapTexture: { type: 't', value: mapTexture },
 			mapTextureOffset: { value: new THREE.Vector2() },
 			mapPosition: { value: new THREE.Vector2() }
