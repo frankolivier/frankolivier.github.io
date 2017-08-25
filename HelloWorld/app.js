@@ -22,8 +22,8 @@ let terrainTiles;	  		// Tiles.js instance for elevation data
 let mapTiles;		 		// Tiles.js instance for pixel color values
 
 // The zoom level of the slippy map we're using
-const mapZoom = 11;
-const terrainZoom = 11; 
+const mapZoom = 13;
+const terrainZoom = 13; 
 // TODO we can use a lower texture resolution & higher zoom for terrain and save memory, GPU bandwidth
 // The terrain texture only has to match the mesh complexity (currenyly 512x512 )
 
