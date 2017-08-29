@@ -12,7 +12,7 @@ let flyingVector = new THREE.Vector3(0, 0, 0);
 
 let windowIsActive = true;
 window.addEventListener('xfocus', () => { windowIsActive = true })
-window.addEventListener('xblur', () => { if (flying===false) { windowIsActive = false } })
+window.addEventListener('xblur', () => { if (flying === false) { windowIsActive = false } })
 
 // the (slippy tile) location on the map (x, z) we are currently above (y)
 let user = new THREE.Vector3(331.02, 1.55, 722.992);
@@ -23,7 +23,7 @@ let mapTiles;		 		// Tiles.js instance for pixel color values
 
 // The zoom level of the slippy map we're using
 const mapZoom = 13;
-const terrainZoom = 13; 
+const terrainZoom = 13;
 // TODO we can use a lower texture resolution & higher zoom for terrain and save memory, GPU bandwidth
 // The terrain texture only has to match the mesh complexity (currenyly 512x512 )
 
@@ -31,77 +31,77 @@ let zFactor = 1;
 let mapSize;
 
 let coolPlaces = [
-{
-	// calgary
-	lat: 51.00792117737652,
-	long: -113.72016281041633,
-	altitude: 0.7,
-	x: 0.5192160218387453,
-	y: 1.111386550103285,
-	z: -0.13997011027038148
-},
-/*
-{
-	// baja
-	lat: 32.57489142452417,
-	long: -117.55620298853591,
-	altitude: 0.35,
-	x: -0.4672378333309644,
-	y: 0.9604801073466033,
-	z: -0.6192929382362446
-
-},
-{
-	// everest
-	lat: 28.981259082440634,
-	long: 86.8987579332611,
-	altitude: 0.2,
-	x: 0.04412079812160909,
-	y: 0.407682868650855,
-	z: -0.9120570342810701
-},{
-	// taranaki
-	lat: -39.497514052713164,
-	long: 173.26214310553706,
-	altitude: 0.2,
-	x: -1.03636448474885,
-	y: 0.9688781772202125,
-	z: 0.1943444831548005
-},{
-	// kilimanjaro
-	lat: -3.388293006768995,
-	long: 37.694583068492136,
-	altitude: 0.3,
-	x: 0.7298929322802403,
-	y: 0.6943702114948183,
-	z: 0.30518774187903275
-},{
-	// denali
-	lat: 63.5339147484756,
-	long: -149.00247516698886,
-	altitude: 0.75,
-	x: 0.38637821825866064,
-	y: 0.8868423401837369,
-	z: -0.2534216567554871
-},*/
-{
-	// grand canyon
-	lat: 36.309510819387796 ,
-	long: -112.11374090546788,
-	altitude: 0.4,
-	x: 0.665384046849869,
-	y: 0.7443277479452758,
-	z: -0.05692340323983429
-},
-{
-	// fractal lake
-	lat: 23.722306617661523,
-	long: 32.964605191783505,
-	altitude: 0.2,
-	x: 0.14156320405053108,
-	y: 0.8650418997772855,
-	z: -0.4813131734002848
-},/*
+	{
+		// calgary
+		lat: 51.00792117737652,
+		long: -113.72016281041633,
+		altitude: 0.7,
+		x: 0.5192160218387453,
+		y: 1.111386550103285,
+		z: -0.13997011027038148
+	},
+	/*
+	{
+		// baja
+		lat: 32.57489142452417,
+		long: -117.55620298853591,
+		altitude: 0.35,
+		x: -0.4672378333309644,
+		y: 0.9604801073466033,
+		z: -0.6192929382362446
+	
+	},
+	{
+		// everest
+		lat: 28.981259082440634,
+		long: 86.8987579332611,
+		altitude: 0.2,
+		x: 0.04412079812160909,
+		y: 0.407682868650855,
+		z: -0.9120570342810701
+	},{
+		// taranaki
+		lat: -39.497514052713164,
+		long: 173.26214310553706,
+		altitude: 0.2,
+		x: -1.03636448474885,
+		y: 0.9688781772202125,
+		z: 0.1943444831548005
+	},{
+		// kilimanjaro
+		lat: -3.388293006768995,
+		long: 37.694583068492136,
+		altitude: 0.3,
+		x: 0.7298929322802403,
+		y: 0.6943702114948183,
+		z: 0.30518774187903275
+	},{
+		// denali
+		lat: 63.5339147484756,
+		long: -149.00247516698886,
+		altitude: 0.75,
+		x: 0.38637821825866064,
+		y: 0.8868423401837369,
+		z: -0.2534216567554871
+	},*/
+	{
+		// grand canyon
+		lat: 36.309510819387796,
+		long: -112.11374090546788,
+		altitude: 0.4,
+		x: 0.665384046849869,
+		y: 0.7443277479452758,
+		z: -0.05692340323983429
+	},
+	{
+		// fractal lake
+		lat: 23.722306617661523,
+		long: 32.964605191783505,
+		altitude: 0.2,
+		x: 0.14156320405053108,
+		y: 0.8650418997772855,
+		z: -0.4813131734002848
+	},/*
 {
 	// cape town
 	lat: -34.42967306621232,
@@ -111,15 +111,15 @@ let coolPlaces = [
 	y: 0.6663093574533964,
 	z: 0.7356869730444578
 },*/
-{
-	// mt fuji
-	lat: 35.338586760120926,
-	long: 138.8921871397833,
-	altitude: 0.45,
-	x: 0.9005882030186811,
-	y: 0.4006935633615168,
-	z: -0.16848013789237243
-}
+	{
+		// mt fuji
+		lat: 35.338586760120926,
+		long: 138.8921871397833,
+		altitude: 0.45,
+		x: 0.9005882030186811,
+		y: 0.4006935633615168,
+		z: -0.16848013789237243
+	}
 ];
 
 function setFlyMode(setting) {
@@ -142,18 +142,18 @@ function GotoRandomCoolPlace() {
 
 	//p.lat = Math.random() * 170 - 85;
 	//p.long = Math.random() * 360 - 180;
-	
-	const radLad = p.lat  * (Math.PI / 180);
+
+	const radLad = p.lat * (Math.PI / 180);
 
 	let metersPerPixel = (156543.03 * Math.cos(radLad) / Math.pow(2, mapZoom));
 
 	zFactor = 10000 / (metersPerPixel * canvasComplexity / mesh.geometry.parameters.width);
-		
+
 	material.uniforms.zFactor.value = zFactor; // * mesh.geometry.parameters.width;
 
 	//zFactor = 28000;
 	//material.uniforms.zFactor = zFactor;
-	
+
 
 
 	user.z = lat2tile(p.lat, mapZoom);
@@ -474,7 +474,12 @@ function init() {
 
 	let meshComplexity = isMobile() ? 128 : 512;
 	canvasComplexity = isMobile() ? 2048 : 4096;
- 	mapSize = 10;
+	mapSize = 10;
+
+	if (/hq/.test(window.location.href)) {
+		canvasComplexity = 8192;			
+		mapSize = 20;
+	}
 
 	geometry = new THREE.PlaneGeometry(mapSize, mapSize, meshComplexity, meshComplexity);
 
@@ -487,13 +492,13 @@ function init() {
 		"varying vec2 vUV; " +
 		"uniform sampler2D terrainTexture;" +
 		"uniform vec2 terrainTextureOffset; " +
-		"uniform float zFactor; " +		
+		"uniform float zFactor; " +
 		"varying float vDistance; " +
 		"void main() { " +
 		"  vUV = vec2(uv.x, 1.0 - uv.y); vec4 s = texture2D(terrainTexture, vUV + terrainTextureOffset) * 256.0; " +
 		"  float elevation = s.r * 256.0 + s.g + s.b / 256.0 - 32768.0; " +
 		"  elevation = clamp(elevation, 0.0, 10000.0); " +					// Clamp to sea level and Everest
-		"  elevation = elevation / 10000.0; " +  
+		"  elevation = elevation / 10000.0; " +
 		"  elevation = elevation * zFactor; " +   							// TODO change this based on latitude 
 		//"  elevation = elevation / 14000.0; " +   							// TODO change this based on latitude 
 		"  vec3 p = position;" + 												// 'position' is a built-in three.js construct
@@ -511,12 +516,12 @@ function init() {
 		"varying float vDistance;" +
 		"void main() { " +
 		"  gl_FragColor = texture2D(mapTexture, vUV + mapTextureOffset); " +
-		"  if (vDistance < 0.8) {" + // Blur texture if close to the camera
-		"  gl_FragColor += texture2D(mapTexture, vUV + mapTextureOffset + vec2(1.0 / " + canvasComplexity + ".0, 1.0 / " + canvasComplexity + ".0)); " +
+		///"  if (vDistance < 0.8) {" + // Blur texture if close to the camera
+		///"  gl_FragColor += texture2D(mapTexture, vUV + mapTextureOffset + vec2(1.0 / " + canvasComplexity + ".0, 1.0 / " + canvasComplexity + ".0)); " +
 		//"  gl_FragColor.r += 1.0;" +
-		"  gl_FragColor /= 2.0;" +
-		"  }" +
-        "  float fDistance = distance(mapPosition, vUV);" + 
+		///"  gl_FragColor /= 2.0;" +
+		///"  }" +
+		"  float fDistance = distance(mapPosition, vUV);" +
 		"  float hazeStrength = smoothstep(0.25, 0.46, fDistance);" + //TODO tileCount / 8 * 7.5
 		//" hazeStrength = 0.0; " +
 		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
