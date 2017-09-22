@@ -62,11 +62,26 @@ function getTile(x, y) {
 			console.log('requesting ' + x + ' ' + y);
 
 			const url = 'https://stamen-tiles.a.ssl.fastly.net/terrain/10/'+x+'/'+y+'.png'
+
+			/*
 			fetch(url)
 				.then(response => response.blob())
 				.then(blob => createImageBitmap(blob))
 				.then(image => tile.image = image)
+			*/
 
+			if (!!window.createImageBitmap) {
+				fetch(url)
+					.then(response => response.blob())
+					.then(blob => createImageBitmap(blob))
+					.then(image => { tile.image = image; })
+			}
+			else {
+				// fallback path
+				fetch(url)
+					.then(response => response.blob())
+					.then(blob => { tile.image = new Image(); tile.image.src = URL.createObjectURL(blob); })
+			}
 
 		
 
