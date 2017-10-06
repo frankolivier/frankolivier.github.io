@@ -12,18 +12,20 @@ function Tiles(url, textureWidth, zoom) {
     // Size of the (square) texture to fill with tiles
     this.textureWidth = textureWidth;
 
-    // We are drawing 256x256 pixel tiles
-    const tileDimension = 256;
-
     // Zoom level of the slippy map
     this.zoom = zoom;
 
-    this.tileCount = (this.textureWidth / tileDimension); // How many tiles should we draw? (1024 / 256 == 4 tiles, + buffer)
+    // We are drawing 256x256 pixel tiles
+    const tileDimension = 256;
 
-    // To re-render less, we'll 'wrap' around the texture as we render tiles 
+    // How many tiles should we draw? (Example: 1024 / 256 == 4 tiles)
+    this.tileCount = (this.textureWidth / tileDimension); 
+
+    // To re-render less, we'll UV-offset 'wrap' around the texture as we render tiles 
     this.offsetX = 0;
     this.offsetY = 0;
 
+    // The list of 256x256 tile bitmap resources to render - one per frame
     this.renderTiles = [];
 
     this.getRenderTile = function () {
@@ -42,17 +44,24 @@ function Tiles(url, textureWidth, zoom) {
     // Our render list:
     this.tiles = new Array(this.tileCount).fill(undefined).map(() => new Array(this.tileCount).fill(undefined));
 
+    this.iteration = 0;
+
     this.makeTile = function (x, y, image, drawX, drawY) {
+        this.iteration++;
+
         return {
             x: x,
             y: y,
             image: image,
             drawX: drawX,
-            drawY: drawY
+            drawY: drawY,
+            iteration: this.iteration
         };
     }
 
     this.fetchCount = 0;
+
+    this.era = 0;
 
     this.sameDrawXY = function (tile) {
         return (tile.drawX == this.drawX && tile.drawY == this.drawY);
@@ -65,10 +74,15 @@ function Tiles(url, textureWidth, zoom) {
         let i = this.renderTiles.findIndex(this.sameDrawXY, tile);
 
         if (i == -1) {
+            // No tile found; paint it
             this.renderTiles.push(tile);
         }
         else {
-            this.renderTiles[i] = tile;
+            // Am I a newer, better tile? Replace the older tile in the queue
+            if (tile.iteration > this.renderTiles[i].iteration)
+            {
+                this.renderTiles[i] = tile;                
+            }
         }
 
         this.fetchCount--;
@@ -150,24 +164,19 @@ function Tiles(url, textureWidth, zoom) {
                     this.tiles[xx][yy].requested = false;
                 }
 
-
                 if (this.tiles[xx][yy].requested == false) {
-                    //if (this.fetchCount < 100) { // Limit the number of outstanding requests
+                    //if (this.fetchCount < 100) { // Limit the number of outstanding requests; work around Safari bug
                         // Find best tile to request
                         let testX = xx > this.offsetX ? xx : xx + this.tileCount;
                         let testY = yy > this.offsetY ? yy : yy + this.tileCount;
 
-                        let distance = Math.abs(targetX - testX) + Math.abs(targetY - testY);
+                        let distance = Math.abs(targetX - testX) + Math.abs(targetY - testY); //bugbug improve
                         if (distance < bestRequestDistance) {
                             bestRequestX = xx;
                             bestRequestY = yy;
                             bestRequestDistance = distance;
                         }
 
-                        //this.getTile(this.tiles[xx][yy].x, this.tiles[xx][yy].y, xx * tileDimension, (this.tileCount - yy - 1) * tileDimension);
-                        //this.tiles[xx][yy].requested = true;
-
-                        //console.log('fetchCoutn == ' + this.fetchCount);
                     //}
                 }
 
@@ -176,7 +185,6 @@ function Tiles(url, textureWidth, zoom) {
         }
 
         if (bestRequestX !== undefined && bestRequestY !== undefined) {
-
 
             let xx = bestRequestX;
             let yy = bestRequestY;
