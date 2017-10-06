@@ -137,11 +137,24 @@ function setFlyMode(setting) {
 	}
 }
 
+function GotoRandomPlace()
+{
+	let p = coolPlaces[0];
+	
+	p.lat = Math.random() * 170 - 85;
+	p.long = Math.random() * 360 - 180;
+
+	GotoPlace(p);
+	
+}
+
 function GotoRandomCoolPlace() {
 	let p = coolPlaces[Math.floor(Math.random() * coolPlaces.length)];
+	GotoPlace(p);
+}
 
-	//p.lat = Math.random() * 170 - 85;
-	//p.long = Math.random() * 360 - 180;
+
+function GotoPlace(p) {
 
 	const radLad = p.lat * (Math.PI / 180);
 
@@ -208,7 +221,7 @@ function handleKey(e) {
 			user.y += step;
 			setFlyMode(false);
 			break;
-		case '1':
+		case '3':
 			// Dump location data to console so that we can add a cool place
 			console.log(tile2lat(user.z, mapZoom) + ' ' + tile2long(user.x, mapZoom));
 			console.log(user.y);
@@ -217,6 +230,9 @@ function handleKey(e) {
 		case '2':
 		case 'r':
 		case 'R':
+			GotoRandomPlace();
+			break;
+		case '1':	
 			GotoRandomCoolPlace();
 			break;
 		default:
