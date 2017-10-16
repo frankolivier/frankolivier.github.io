@@ -171,6 +171,7 @@ function GotoPlace(p) {
 
 	user.z = lat2tile(p.lat, mapZoom);
 	user.x = long2tile(p.long, mapZoom);
+
 	user.y = p.altitude;
 
 	camera.position.x = p.x;

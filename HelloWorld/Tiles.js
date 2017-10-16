@@ -1,6 +1,6 @@
 "use strict";
 
-function Tiles(url, textureWidth, zoom) {
+function Tiles(url, textureWidth, zoom, emptyTile) {
 
     // The URL pattern to use when downloading tiles
     // must contain %x%  %y% and %zoom%
@@ -9,30 +9,26 @@ function Tiles(url, textureWidth, zoom) {
     // %zoom% is replaced with zoom level
     this.url = url;
 
-    // Size of the (square) texture to fill with tiles
+    // Pixel size of the (square) texture to fill with tiles (Example: 1024, 2048, 4096, etc)
     this.textureWidth = textureWidth;
 
     // Zoom level of the slippy map
     this.zoom = zoom;
 
+    // Default tile to prep
+    this.emptyTile = emptyTile;
+
     // We are drawing 256x256 pixel tiles
     const tileDimension = 256;
 
     // How many tiles should we draw? (Example: 1024 / 256 == 4 tiles)
-    this.tileCount = (this.textureWidth / tileDimension); 
+    this.tileCount = (this.textureWidth / tileDimension);
 
     // To re-render less, we'll UV-offset 'wrap' around the texture as we render tiles 
     this.offsetX = 0;
     this.offsetY = 0;
 
-    // The list of 256x256 tile bitmap resources to render - one per frame
-    this.renderTiles = [];
-
-    this.getRenderTile = function () {
-        // bugbug actually, we should enforce render order...
-        return this.renderTiles.shift();
-    }
-
+    // UV Wrap Values
     this.getNormalizedOffsetX = function () {
         return this.offsetX / this.tileCount;
     }
@@ -41,82 +37,107 @@ function Tiles(url, textureWidth, zoom) {
         return this.offsetY / this.tileCount;
     }
 
-    // Our render list:
+    // The list of 256x256 tile resources to render - one per frame
     this.tiles = new Array(this.tileCount).fill(undefined).map(() => new Array(this.tileCount).fill(undefined));
 
-    this.iteration = 0;
+    this.getRenderTile = function () {
 
-    this.makeTile = function (x, y, image, drawX, drawY) {
-        this.iteration++;
+        // bugbug improve - draw from center
+        for (let y = 0; y < this.tileCount; y++) {
+            for (let x = 0; x < this.tileCount; x++) {
 
+                if (this.tiles[x][y].image != null) {
+                    if (this.tiles[x][y].done != true) {
+                        this.tiles[x][y].done = true;
+
+                        let tile = {
+                            image: this.tiles[x][y].image,
+                            drawX: this.tiles[x][y].drawX,
+                            drawY: this.tiles[x][y].drawY
+                        }
+                        this.tiles[x][y].image = null;
+
+                        return tile;
+                    }
+                }
+
+            }
+        }
+        //return this.renderTiles.pop();
+
+        /*
+        if (this.renderTiles.length === 0) return undefined;
+
+        let findex = 0;
+        let tile = this.renderTiles[findex];
+
+        this.renderTiles.forEach(function (item, index, array) {
+            if (item.iteration > tile.iteration) {
+                tile = item;
+                findex = index;
+            }
+        });
+
+        this.renderTiles.splice(findex, 1);
+
+        return tile;
+        */
+    }
+
+
+    // Our render list:
+
+    this.makeTile = function (slippyX, slippyY, image, drawX, drawY) {
         return {
-            x: x,
-            y: y,
+            slippyX: slippyX,
+            slippyY: slippyY,
             image: image,
             drawX: drawX,
             drawY: drawY,
-            iteration: this.iteration
+            requested: false,
+            done: false
         };
     }
 
-    this.fetchCount = 0;
-
-    this.era = 0;
-
-    this.sameDrawXY = function (tile) {
-        return (tile.drawX == this.drawX && tile.drawY == this.drawY);
+    this.setTileImage = function (image, tileX, tileY, slippyX, slippyY) {
+        // still the right image resource?
+        if (this.tiles[tileX][tileY].slippyX === slippyX && this.tiles[tileX][tileY].slippyY === slippyY) {
+            this.tiles[tileX][tileY].image = image;
+        }
+        else
+        {
+            console.log('discard!');
+        }
     }
 
-    //TODO remove fetchCount? check if 8k x 8k mode needs a limit
-
-    this.addRenderTile = function (tile) {
-
-        let i = this.renderTiles.findIndex(this.sameDrawXY, tile);
-
-        if (i == -1) {
-            // No tile found; paint it
-            this.renderTiles.push(tile);
-        }
-        else {
-            // Am I a newer, better tile? Replace the older tile in the queue
-            if (tile.iteration > this.renderTiles[i].iteration)
-            {
-                this.renderTiles[i] = tile;                
-            }
-        }
-
-        this.fetchCount--;
-    }
-
-    // returns ? bugbug?
     // drawX and drawX are where to draw the tile on the texture
-    this.getTile = function (x, y, drawX, drawY) {
+    this.getTile = function (tileX, tileY) {
 
-        let tile; // = this.cachedTiles.find(this.checkId, id);
+        let x = tileX;
+        let y = tileY;
+        let slippyX = this.tiles[x][y].slippyX;
+        let slippyY = this.tiles[x][y].slippyY;
 
-        //if (tile === undefined) { // Not found in the array
-
-        tile = this.makeTile(x, y, null, drawX, drawY);
-        //this.addTile(tile);
+        this.tiles[x][y].requested = true;
 
         var url = this.url;
-        url = url.replace('%x%', x);
-        url = url.replace('%y%', y);
+        url = url.replace('%x%', slippyX);
+        url = url.replace('%y%', slippyY);
         url = url.replace('%zoom%', zoom);
-
-        this.fetchCount++;
 
         if (!!window.createImageBitmap) {
             fetch(url)
                 .then(response => response.blob())
                 .then(blob => createImageBitmap(blob))
-                .then(image => { tile.image = image; this.addRenderTile(tile); })
+                .then(image => { this.setTileImage(image, x, y, slippyX, slippyY) })
         }
         else {
             // fallback path
             fetch(url)
                 .then(response => response.blob())
-                .then(blob => { tile.image = new Image(); tile.image.src = URL.createObjectURL(blob); this.addRenderTile(tile); })
+                .then(blob => {
+                    let image = new Image(); image.src = URL.createObjectURL(blob); this.setTileImage(image, x, y, slippyX, slippyY)
+                })
         }
     }
 
@@ -124,16 +145,14 @@ function Tiles(url, textureWidth, zoom) {
     // Tries to avoid work whenever possible
     this.render = function (longtitude, latitude) {
 
-        let x = long2tile(longtitude, zoom);    // x of the tile to render
+        let x = long2tile(longtitude, zoom);    // Slippy x of the tile to render
         let y = lat2tile(latitude, zoom);       // y
 
         const halfTileCount = this.tileCount / 2; // How many tiles should we draw?
-        const translateX = (x - halfTileCount) * tileDimension;
-        const translateY = (y - halfTileCount) * tileDimension;
         const lowerX = Math.floor(x - halfTileCount);
         const lowerY = Math.floor(y - halfTileCount);
 
-        this.offsetX = x % this.tileCount;
+        this.offsetX = x % this.tileCount; // For UV Wrap
         this.offsetY = y % this.tileCount;
 
         // let's request one tile per frame
@@ -148,34 +167,36 @@ function Tiles(url, textureWidth, zoom) {
         for (let yy = 0; yy < this.tileCount; yy++) {
             for (let xx = 0; xx < this.tileCount; xx++) {
 
+                let xValue = lowerX + ((xx - this.offsetX + this.tileCount) % this.tileCount);
+                let yValue = lowerY + ((yy - this.offsetY + this.tileCount) % this.tileCount); // move outside xx loop bugbug
+
                 // Initialize the tile, if needed
                 if (!this.tiles[xx][yy]) {
-                    this.tiles[xx][yy] = { x: -1, y: -1, painted: false, requested: false }; //init
+                    this.tiles[xx][yy] = this.makeTile(xValue, yValue, undefined, xx * tileDimension, (this.tileCount - yy - 1) * tileDimension);
                 }
 
-                let xValue = lowerX + ((xx - this.offsetX + this.tileCount) % this.tileCount);
-                let yValue = lowerY + ((yy - this.offsetY + this.tileCount) % this.tileCount);
-
-                // We need to overwrite this tile
-                if ((this.tiles[xx][yy].x != xValue) || (this.tiles[xx][yy].y != yValue)) {
-                    this.tiles[xx][yy].x = xValue;
-                    this.tiles[xx][yy].y = yValue;
-                    this.tiles[xx][yy].painted = false;
+                // Do we need to overwrite this tile
+                if ((this.tiles[xx][yy].slippyX != xValue) || (this.tiles[xx][yy].slippyY != yValue)) {
+                    this.tiles[xx][yy].slippyX = xValue;
+                    this.tiles[xx][yy].slippyY = yValue;
+                    this.tiles[xx][yy].image = null;
                     this.tiles[xx][yy].requested = false;
+                    this.tiles[xx][yy].done = false;
                 }
 
+                // find best tile to request
                 if (this.tiles[xx][yy].requested == false) {
                     //if (this.fetchCount < 100) { // Limit the number of outstanding requests; work around Safari bug
-                        // Find best tile to request
-                        let testX = xx > this.offsetX ? xx : xx + this.tileCount;
-                        let testY = yy > this.offsetY ? yy : yy + this.tileCount;
+                    // Find best tile to request
+                    let testX = xx > this.offsetX ? xx : xx + this.tileCount;
+                    let testY = yy > this.offsetY ? yy : yy + this.tileCount;
 
-                        let distance = Math.abs(targetX - testX) + Math.abs(targetY - testY); //bugbug improve
-                        if (distance < bestRequestDistance) {
-                            bestRequestX = xx;
-                            bestRequestY = yy;
-                            bestRequestDistance = distance;
-                        }
+                    let distance = Math.abs(targetX - testX) + Math.abs(targetY - testY); //bugbug improve
+                    if (distance < bestRequestDistance) {
+                        bestRequestX = xx;
+                        bestRequestY = yy;
+                        bestRequestDistance = distance;
+                    }
 
                     //}
                 }
@@ -185,12 +206,7 @@ function Tiles(url, textureWidth, zoom) {
         }
 
         if (bestRequestX !== undefined && bestRequestY !== undefined) {
-
-            let xx = bestRequestX;
-            let yy = bestRequestY;
-
-            this.getTile(this.tiles[xx][yy].x, this.tiles[xx][yy].y, xx * tileDimension, (this.tileCount - yy - 1) * tileDimension);
-            this.tiles[xx][yy].requested = true;
+            this.getTile(bestRequestX, bestRequestY);
         }
     }
 }
