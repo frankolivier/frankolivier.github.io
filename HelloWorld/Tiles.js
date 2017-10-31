@@ -37,15 +37,49 @@ function Tiles(url, textureWidth, zoom, emptyTile) {
         return this.offsetY / this.tileCount;
     }
 
+    let tempcanvas = document.createElement('canvas');
+    tempcanvas.width = tempcanvas.height = 32;
+    let ctx = tempcanvas.getContext('2d');
+
+    // Red rectangle
+    ctx.beginPath();
+    ctx.fillStyle = "black";
+    ctx.rect(0, 0, 32, 32);
+    ctx.fill();
+
     // The list of 256x256 tile resources to render - one per frame
     this.tiles = new Array(this.tileCount).fill(undefined).map(() => new Array(this.tileCount).fill(undefined));
 
-    this.getRenderTile = function () {
+    this.fetchCount = 0;
+
+    // called by the rendering code - gets a list of tiles to render
+    this.getRenderTiles = function () {
+
+        let tiles = [];
 
         // bugbug improve - draw from center
         for (let y = 0; y < this.tileCount; y++) {
             for (let x = 0; x < this.tileCount; x++) {
 
+                if (this.tiles[x][y].temporary != true) {
+
+                    this.tiles[x][y].temporary = true;
+
+                    let tile = {
+                        image: tempcanvas,
+                        drawX: this.tiles[x][y].drawX,
+                        drawY: this.tiles[x][y].drawY
+                    }
+
+                    tiles.push(tile);
+                }
+            }
+        }
+
+        if (tiles.length > 0) return tiles;
+
+        for (let y = 0; y < this.tileCount; y++) {
+            for (let x = 0; x < this.tileCount; x++) {
                 if (this.tiles[x][y].image != null) {
                     if (this.tiles[x][y].done != true) {
                         this.tiles[x][y].done = true;
@@ -57,12 +91,16 @@ function Tiles(url, textureWidth, zoom, emptyTile) {
                         }
                         this.tiles[x][y].image = null;
 
-                        return tile;
+                        tiles.push(tile);
+                        return tiles; // only do one big tile at a time, to keep FPS budget    
                     }
                 }
 
             }
         }
+
+        return tiles;
+
         //return this.renderTiles.pop();
 
         /*
@@ -95,24 +133,30 @@ function Tiles(url, textureWidth, zoom, emptyTile) {
             drawX: drawX,
             drawY: drawY,
             requested: false,
-            done: false
+            done: false,
+            temporary: false
         };
     }
 
     this.setTileImage = function (image, tileX, tileY, slippyX, slippyY) {
+
+        this.fetchCount--;
+
         // still the right image resource?
         if (this.tiles[tileX][tileY].slippyX === slippyX && this.tiles[tileX][tileY].slippyY === slippyY) {
             this.tiles[tileX][tileY].image = image;
-        }
-        else
-        {
-            console.log('discard!');
         }
     }
 
     // drawX and drawX are where to draw the tile on the texture
     this.getTile = function (tileX, tileY) {
 
+        //console.log(" count = " + this.fetchCount);
+
+        if (this.fetchCount > 10) return;
+
+        this.fetchCount++;
+        
         let x = tileX;
         let y = tileY;
         let slippyX = this.tiles[x][y].slippyX;
@@ -124,6 +168,8 @@ function Tiles(url, textureWidth, zoom, emptyTile) {
         url = url.replace('%x%', slippyX);
         url = url.replace('%y%', slippyY);
         url = url.replace('%zoom%', zoom);
+
+        //todo handle fetch failing
 
         if (!!window.createImageBitmap) {
             fetch(url)
@@ -182,6 +228,7 @@ function Tiles(url, textureWidth, zoom, emptyTile) {
                     this.tiles[xx][yy].image = null;
                     this.tiles[xx][yy].requested = false;
                     this.tiles[xx][yy].done = false;
+                    this.tiles[xx][yy].temporary = false;
                 }
 
                 // find best tile to request

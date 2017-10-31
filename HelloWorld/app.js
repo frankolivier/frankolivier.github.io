@@ -137,15 +137,14 @@ function setFlyMode(setting) {
 	}
 }
 
-function GotoRandomPlace()
-{
+function GotoRandomPlace() {
 	let p = coolPlaces[0];
-	
+
 	p.lat = Math.random() * 170 - 85;
 	p.long = Math.random() * 360 - 180;
 
 	GotoPlace(p);
-	
+
 }
 
 function GotoRandomCoolPlace() {
@@ -173,7 +172,6 @@ function GotoPlace(p) {
 	user.x = long2tile(p.long, mapZoom);
 
 	user.y = p.altitude;
-
 	camera.position.x = p.x;
 	camera.position.y = p.y;
 	camera.position.z = p.z;
@@ -233,7 +231,7 @@ function handleKey(e) {
 		case 'R':
 			GotoRandomPlace();
 			break;
-		case '1':	
+		case '1':
 			GotoRandomCoolPlace();
 			break;
 		default:
@@ -367,11 +365,8 @@ function renderFrame() {
 
 	handleController();
 
-	const fx = user.x;
-	const fz = user.z;
-
-	const longtitude = tile2long(fx, mapZoom);
-	const latitude = tile2lat(fz, mapZoom);
+	const longtitude = tile2long(user.x, mapZoom);
+	const latitude = tile2lat(user.z, mapZoom);
 
 	terrainTiles.render(longtitude, latitude);
 	{
@@ -379,10 +374,11 @@ function renderFrame() {
 		material.uniforms.terrainTextureOffset.value.y = terrainTiles.getNormalizedOffsetY();
 		material.uniforms.terrainTextureOffset.value.needsUpdate = true;
 
-		let tile = terrainTiles.getRenderTile();
-		if (!!tile) {
+		let tiles = terrainTiles.getRenderTiles();
+		tiles.forEach(function (tile) {
 			terrainTexture.update(tile.image, tile.drawX, tile.drawY);
-		}
+		});
+
 	}
 
 	mapTiles.render(longtitude, latitude);
@@ -392,10 +388,10 @@ function renderFrame() {
 		material.uniforms.mapTextureOffset.value.y = mapTiles.getNormalizedOffsetY();
 		material.uniforms.mapTextureOffset.value.needsUpdate = true;
 
-		let tile = mapTiles.getRenderTile();
-		if (!!tile) {
+		let tiles = mapTiles.getRenderTiles();
+		tiles.forEach(function (tile) {
 			mapTexture.update(tile.image, tile.drawX, tile.drawY);
-		}
+		});
 
 
 
@@ -494,7 +490,7 @@ function init() {
 	mapSize = 10;
 
 	if (/hq/.test(window.location.href)) {
-		canvasComplexity = 8192;			
+		canvasComplexity = 8192;
 		mapSize = 20;
 	}
 
@@ -505,24 +501,46 @@ function init() {
 
 	const gl = renderer.context;
 
+	let tileCount = mapTiles.tileCount;
+
+
 	let vertexShader =
-		"varying vec2 vUV; " +
+		"varying vec2 vUV; " +						// location on the uv map
 		"uniform sampler2D terrainTexture;" +
 		"uniform vec2 terrainTextureOffset; " +
-		"uniform float zFactor; " +
+		"uniform sampler2D mapTexture; " +
+		"uniform float zFactor; " +					// scale factor for height
 		"varying float vDistance; " +
+		"varying float vTileReady;" +
 		"void main() { " +
-		"  vUV = vec2(uv.x, 1.0 - uv.y); vec4 s = texture2D(terrainTexture, vUV + terrainTextureOffset) * 256.0; " +
+		"  vUV = vec2(uv.x, 1.0 - uv.y); " +
+		"  vec4 s = texture2D(terrainTexture, vUV + terrainTextureOffset) * 256.0; " +
 		"  float elevation = s.r * 256.0 + s.g + s.b / 256.0 - 32768.0; " +
 		"  elevation = clamp(elevation, 0.0, 10000.0); " +					// Clamp to sea level and Everest
 		"  elevation = elevation / 10000.0; " +
 		"  elevation = elevation * zFactor; " +   							// TODO change this based on latitude 
-		//"  elevation = elevation / 14000.0; " +   							// TODO change this based on latitude 
-		"  vec3 p = position;" + 												// 'position' is a built-in three.js construct
+
+		"  vec2 lookup = vUV + terrainTextureOffset;" +
+		"  lookup.x = floor(lookup.x * " + tileCount + ".0) / " + tileCount + ".0 + (1.0 / " + tileCount * 32 + ".0);" +
+		"  lookup.y = floor(lookup.y * " + tileCount + ".0) / " + tileCount + ".0 + (1.0 / " + tileCount + ".0) - (1.0 / " + tileCount * 32 + ".0);" +
+		"  vec4 terrainTest = texture2D(terrainTexture, lookup); " +
+		"  vec4 mapTest = texture2D(mapTexture, lookup); " +
+
+		"  vec4 test = min(terrainTest, mapTest);" +
+
+		"   vTileReady = step(0.01, test.r);" +
+
+
+		"  vec3 p = position;" + 											// 'position' is a built-in three.js construct
 		"  p.z += elevation; " +
+
+		" p.z *= vTileReady;" +
+
 		"  gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
+
 		"  vDistance = distance(gl_Position.xyz, vec3(0.0, 0.0, 0.0));" +
 		"}";
+
 
 	let fragmentShader =
 		"varying vec2 vUV; " +
@@ -531,24 +549,25 @@ function init() {
 		"uniform vec2 mapPosition; " +
 		"varying float hazeStrength; " +
 		"varying float vDistance;" +
-		"void main() { " +
-		"  gl_FragColor = texture2D(mapTexture, vUV + mapTextureOffset); " +
-		///"  if (vDistance < 0.8) {" + // Blur texture if close to the camera
-		///"  gl_FragColor += texture2D(mapTexture, vUV + mapTextureOffset + vec2(1.0 / " + canvasComplexity + ".0, 1.0 / " + canvasComplexity + ".0)); " +
-		//"  gl_FragColor.r += 1.0;" +
-		///"  gl_FragColor /= 2.0;" +
-		///"  }" +
-		"  float fDistance = distance(mapPosition, vUV);" +
-		"  float hazeStrength = smoothstep(0.25, 0.46, fDistance);" + //TODO tileCount / 8 * 7.5
-		//" hazeStrength = 0.0; " +
-		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
-		//"  gl_FragColor = mix(gl_FragColor, vec4(1.0, 1.0, 1.0, 1.0), hazeStrength); " +
+		"varying float vTileReady;" +
 
-		//"	{" +
-		//" gl_FragColor.r = 1.0;" +
-		//" gl_FragColor.g = 1.0;" +
-		//" gl_FragColor.b = 1.0;" +
-		//"	}" +
+		"void main() { " +
+
+		"  gl_FragColor = texture2D(mapTexture, vUV + mapTextureOffset); " +
+
+		//"if (distance(mapTextureOffset + vUV, lookup) < 0.005) { gl_FragColor.r = 1.0; };"+
+
+		"  float fDistance = distance(mapPosition, vUV);" +
+
+		"if (fDistance > 0.47) { discard; }; " +
+
+		"  float hazeStrength = smoothstep(0.40, 0.47, fDistance);" + //TODO tileCount / 8 * 7.5
+
+		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
+		//"  gl_FragColor.r = mix(gl_FragColor.r, 1.0, hazeStrength); " +
+
+		"if (vTileReady == 0.0) { discard; }; " +
+
 		"}";
 
 
@@ -581,7 +600,7 @@ function init() {
 			zFactor: { type: 'f', value: 1.0 },
 			mapTexture: { type: 't', value: mapTexture },
 			mapTextureOffset: { value: new THREE.Vector2() },
-			mapPosition: { value: new THREE.Vector2() }
+			mapPosition: { value: new THREE.Vector2() }	// Where we are on the UV wrap?
 		},
 		vertexShader: vertexShader,
 		fragmentShader: fragmentShader
