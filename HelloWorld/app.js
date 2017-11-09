@@ -487,7 +487,8 @@ function init() {
 		laserPointer = new THREE.Mesh(pointerGeometry, pointerMaterial);
 	}
 	scene.add(laserPointer);
-
+	laserPointer.visible = false;
+	
 	let meshComplexity = isMobile() ? 128 : 512;
 	canvasComplexity = isMobile() ? 2048 : 4096;
 	mapSize = 10;
