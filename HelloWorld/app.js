@@ -328,9 +328,9 @@ function handleController() {
 				if (pressed == true) {
 					let input = controller.axes[1];
 
-					if (controller.id == "Daydream Controller") {
+					//if (controller.id == "Daydream Controller") {
 						input *= -1;	// for some reason the daydream controller values are swapped?
-					}
+					//}
 
 					const scale = 0.01;
 
@@ -350,7 +350,7 @@ function handleController() {
 
 	}
 
-	laserPointer.visible = hasPointerHardware;
+	//laserPointer.visible = hasPointerHardware;
 
 }
 
@@ -645,6 +645,7 @@ function init() {
 			renderer.domElement.webkitRequestFullscreen();
 		}
 		else {
+			setFlyMode(false);
 			effect.isPresenting ? effect.exitPresent() : effect.requestPresent();
 
 		}
