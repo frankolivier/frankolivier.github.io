@@ -435,9 +435,11 @@ function renderFrame() {
 
 // Resize the WebGL canvas when the window size changes
 function onWindowResize() {
-	camera.aspect = window.innerWidth / window.innerHeight;
-	camera.updateProjectionMatrix();
-	renderer.setSize(window.innerWidth, window.innerHeight);
+	if (!effect.isPresenting) {
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize(window.innerWidth, window.innerHeight);
+	}
 }
 
 let geocoder;
