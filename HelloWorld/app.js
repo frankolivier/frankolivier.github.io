@@ -296,7 +296,7 @@ function handleController() {
 		for (let i = 0; i < gamepads.length; ++i) {
 			let controller = gamepads[i];
 
-			if (controller != null) {
+			if (controller != null&&controller.pose != null) {
 
 				if (controller.pose.hasPosition == true) {
 					try {
