@@ -351,6 +351,7 @@ function handleController() {
 	}
 
 	//laserPointer.visible = hasPointerHardware;
+	laserPointer.visible = false;
 
 }
 
