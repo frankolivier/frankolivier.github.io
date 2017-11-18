@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 function Tiles(url, textureWidth, zoom, emptyTile) {
 
@@ -37,9 +37,9 @@ function Tiles(url, textureWidth, zoom, emptyTile) {
         return this.offsetY / this.tileCount;
     }
 
-    let tempcanvas = document.createElement('canvas');
-    tempcanvas.width = tempcanvas.height = 32;
-    let ctx = tempcanvas.getContext('2d');
+    this.tempcanvas = document.createElement('canvas');
+    this.tempcanvas.width = this.tempcanvas.height = 32;
+    let ctx = this.tempcanvas.getContext('2d');
 
     // Red rectangle
     ctx.beginPath();
@@ -66,12 +66,17 @@ function Tiles(url, textureWidth, zoom, emptyTile) {
                     this.tiles[x][y].temporary = true;
 
                     let tile = {
-                        image: tempcanvas,
+                        image: null,
                         drawX: this.tiles[x][y].drawX,
                         drawY: this.tiles[x][y].drawY
                     }
 
                     tiles.push(tile);
+                    //return tiles; // only do one big tile at a time, to keep FPS budget    
+                    
+                    // exit early to not block rendering
+                    // bugbug improve
+                    if (tile.length > 10) return tiles;
                 }
             }
         }
@@ -146,6 +151,10 @@ function Tiles(url, textureWidth, zoom, emptyTile) {
         if (this.tiles[tileX][tileY].slippyX === slippyX && this.tiles[tileX][tileY].slippyY === slippyY) {
             this.tiles[tileX][tileY].image = image;
         }
+        else
+        {
+            console.log('flush!');
+        }
     }
 
     // drawX and drawX are where to draw the tile on the texture
@@ -156,7 +165,7 @@ function Tiles(url, textureWidth, zoom, emptyTile) {
         if (this.fetchCount > 10) return;
 
         this.fetchCount++;
-        
+
         let x = tileX;
         let y = tileY;
         let slippyX = this.tiles[x][y].slippyX;
@@ -176,6 +185,7 @@ function Tiles(url, textureWidth, zoom, emptyTile) {
                 .then(response => response.blob())
                 .then(blob => createImageBitmap(blob))
                 .then(image => { this.setTileImage(image, x, y, slippyX, slippyY) })
+                .catch(error => this.fetchCount--)
         }
         else {
             // fallback path
@@ -184,6 +194,7 @@ function Tiles(url, textureWidth, zoom, emptyTile) {
                 .then(blob => {
                     let image = new Image(); image.src = URL.createObjectURL(blob); this.setTileImage(image, x, y, slippyX, slippyY)
                 })
+                .catch(error => this.fetchCount--)
         }
     }
 

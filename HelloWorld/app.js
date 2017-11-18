@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 // TODO Add location to URL when focus changes away from content
 // TODO Allow HMD rotate in WebVR
@@ -152,6 +152,7 @@ function GotoRandomCoolPlace() {
 	GotoPlace(p);
 }
 
+let doCamera = true;
 
 function GotoPlace(p) {
 
@@ -171,11 +172,14 @@ function GotoPlace(p) {
 	user.z = lat2tile(p.lat, mapZoom);
 	user.x = long2tile(p.long, mapZoom);
 
-	user.y = p.altitude;
-	camera.position.x = p.x;
-	camera.position.y = p.y;
-	camera.position.z = p.z;
-	camera.lookAt(new THREE.Vector3(0, 0, 0));
+	///user.y = p.altitude;
+	if (doCamera == true) {
+		camera.position.x = p.x;
+		camera.position.y = p.y;
+		camera.position.z = p.z;
+		camera.lookAt(new THREE.Vector3(0, 0, 0));
+		doCamera = false;
+	}
 
 	setFlyMode(true);
 }
@@ -296,7 +300,7 @@ function handleController() {
 		for (let i = 0; i < gamepads.length; ++i) {
 			let controller = gamepads[i];
 
-			if (controller != null&&controller.pose != null) {
+			if (controller != null && controller.pose != null) {
 
 				if (controller.pose.hasPosition == true) {
 					try {
@@ -328,8 +332,10 @@ function handleController() {
 				if (pressed == true) {
 					let input = controller.axes[1];
 
+					console.log("input = " + input);
+
 					//if (controller.id == "Daydream Controller") {
-						input *= -1;	// for some reason the daydream controller values are swapped?
+					input *= -1;	// for some reason the daydream controller values are swapped?
 					//}
 
 					const scale = 0.01;
@@ -357,10 +363,8 @@ function handleController() {
 
 function renderFrame() {
 
-	effect.requestAnimationFrame(renderFrame);
-
 	// Save power and performance by not rendering when window is in the background
-	if (!windowIsActive) return;
+	//bugbug test is safge to add back if (!windowIsActive) return;
 
 	user.add(flyingVector);
 
@@ -377,7 +381,14 @@ function renderFrame() {
 
 		let tiles = terrainTiles.getRenderTiles();
 		tiles.forEach(function (tile) {
-			terrainTexture.update(tile.image, tile.drawX, tile.drawY);
+			if (tile.image === null) {
+				terrainTexture.update(terrainTiles.tempcanvas, tile.drawX, tile.drawY);
+			}
+			else
+			{
+				terrainTexture.update(tile.image, tile.drawX, tile.drawY);
+				
+			}
 		});
 
 	}
@@ -391,7 +402,14 @@ function renderFrame() {
 
 		let tiles = mapTiles.getRenderTiles();
 		tiles.forEach(function (tile) {
-			mapTexture.update(tile.image, tile.drawX, tile.drawY);
+			if (tile.image === null) {
+				mapTexture.update(mapTiles.tempcanvas, tile.drawX, tile.drawY);
+			}
+			else
+			{
+				mapTexture.update(tile.image, tile.drawX, tile.drawY);
+				
+			}
 		});
 
 
@@ -411,18 +429,6 @@ function renderFrame() {
 	material.uniforms.mapPosition.value.y = 0.5 - offsetZ / (canvasComplexity / tileDimension);
 	material.uniforms.mapPosition.value.needsUpdate = true;
 
-	/*
-		disable moving to do some performance tests
-		if (true == moving) {
-			if (window.performance.now() - downTime > 1000) {
-				// wait 1000ms before moving forward
-				// this gives the user time to turn the camera
-				let vector = new THREE.Vector3(0, 0, -0.001);
-				vector.applyQuaternion(orbitControls.object.quaternion);
-				user.add(vector);
-			}
-		}
-	*/
 	vrControls.update();	// update HMD head position
 
 	// Shouldn't flying to high or too low...
@@ -432,16 +438,18 @@ function renderFrame() {
 
 	effect.render(scene, camera);
 
+	effect.requestAnimationFrame(renderFrame);	
+
 }
 
 // Resize the WebGL canvas when the window size changes
 function onWindowResize() {
 	if (!effect.isPresenting) {
-	  camera.aspect = window.innerWidth / window.innerHeight;
-	  camera.updateProjectionMatrix();
-	  renderer.setSize(window.innerWidth, window.innerHeight);
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize(window.innerWidth, window.innerHeight);
 	}
-  }
+}
 
 let geocoder;
 function geocodeAddress() {
@@ -488,8 +496,8 @@ function init() {
 	}
 	scene.add(laserPointer);
 	laserPointer.visible = false;
-	
-	let meshComplexity = isMobile() ? 128 : 512;
+
+	let meshComplexity = isMobile() ? 128 : 512;  //bugbug todo can probably up the triangle count for mobile to be near 100k
 	canvasComplexity = isMobile() ? 2048 : 4096;
 	mapSize = 10;
 
@@ -563,10 +571,10 @@ function init() {
 
 		"  float fDistance = distance(mapPosition, vUV);" +
 
-		"if (fDistance > 0.47) { discard; }; " +
+		/// bugbug put back "if (fDistance > 0.47) { discard; }; " +
 
 		"  float hazeStrength = smoothstep(0.40, 0.47, fDistance);" + //TODO tileCount / 8 * 7.5
-
+		"  hazeStrength = 0.0;" +
 		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
 		//"  gl_FragColor.r = mix(gl_FragColor.r, 1.0, hazeStrength); " +
 
@@ -617,7 +625,7 @@ function init() {
 	scene.add(mesh);
 
 	vrControls = new THREE.VRControls(camera);
-	vrControls.standing = false;
+	vrControls.standing = true;
 
 	// non-VR controls
 	orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
