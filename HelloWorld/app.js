@@ -571,10 +571,10 @@ function init() {
 
 		"  float fDistance = distance(mapPosition, vUV);" +
 
-		/// bugbug put back "if (fDistance > 0.47) { discard; }; " +
+		"if (fDistance > 0.47) { discard; }; " +
 
-		"  float hazeStrength = smoothstep(0.40, 0.47, fDistance);" + //TODO tileCount / 8 * 7.5
-		"  hazeStrength = 0.0;" +
+		"  float hazeStrength = smoothstep(0.41, 0.47, fDistance);" + //TODO tileCount / 8 * 7.5
+		//"  hazeStrength = 0.0;" +
 		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
 		//"  gl_FragColor.r = mix(gl_FragColor.r, 1.0, hazeStrength); " +
 
