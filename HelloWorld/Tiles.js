@@ -1,29 +1,30 @@
 'use strict';
 
-function Tiles(url, textureWidth, zoom, emptyTile) {
+function Tiles(url, _textureWidth, _zoom, canvasName) {
 
     // The URL pattern to use when downloading tiles
-    // must contain %x%  %y% and %zoom%
+    // must contain %x%  %y% and %this.zoom%
     // %x% is replaced with slippy map x
     // %y% is replaced with slippy map y
-    // %zoom% is replaced with zoom level
+    // %zoom% is replaced with this.zoom level
     this.url = url;
 
     // Pixel size of the (square) texture to fill with tiles (Example: 1024, 2048, 4096, etc)
-    this.textureWidth = textureWidth;
+    this.textureWidth = _textureWidth;
 
-    // Zoom level of the slippy map
-    this.zoom = zoom;
+    // this.zoom level of the slippy map
+    this.zoom = _zoom;
 
     // Default tile to prep
-    this.emptyTile = emptyTile;
+    this.canvas = document.getElementById(canvasName);
+    this.canvas.width = this.canvas.height = this.textureWidth;
 
     // We are drawing 256x256 pixel tiles
     const tileDimension = 256;
 
     // How many tiles should we draw? (Example: 1024 / 256 == 4 tiles)
     this.tileCount = (this.textureWidth / tileDimension);
-
+    
     // To re-render less, we'll UV-offset 'wrap' around the texture as we render tiles 
     this.offsetX = 0;
     this.offsetY = 0;
@@ -46,6 +47,7 @@ function Tiles(url, textureWidth, zoom, emptyTile) {
     ctx.fillStyle = "black";
     ctx.rect(0, 0, 32, 32);
     ctx.fill();
+
 
     // The list of 256x256 tile resources to render - one per frame
     this.tiles = new Array(this.tileCount).fill(undefined).map(() => new Array(this.tileCount).fill(undefined));
@@ -94,7 +96,16 @@ function Tiles(url, textureWidth, zoom, emptyTile) {
                             drawX: this.tiles[x][y].drawX,
                             drawY: this.tiles[x][y].drawY
                         }
-                        this.tiles[x][y].image = null;
+
+                        // TEMPORARY DRAW PREVIEW
+                        const ctx = this.canvas.getContext('2d');
+                        //ctx.scale(1, -1);
+                        //ctx.drawImage(tile.image, tile.drawX, -tile.drawY);
+                        createImageBitmap(tile.image, {imageOrientation: "flipY"}).then(image => ctx.drawImage(image, tile.drawX, tile.drawY));
+
+                        /// bugbug restore this.tiles[x][y].image = null;
+
+
 
                         tiles.push(tile);
                         return tiles; // only do one big tile at a time, to keep FPS budget    
@@ -153,7 +164,7 @@ function Tiles(url, textureWidth, zoom, emptyTile) {
         }
         else
         {
-            console.log('flush!');
+            ///bugbug console.log('flush!');
         }
     }
 
@@ -176,7 +187,7 @@ function Tiles(url, textureWidth, zoom, emptyTile) {
         var url = this.url;
         url = url.replace('%x%', slippyX);
         url = url.replace('%y%', slippyY);
-        url = url.replace('%zoom%', zoom);
+        url = url.replace('%zoom%', this.zoom);
 
         //todo handle fetch failing
 
@@ -202,8 +213,8 @@ function Tiles(url, textureWidth, zoom, emptyTile) {
     // Tries to avoid work whenever possible
     this.render = function (longtitude, latitude) {
 
-        let x = long2tile(longtitude, zoom);    // Slippy x of the tile to render
-        let y = lat2tile(latitude, zoom);       // y
+        let x = long2tile(longtitude, this.zoom);    // Slippy x of the tile to render
+        let y = lat2tile(latitude, this.zoom);       // y
 
         const halfTileCount = this.tileCount / 2; // How many tiles should we draw?
         const lowerX = Math.floor(x - halfTileCount);

@@ -35,18 +35,23 @@ input,
             position: absolute;
             left: 10px;
             top: 100px;
-            width: 200px;
-            height: 200px;
-            display: none;
+            width: 400px;
+            height: 400px;
+            cdisplay: none;
+            -webkit-transform: scaleY(-1);
+            
+            
         }
 
         #terrainCanvas {
             position: absolute;
             right: 10px;
             top: 100px;
-            width: 200px;
-            height: 200px;
-            display: none;
+            width: 400px;
+            height: 400px;
+            cdisplay: none;
+
+            -webkit-transform: scaleY(-1);            
         }
 
         #vrButton {

@@ -15,19 +15,24 @@ window.addEventListener('xfocus', () => { windowIsActive = true })
 window.addEventListener('xblur', () => { if (flying === false) { windowIsActive = false } })
 
 // the (slippy tile) location on the map (x, z) we are currently above (y)
-let user = new THREE.Vector3(331.02, 1.55, 722.992);
+//let user = new THREE.Vector3(331.02, 1.55, 722.992);
+
+let gLat = 0;
+let gLong = 0;
+let gHeight = 0;
 
 const tileDimension = 256;	// Slippy map tiles are 256 x 256 pixels
 let terrainTiles;	  		// Tiles.js instance for elevation data
 let mapTiles;		 		// Tiles.js instance for pixel color values
 
 // The zoom level of the slippy map we're using
-const mapZoom = 13;
-const terrainZoom = 13;
+let terrainZoom = 8;
+let mapZoom = 9;
+
 // TODO we can use a lower texture resolution & higher zoom for terrain and save memory, GPU bandwidth
 // The terrain texture only has to match the mesh complexity (currenyly 512x512 )
 
-let zFactor = 1;
+let zFactor = 1; //bugbug what is zfactor?
 let mapSize;
 
 let coolPlaces = [
@@ -154,23 +159,23 @@ function GotoRandomCoolPlace() {
 
 let doCamera = true;
 
+function fixZ()
+{
+	const LatitudeInRadians = gLat * (Math.PI / 180);
+	const EarthCircumferenceInMeters = 40075000;
+	const MetersPerPixel = EarthCircumferenceInMeters * Math.cos(LatitudeInRadians) / (2 ** (mapZoom + 8));
+	zFactor = 10000 / (MetersPerPixel * mapTiles.textureWidth / mesh.geometry.parameters.width);
+	material.uniforms.zFactor.value = zFactor;	//bugbug why 10000?
+}
+
 function GotoPlace(p) {
 
-	const radLad = p.lat * (Math.PI / 180);
 
-	let metersPerPixel = (156543.03 * Math.cos(radLad) / Math.pow(2, mapZoom));
+	gLat = p.lat;
+	gLong = p.long;
 
-	zFactor = 10000 / (metersPerPixel * canvasComplexity / mesh.geometry.parameters.width);
-
-	material.uniforms.zFactor.value = zFactor; // * mesh.geometry.parameters.width;
-
-	//zFactor = 28000;
-	//material.uniforms.zFactor = zFactor;
-
-
-
-	user.z = lat2tile(p.lat, mapZoom);
-	user.x = long2tile(p.long, mapZoom);
+	//user.z = lat2tile(p.lat, mapZoom);
+	//user.x = long2tile(p.long, mapZoom);
 
 	///user.y = p.altitude;
 	if (doCamera == true) {
@@ -181,12 +186,15 @@ function GotoPlace(p) {
 		doCamera = false;
 	}
 
+
+	fixZ();
+
 	setFlyMode(true);
 }
 
 function handleKey(e) {
 
-	const step = 0.05;
+	const step = 0.01; //bugbug account for zoom
 	let vector = new THREE.Vector3(0, 0, 0);
 	e = e || window.event;
 
@@ -196,12 +204,12 @@ function handleKey(e) {
 			break;
 		case 'Up':
 		case 'ArrowUp':
-			vector.z = -step;
+			vector.z = step;
 			setFlyMode(false);
 			break;
 		case 'Down':
 		case 'ArrowDown':
-			vector.z = step;
+			vector.z = -step;
 			setFlyMode(false);
 			break;
 		case 'Left':
@@ -216,18 +224,23 @@ function handleKey(e) {
 			break;
 		case '[':
 		case 'PageDown':
-			user.y -= step;
+			//user.y -= step;
+			gHeight -= step; //bugbug need to account for zoom
 			setFlyMode(false);
 			break;
 		case 'PageUp':
 		case ']':
-			user.y += step;
+			//user.y += step;
+			gHeight += step; //bugbug need to account for zoom
 			setFlyMode(false);
 			break;
 		case '3':
 			// Dump location data to console so that we can add a cool place
-			console.log(tile2lat(user.z, mapZoom) + ' ' + tile2long(user.x, mapZoom));
-			console.log(user.y);
+			///console.log(tile2lat(user.z, mapZoom) + ' ' + tile2long(user.x, mapZoom));
+			///console.log(user.y);
+			console.log(gLat + ' ' + gLong);
+			console.log(gHeight);
+
 			console.log(camera.position.x + ' ' + camera.position.y + ' ' + camera.position.z);
 			break;
 		case '2':
@@ -238,12 +251,36 @@ function handleKey(e) {
 		case '1':
 			GotoRandomCoolPlace();
 			break;
+		case 'j':
+			mapTiles.zoom++;
+			terrainTiles.zoom++;
+			mapZoom++;
+			terrainZoom++;	
+			break;
+		case 'k':
+			mapTiles.zoom--;
+			terrainTiles.zoom--;
+			mapZoom--;
+			terrainZoom--;	
+			break;
 		default:
 	}
 
-	vector.applyQuaternion(camera.quaternion);
-	user.x += vector.x;
-	user.z += vector.z;
+	//vector.applyQuaternion(camera.quaternion);
+
+	//let userX = long2tile(gLong, mapZoom);
+	//let userZ = lat2tile(gLat, mapZoom);
+	//userX += vector.x;
+	//userZ += vector.z;
+	//gLong = tile2long(userX, mapZoom);
+	//gLat = tile2lat(userZ, mapZoom);
+	gLong += vector.x;
+	gLat += vector.z;
+
+	fixZ();
+
+	//console.log(gLong + ' ' + gLat);
+
 
 	// TODO To avoid 'janky' key movement, add an animation system 
 }
@@ -260,11 +297,23 @@ let mapTexture;
 
 let laserPointer;  // the cursor / pointer we're drawing for the gamepad
 
-function long2tile(lon, zoom) { return (Math.floor((lon + 180) / 360 * Math.pow(2, zoom))); }
-function lat2tile(lat, zoom) {
-	let f = Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180);
-	return (Math.floor((1 - Math.log(f) / Math.PI) / 2 * Math.pow(2, zoom)));
+
+
+function long2tileRaw(lon, zoom) { 
+	return (lon + 180) / 360 * Math.pow(2, zoom);
 }
+function lat2tileRaw(lat, zoom) {
+	let f = Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180);
+	return (1 - Math.log(f) / Math.PI) / 2 * Math.pow(2, zoom);
+}
+
+function long2tile(lon, zoom) { 
+	return Math.floor(long2tileRaw(lon, zoom));
+}
+function lat2tile(lat, zoom) {
+	return Math.floor(lat2tileRaw(lat, zoom));
+}
+
 
 function tile2long(x, z) { return (x / Math.pow(2, z) * 360 - 180); }
 function tile2lat(y, z) { let n = Math.PI - 2 * Math.PI * y / Math.pow(2, z); return (180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)))); }
@@ -284,9 +333,6 @@ function orbitMouseUp() {
 	downTime = 0;
 	moving = false;
 }
-
-// TODO move all desktop/mobile complexity const to a struct
-let canvasComplexity;
 
 function handleController() {
 	// Handle controller input
@@ -340,9 +386,10 @@ function handleController() {
 
 					const scale = 0.01;
 
-					user.x += vector.x * input * scale;
-					user.z += vector.z * input * scale;
-					user.y += vector.y * input * scale;
+					// bugbug handle controller
+					///user.x += vector.x * input * scale;
+					///user.z += vector.z * input * scale;
+					///user.y += vector.y * input * scale;
 				}
 
 
@@ -364,14 +411,21 @@ function handleController() {
 function renderFrame() {
 
 	// Save power and performance by not rendering when window is in the background
-	//bugbug test is safge to add back if (!windowIsActive) return;
+	//bugbug test is safe to add back if (!windowIsActive) return;
 
-	user.add(flyingVector);
+	//bugbug handle flyingvector
+	//user.add(flyingVector);
 
 	handleController();
 
-	const longtitude = tile2long(user.x, mapZoom);
-	const latitude = tile2lat(user.z, mapZoom);
+	const longtitude = gLong; // tile2long(user.x, mapZoom);
+	const latitude = gLat; //tile2lat(user.z, mapZoom);
+
+	const userX = long2tileRaw(gLong, mapZoom);
+	const userZ = lat2tileRaw(gLat, mapZoom);
+
+	console.log(terrainTiles.getNormalizedOffsetX() + " " + terrainTiles.getNormalizedOffsetY() + " " + mapTiles.getNormalizedOffsetX() + " " + mapTiles.getNormalizedOffsetY());
+	
 
 	terrainTiles.render(longtitude, latitude);
 	{
@@ -395,7 +449,6 @@ function renderFrame() {
 
 	mapTiles.render(longtitude, latitude);
 	{
-		// TODO optimize
 		material.uniforms.mapTextureOffset.value.x = mapTiles.getNormalizedOffsetX();
 		material.uniforms.mapTextureOffset.value.y = mapTiles.getNormalizedOffsetY();
 		material.uniforms.mapTextureOffset.value.needsUpdate = true;
@@ -416,17 +469,23 @@ function renderFrame() {
 
 	}
 
-	const m = geometry.parameters.width / (canvasComplexity / tileDimension); // mesh size / n tiles
 
-	const offsetX = ((-1 * (user.x % 1) + 0.5));
-	const offsetZ = ((-1 * (user.z % 1) + 0.5));
+	//closeMapTiles.render(longtitude, latitude);
+	//let tiles = closeMapTiles.getRenderTiles();
+	
+	const m = geometry.parameters.width / (mapTiles.textureWidth / tileDimension); // mesh size / n tiles
+
+	//BUGBUG
+	const offsetX = ((-1 * (userX % 1) + 0.5));
+	const offsetZ = ((-1 * (userZ % 1) + 0.5));
 
 	mesh.position.x = offsetX * m;
 	mesh.position.z = offsetZ * m;
-	mesh.position.y = user.y * -1;
+	mesh.position.y = gHeight;
+	//mesh.position.y = user.y * -1;
 
-	material.uniforms.mapPosition.value.x = 0.5 - offsetX / (canvasComplexity / tileDimension);
-	material.uniforms.mapPosition.value.y = 0.5 - offsetZ / (canvasComplexity / tileDimension);
+	material.uniforms.mapPosition.value.x = 0.5 - offsetX / (terrainTiles.textureWidth / tileDimension);
+	material.uniforms.mapPosition.value.y = 0.5 - offsetZ / (terrainTiles.textureWidth / tileDimension);
 	material.uniforms.mapPosition.value.needsUpdate = true;
 
 	vrControls.update();	// update HMD head position
@@ -459,8 +518,8 @@ function geocodeAddress() {
 	geocoder.geocode({ 'address': address }, function (results, status) {
 		if (status === 'OK') {
 
-			user.x = long2tile(results[0].geometry.location.lng(), mapZoom);
-			user.z = lat2tile(results[0].geometry.location.lat() - 0.152, mapZoom); // south... to put object in view
+			gLong = results[0].geometry.location.lng();
+			gLat = results[0].geometry.location.lat();
 
 			renderer.domElement.focus();
 
@@ -485,7 +544,7 @@ function init() {
 	//redundant renderer.setSize(document.body.clientWidth, document.body.clientHeight);
 	renderer.setPixelRatio(window.devicePixelRatio);
 
-	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 	camera.lookAt(new THREE.Vector3(0, -0.5, -1));
 
 	{
@@ -498,55 +557,69 @@ function init() {
 	laserPointer.visible = false;
 
 	let meshComplexity = isMobile() ? 128 : 512;  //bugbug todo can probably up the triangle count for mobile to be near 100k
-	canvasComplexity = isMobile() ? 2048 : 4096;
-	mapSize = 10;
+	//canvasComplexity = isMobile() ? 204538 : 4096;
+
+	let terrainTextureWidth = 1024;
+	let mapTextureWidth = terrainTextureWidth * 2;
+	
+
+	mapSize = 160;
 
 	if (/hq/.test(window.location.href)) {
-		canvasComplexity = 8192;
-		mapSize = 20;
+		mapTextureWidth = terrainTextureWidth * 4;
+		mapZoom = terrainZoom + 2;
+//		mapSize = 20;
 	}
 
 	geometry = new THREE.PlaneGeometry(mapSize, mapSize, meshComplexity, meshComplexity);
 
-	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%zoom%/%x%/%y%.png?api_key=mapzen-JcyHAc8', canvasComplexity, terrainZoom);
-	mapTiles = new Tiles('https://b.tiles.mapbox.com/v4/mapbox.satellite/%zoom%/%x%/%y%.pngraw?access_token=pk.eyJ1IjoiZnJhbmtvbGl2aWVyIiwiYSI6ImNqMHR3MGF1NTA0Z24ycW81dXR0dDIweDMifQ.SoQ9aqIfdOheISIYRqgR7w', canvasComplexity, mapZoom);
-
+	//terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%zoom%/%x%/%y%.png?api_key=mapzen-JcyHAc8', canvasComplexity, terrainZoom, 'terrainCanvas');
+	//mapTiles = new Tiles('https://b.tiles.mapbox.com/v4/mapbox.satellite/%zoom%/%x%/%y%.pngraw?access_token=pk.eyJ1IjoiZnJhbmtvbGl2aWVyIiwiYSI6ImNqMHR3MGF1NTA0Z24ycW81dXR0dDIweDMifQ.SoQ9aqIfdOheISIYRqgR7w', canvasComplexity * 2, mapZoom, 'mapCanvas');
+	
+	terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%zoom%/%x%/%y%.png?api_key=mapzen-JcyHAc8',
+ 	  terrainTextureWidth, terrainZoom, 'terrainCanvas');
+	mapTiles = new Tiles('https://b.tiles.mapbox.com/v4/mapbox.satellite/%zoom%/%x%/%y%.pngraw?access_token=pk.eyJ1IjoiZnJhbmtvbGl2aWVyIiwiYSI6ImNqMHR3MGF1NTA0Z24ycW81dXR0dDIweDMifQ.SoQ9aqIfdOheISIYRqgR7w',
+	  mapTextureWidth, mapZoom, 'mapCanvas');
+	
+	
 	const gl = renderer.context;
 
 	let tileCount = mapTiles.tileCount;
 
 
 	let vertexShader =
-		"varying vec2 vUV; " +						// location on the uv map
-		"uniform sampler2D terrainTexture;" +
-		"uniform vec2 terrainTextureOffset; " +
+		"varying vec2 vUV; " +						// location across the square
+		"varying vec4 vRGBA;" +
+		"uniform sampler2D terrainTexture;" +		// terrain texture - height info
+		"uniform vec2 mapTextureOffset; " +
+		"uniform vec2 terrainTextureOffset; " +     // where to start sampling from on the uv plane
 		"uniform sampler2D mapTexture; " +
 		"uniform float zFactor; " +					// scale factor for height
 		"varying float vDistance; " +
-		"varying float vTileReady;" +
+		//"varying float vTileReady;" +
 		"void main() { " +
 		"  vUV = vec2(uv.x, 1.0 - uv.y); " +
-		"  vec4 s = texture2D(terrainTexture, vUV + terrainTextureOffset) * 256.0; " +
+		"  vec2 uv = vec2(vUV.x + mapTextureOffset.x, vUV.y + mapTextureOffset.y); " +
+		"  vec4 s = texture2D(terrainTexture, uv) * 256.0; " +
 		"  float elevation = s.r * 256.0 + s.g + s.b / 256.0 - 32768.0; " +
 		"  elevation = clamp(elevation, 0.0, 10000.0); " +					// Clamp to sea level and Everest
 		"  elevation = elevation / 10000.0; " +
 		"  elevation = elevation * zFactor; " +   							// TODO change this based on latitude 
 
-		"  vec2 lookup = vUV + terrainTextureOffset;" +
-		"  lookup.x = floor(lookup.x * " + tileCount + ".0) / " + tileCount + ".0 + (1.0 / " + tileCount * 32 + ".0);" +
-		"  lookup.y = floor(lookup.y * " + tileCount + ".0) / " + tileCount + ".0 + (1.0 / " + tileCount + ".0) - (1.0 / " + tileCount * 32 + ".0);" +
-		"  vec4 terrainTest = texture2D(terrainTexture, lookup); " +
-		"  vec4 mapTest = texture2D(mapTexture, lookup); " +
-
-		"  vec4 test = min(terrainTest, mapTest);" +
-
-		"   vTileReady = step(0.01, test.r);" +
-
+		//"  vec2 lookup = vUV + terrainTextureOffset;" +
+		//"  lookup.x = floor(lookup.x * " + tileCount + ".0) / " + tileCount + ".0 + (1.0 / " + tileCount * 32 + ".0);" +
+		//"  lookup.y = floor(lookup.y * " + tileCount + ".0) / " + tileCount + ".0 + (1.0 / " + tileCount + ".0) - (1.0 / " + tileCount * 32 + ".0);" +
+		//"  vec4 terrainTest = texture2D(terrainTexture, lookup); " +
+		//"  vec4 mapTest = texture2D(mapTexture, lookup); " +
+		//"  vec4 test = min(terrainTest, mapTest);" +
+		//"   vTileReady = step(0.01, test.r);" +
 
 		"  vec3 p = position;" + 											// 'position' is a built-in three.js construct
 		"  p.z += elevation; " +
 
-		" p.z *= vTileReady;" +
+		" vRGBA = texture2D(terrainTexture, uv);" +
+
+		//" p.z *= vTileReady;" +
 
 		"  gl_Position = projectionMatrix * modelViewMatrix * vec4(p.x, p.y, p.z, 1.0 ); " +
 
@@ -556,12 +629,16 @@ function init() {
 
 	let fragmentShader =
 		"varying vec2 vUV; " +
+		"varying vec4 vRGBA;" +
+	
 		"uniform sampler2D mapTexture; " +
 		"uniform vec2 mapTextureOffset; " +
+		"uniform vec2 terrainTextureOffset; " +     // where to start sampling from on the uv plane
+		
 		"uniform vec2 mapPosition; " +
 		"varying float hazeStrength; " +
 		"varying float vDistance;" +
-		"varying float vTileReady;" +
+		//"varying float vTileReady;" +
 
 		"void main() { " +
 
@@ -571,26 +648,40 @@ function init() {
 
 		"  float fDistance = distance(mapPosition, vUV);" +
 
-		"if (fDistance > 0.47) { discard; }; " +
+		//"if (fDistance > 0.49) { discard; }; " +
+		//"if (fDistance > 0.34) { gl_FragColor.r = gl_FragColor.g = gl_FragColor.b = ((gl_FragColor.r + gl_FragColor.g + gl_FragColor.b) / 2.0); }; " +
 
 		"  float hazeStrength = smoothstep(0.41, 0.47, fDistance);" + //TODO tileCount / 8 * 7.5
-		//"  hazeStrength = 0.0;" +
+		"  hazeStrength = 0.0;" +
 		"  gl_FragColor = mix(gl_FragColor, vec4(135.0 / 256.0, 206.0 / 256.0, 1.0, 1.0), hazeStrength); " +
 		//"  gl_FragColor.r = mix(gl_FragColor.r, 1.0, hazeStrength); " +
+	
+		
+		//"if (vTileReady == 0.0) { discard; }; " +
 
-		"if (vTileReady == 0.0) { discard; }; " +
+		//"  vec2 uv = vec2(vUV.x + mapTextureOffset.x, vUV.y + mapTextureOffset.y); " +
+		"  vec2 uv = vec2(vUV.x + mapTextureOffset.x, vUV.y + mapTextureOffset.y); " +
+
+		"  vec4 frank = texture2D(mapTexture, uv);" +
+        "gl_FragColor = frank;" +
+		//"gl_FragColor.r = (frank.r + frank.g + frank.b) / 3.0;" +
+		//"gl_FragColor.g = (vRGBA.r + vRGBA.g + vRGBA.b) / 3.0;" +
+
+		//" if (fDistance < 0.05) (gl_FragColor.r = 1.0 ); " +
 
 		"}";
 
 
 	terrainTexture = new UpdatableTexture();
 	terrainTexture.setRenderer(renderer);
-	terrainTexture.minFilter = THREE.NearestFilter;
-	terrainTexture.magFilter = THREE.NearestFilter;
+	terrainTexture.minFilter = THREE.LinearFilter;
+	terrainTexture.magFilter = THREE.LinearFilter;
 	terrainTexture.wrapS = THREE.RepeatWrapping;
 	terrainTexture.wrapT = THREE.RepeatWrapping;
+	terrainTexture.generateMipmaps = false;
 	terrainTexture.anisotropy = 1;
 	terrainTexture.generateMipmaps = false;
+	//terrainTexture.repeat.set( 4, 4 );
 
 	mapTexture = new UpdatableTexture();
 	mapTexture.setRenderer(renderer);
@@ -600,8 +691,9 @@ function init() {
 	mapTexture.wrapT = THREE.RepeatWrapping;
 	mapTexture.generateMipmaps = true;
 	mapTexture.anisotropy = 1; //renderer.getMaxAnisotropy();
+	//mapTexture.repeat.set( 4, 4 );
 
-	mapTexture.flipY = false;
+	//mapTexture.flipY = false;
 
 
 
@@ -631,7 +723,7 @@ function init() {
 	orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
 	orbitControls.maxPolarAngle = Math.PI * 0.7;
 	orbitControls.minDistance = 0.1;
-	orbitControls.maxDistance = 10;
+	orbitControls.maxDistance = 1000;
 	orbitControls.enableKeys = false;
 
 	orbitControls.autoRotate = true;
@@ -663,8 +755,8 @@ function init() {
 
 	effect.render(scene, camera); // Need to call this at least once to init texture system
 
-	terrainTexture.setSize(canvasComplexity, canvasComplexity);
-	mapTexture.setSize(canvasComplexity, canvasComplexity);
+	terrainTexture.setSize(terrainTextureWidth, terrainTextureWidth);
+	mapTexture.setSize(mapTextureWidth, mapTextureWidth);
 
 	window.addEventListener("resize", onWindowResize);
 	onWindowResize();
