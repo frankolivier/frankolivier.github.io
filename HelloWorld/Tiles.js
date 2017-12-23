@@ -117,25 +117,6 @@ function Tiles(url, _textureWidth, _zoom, canvasName) {
 
         return tiles;
 
-        //return this.renderTiles.pop();
-
-        /*
-        if (this.renderTiles.length === 0) return undefined;
-
-        let findex = 0;
-        let tile = this.renderTiles[findex];
-
-        this.renderTiles.forEach(function (item, index, array) {
-            if (item.iteration > tile.iteration) {
-                tile = item;
-                findex = index;
-            }
-        });
-
-        this.renderTiles.splice(findex, 1);
-
-        return tile;
-        */
     }
 
 
