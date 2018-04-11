@@ -35,9 +35,9 @@ input,
             position: absolute;
             left: 10px;
             top: 100px;
-            width: 400px;
-            height: 400px;
-            cdisplay: none;
+            width: 200px;
+            height: 200px;
+            display: none;
             -webkit-transform: scaleY(-1);
             
             
@@ -47,10 +47,9 @@ input,
             position: absolute;
             right: 10px;
             top: 100px;
-            width: 400px;
-            height: 400px;
-            cdisplay: none;
-
+            width: 200px;
+            height: 200px;
+            display: none;
             -webkit-transform: scaleY(-1);            
         }
 
