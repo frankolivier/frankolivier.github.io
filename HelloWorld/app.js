@@ -17,9 +17,10 @@ window.addEventListener('xblur', () => { if (flying === false) { windowIsActive 
 // the (slippy tile) location on the map (x, z) we are currently above (y)
 //let user = new THREE.Vector3(331.02, 1.55, 722.992);
 
-let gLat = 0;
-let gLong = 0;
-let gHeight = 0;
+// The user's location:
+let gLat = 0;		// Latitude (north-south axis)
+let gLong = 0;		// Longitude (east-west axis)
+let gHeight = 0;	// bugbug in meters?
 
 const tileDimension = 256;	// Slippy map tiles are 256 x 256 pixels
 let terrainTiles;	  		// Tiles.js instance for elevation data
@@ -159,13 +160,19 @@ function GotoRandomCoolPlace() {
 
 let doCamera = true;
 
+function getMetersPerPixel()
+{
+	const EarthCircumferenceInMeters = 40075000;
+	const LatitudeInRadians = gLat * (Math.PI / 180);
+	return EarthCircumferenceInMeters * Math.cos(LatitudeInRadians) / (2 ** (mapZoom + 8));
+}
+
+// Fix the scale factor for mountains - it depends on latitude
 function fixZ()
 {
-	const LatitudeInRadians = gLat * (Math.PI / 180);
-	const EarthCircumferenceInMeters = 40075000;
-	const MetersPerPixel = EarthCircumferenceInMeters * Math.cos(LatitudeInRadians) / (2 ** (mapZoom + 8));
+	const MetersPerPixel = getMetersPerPixel();
 	zFactor = 10000 / (MetersPerPixel * mapTiles.textureWidth / mesh.geometry.parameters.width);
-	material.uniforms.zFactor.value = zFactor;	//bugbug why 10000?
+	material.uniforms.zFactor.value = zFactor;	//bugbug why 10000? probably because of our clamp values (sea level to Everest?)
 }
 
 function GotoPlace(p) {
@@ -194,8 +201,15 @@ function GotoPlace(p) {
 
 function handleKey(e) {
 
-	const step = 0.01; //bugbug account for zoom
+	let MetersPerTile = terrainTiles.textureWidth * getMetersPerPixel();
+
+	const step = 1000; // step ? of the way across the tile when we move bugbug good value?
+	// bugbug this value is actually in meters! So we can use it on height!
+
+	// bugbug do this based on fps?
+	
 	let vector = new THREE.Vector3(0, 0, 0);
+
 	e = e || window.event;
 
 	switch (e.key) {
@@ -204,12 +218,12 @@ function handleKey(e) {
 			break;
 		case 'Up':
 		case 'ArrowUp':
-			vector.z = step;
+			vector.z = -step;
 			setFlyMode(false);
 			break;
 		case 'Down':
 		case 'ArrowDown':
-			vector.z = -step;
+			vector.z = step;
 			setFlyMode(false);
 			break;
 		case 'Left':
@@ -266,18 +280,43 @@ function handleKey(e) {
 		default:
 	}
 
-	//vector.applyQuaternion(camera.quaternion);
+	console.log("before " + gLat + " " + gLong + " " + gHeight);
 
-	//let userX = long2tile(gLong, mapZoom);
-	//let userZ = lat2tile(gLat, mapZoom);
+	vector.applyQuaternion(camera.quaternion);	// rotate along with the camera
+
+	let xInMeters = long2tileRaw(gLong, mapZoom) * MetersPerTile; // get our X location in meters!
+	let zInMeters = lat2tileRaw(gLat, mapZoom) * MetersPerTile;
+	
+	let locationInMeters = new THREE.Vector3(xInMeters, gHeight, zInMeters);
+
+	console.log("meters " + locationInMeters.x + " " + locationInMeters.y + " " + locationInMeters.z);
+
+	locationInMeters.add(vector);
+
+
+	console.log("vector " + vector.x + " " + vector.y + " " + vector.z);
+	console.log("meters " + locationInMeters.x + " " + locationInMeters.y + " " + locationInMeters.z);
+
+
 	//userX += vector.x;
 	//userZ += vector.z;
-	//gLong = tile2long(userX, mapZoom);
-	//gLat = tile2lat(userZ, mapZoom);
-	gLong += vector.x;
-	gLat += vector.z;
+	
+	//locationInMeters.add(vector);
+
+	let tileX = locationInMeters.x / MetersPerTile; // get our X location in meters!
+	let tileZ = locationInMeters.z / MetersPerTile;
+
+
+	gLong = tile2long(tileX, mapZoom);
+	gLat = tile2lat(tileZ, mapZoom);
+	//gHeight = locationInMeters.y;
+
+	//gLong += vector.x;
+	//gLat += vector.z;
 
 	fixZ();
+
+	console.log("after " + gLat + " " + gLong + " " + gHeight);
 
 	//console.log(gLong + ' ' + gLat);
 
@@ -373,7 +412,9 @@ function handleController() {
 				let vector = new THREE.Vector3(0, 0, -1);
 				vector.applyQuaternion(quaternion);
 
-				let pressed = controller.buttons[0].pressed;
+				let pressed = controller.buttons.reduce((answer, button)=> answer | button.pressed);
+
+				console.log("??? " + controller.buttons[0].pressed + " " + controller.buttons[1].pressed);
 
 				if (pressed == true) {
 					let input = controller.axes[1];
@@ -387,9 +428,9 @@ function handleController() {
 					const scale = 0.01;
 
 					// bugbug handle controller
-					///user.x += vector.x * input * scale;
-					///user.z += vector.z * input * scale;
-					///user.y += vector.y * input * scale;
+					user.x += vector.x * input * scale;
+					user.z += vector.z * input * scale;
+					user.y += vector.y * input * scale;
 				}
 
 
@@ -403,9 +444,7 @@ function handleController() {
 
 	}
 
-	//laserPointer.visible = hasPointerHardware;
-	laserPointer.visible = false;
-
+	laserPointer.visible = hasPointerHardware;
 }
 
 function renderFrame() {
@@ -424,7 +463,7 @@ function renderFrame() {
 	const userX = long2tileRaw(gLong, mapZoom);
 	const userZ = lat2tileRaw(gLat, mapZoom);
 
-	console.log(terrainTiles.getNormalizedOffsetX() + " " + terrainTiles.getNormalizedOffsetY() + " " + mapTiles.getNormalizedOffsetX() + " " + mapTiles.getNormalizedOffsetY());
+	///console.log(terrainTiles.getNormalizedOffsetX() + " " + terrainTiles.getNormalizedOffsetY() + " " + mapTiles.getNormalizedOffsetX() + " " + mapTiles.getNormalizedOffsetY());
 	
 
 	terrainTiles.render(longtitude, latitude);
@@ -557,7 +596,6 @@ function init() {
 	laserPointer.visible = false;
 
 	let meshComplexity = isMobile() ? 128 : 512;  //bugbug todo can probably up the triangle count for mobile to be near 100k
-	//canvasComplexity = isMobile() ? 204538 : 4096;
 
 	let terrainTextureWidth = 1024;
 	let mapTextureWidth = terrainTextureWidth * 2;
@@ -572,10 +610,6 @@ function init() {
 	}
 
 	geometry = new THREE.PlaneGeometry(mapSize, mapSize, meshComplexity, meshComplexity);
-
-	//terrainTiles = new Tiles('https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%zoom%/%x%/%y%.png?api_key=mapzen-JcyHAc8', canvasComplexity, terrainZoom, 'terrainCanvas');
-	//mapTiles = new Tiles('https://b.tiles.mapbox.com/v4/mapbox.satellite/%zoom%/%x%/%y%.pngraw?access_token=pk.eyJ1IjoiZnJhbmtvbGl2aWVyIiwiYSI6ImNqMHR3MGF1NTA0Z24ycW81dXR0dDIweDMifQ.SoQ9aqIfdOheISIYRqgR7w', canvasComplexity * 2, mapZoom, 'mapCanvas');
-
 	
 	terrainTiles = new Tiles('https://s3.amazonaws.com/elevation-tiles-prod/terrarium/%zoom%/%x%/%y%.png',
  	  terrainTextureWidth, terrainZoom, 'terrainCanvas');
