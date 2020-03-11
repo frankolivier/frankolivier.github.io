@@ -26335,7 +26335,6 @@ function WebGLRenderer( parameters ) {
 		} else {
 
 			if ( srcTexture.isCompressedTexture ) {
-				//void gl.compressedTexSubImage2D(target, level, xoffset, yoffset, width, height, format, ArrayBufferView? pixels);
 				_gl.compressedTexSubImage2D( 3553, level, position.x, position.y, srcTexture.mipmaps[0].width, srcTexture.mipmaps[0].height, glFormat, srcTexture.mipmaps[0].data );
 			}
 			else
