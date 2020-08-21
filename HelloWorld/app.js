@@ -453,7 +453,7 @@ function renderFrame() {
 	//bugbug test is safe to add back if (!windowIsActive) return;
 
 	//bugbug handle flyingvector
-	//user.add(flyingVector);
+	user.add(flyingVector);
 
 	handleController();
 
