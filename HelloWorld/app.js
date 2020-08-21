@@ -37,7 +37,7 @@ let zFactor = 1; //bugbug what is zfactor?
 let mapSize;
 
 let coolPlaces = [
-	/* {
+	 {
 		// calgary
 		lat: 51.00792117737652,
 		long: -113.72016281041633,
@@ -89,7 +89,7 @@ let coolPlaces = [
 		x: 0.38637821825866064,
 		y: 0.8868423401837369,
 		z: -0.2534216567554871
-	},*/
+	},
 	{
 		// grand canyon
 		lat: 36.309510819387796,
@@ -99,7 +99,7 @@ let coolPlaces = [
 		y: 0.7443277479452758,
 		z: -0.05692340323983429
 	},
-	/*{
+	{
 		// fractal lake
 		lat: 23.722306617661523,
 		long: 32.964605191783505,
@@ -116,7 +116,7 @@ let coolPlaces = [
 	x: -0.1216409382680244,
 	y: 0.6663093574533964,
 	z: 0.7356869730444578
-},*/
+},
 	{
 		// mt fuji
 		lat: 35.338586760120926,
@@ -203,7 +203,7 @@ function handleKey(e) {
 
 	let MetersPerTile = terrainTiles.textureWidth * getMetersPerPixel();
 
-	const step = 1000; // step ? of the way across the tile when we move bugbug good value?
+	const step = 500; // step ? of the way across the tile when we move bugbug good value?
 	// bugbug this value is actually in meters! So we can use it on height!
 
 	// bugbug do this based on fps?
