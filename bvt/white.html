@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manual BVT</title>
+    <style>
+    .pass {
+        word-wrap: break-word;
+        color: green;
+        font-weight: normal;
+    }
+
+    .fail {
+        word-wrap: break-word;
+        color: red;
+        font-weight: bold;
+    } 
+    </style>
+</head>
+
+<body>
+    <h1>Manual BVT</h1>
+
+    <!-- Manual Test Instructions -->
+    <ol>
+        <li>If you do not have a VRDisplay attached, attach one and refresh the page.</li>
+        <li>Click the "Run Test" button</li>
+        <li>If prompted to allow WebVR, click Yes</li>
+        <li>HMD screen should go White.</li>
+        <li>On HoloLens, bloom to exit. Verify that there are no failures listed in the log output.</li>
+        <li>On Desktop, click the "Complete Test" button. Verify that there are no failures listed in the log output, and that the last line indicates the test is finished</li>
+    </ol>
+
+    <button onclick="runTest()">Run Test (White)</button><br/>
+    <button onclick="completeTest()">Complete Test</button><br/>
+
+    <div style="height:40%">
+    <h3>Results Output:</h3>
+    <div id="out" style="width:48%;height:100%;float:left"></div>
+    <canvas id="webglCanvas" style="width:48%;height:100%;float:right"></canvas>
+    </div>
+
+    <!-- vertex shader -->
+    <script id="vertex-shader" type="x-shader/x-vertex">
+    precision lowp float;
+
+    // xy = vertex position in normalized device coordinates ([-1,+1] range).
+    attribute vec2 vertexPositionNDC;
+
+    varying vec2 vTexCoords;
+
+    const vec2 scale = vec2(0.5, 0.5);
+
+    void main()
+    {
+        vTexCoords  = vertexPositionNDC * scale + scale; // scale vertex attribute to [0,1] range
+        gl_Position = vec4(vertexPositionNDC, 0.0, 1.0);
+    }
+    </script>
+
+
+
+    <!-- fragment shader -->
+    <script id="fragment-shader" type="x-shader/x-fragment">
+    precision mediump float;
+
+    uniform sampler2D colorMap;
+    varying vec2 vTexCoords;
+
+    void main()
+    {
+        gl_FragColor = texture2D(colorMap, vTexCoords);
+    }
+    </script>
+
+
+    <script>
+        "use strict";
+        window.onerror = function (msg, url, lineNo, columnNo, error) {
+            assert(false, "Global window error: " + msg + " at " + url + ":" + lineNo + ":" + columnNo);
+        };
+        
+        const RGB_MIN_THRESHOLD = 0.70;
+
+        var output = document.getElementById("out");
+        var webglCanvas = document.getElementById("webglCanvas");
+        var gl = webglCanvas.getContext("experimental-webgl");
+
+        var frameData = new VRFrameData();
+        var id;
+
+        var vrDisplay = null;
+        var posePositionPassed = false;
+        var poseOrientationPassed = false;
+
+        var quadProgram = null;
+
+        // Gets the VRDisplay to run the test on and then runs the test.
+        // Even though requestPresent is done in the getVRDisplays() response,
+        // it is still considered a user initiated action since getVRDisplays()
+        // is user initiated.
+        function startTest() {
+            assert(navigator.getVRDisplays !== undefined, "Verify navigator.getVRDisplays() is defined");
+
+            var vertexShader = getShader(gl, 'vertex-shader');
+            var fragmentShader = getShader(gl, 'fragment-shader');
+            quadProgram = getProgram(gl, vertexShader, fragmentShader);
+
+
+            navigator.getVRDisplays().then((displays) => {
+                assert(displays.length === 1, "Verify getVRDisplays.length is 1");
+                vrDisplay = displays[0];
+            }, () => {
+                assert(false, "getVRDisplays rejected");
+            });
+        }
+
+        function runTest() {
+            vrDisplay.requestPresent([{source: webglCanvas}]).then(() => {
+                assert(true, "requestPresent resolved");
+
+                id = vrDisplay.requestAnimationFrame(onAnimationFrame);
+
+
+                loadTexture();
+
+            }, () => {
+                assert(false, "requestPresent rejected");
+            });
+        }
+
+        function onAnimationFrame() {
+            try {
+                // Schedule the next frame’s callback
+                id = vrDisplay.requestAnimationFrame(onAnimationFrame);
+
+                // Poll the VRDisplay for the current frame’s matrices and pose
+                vrDisplay.getFrameData(frameData);
+
+                // Update the display
+                var posePosition = frameData.pose.position;
+                var poseOrientation = frameData.pose.orientation;
+
+                gl.clearColor(1.0, 0.5, 1.0, 1.0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+
+                drawFullScreenQuad(quadProgram, gl);
+            } catch (e) {
+                completeTest();
+                throw e;
+            }
+            // Indicate that we are ready to present the rendered frame to the VRDisplay
+            if (vrDisplay.isPresenting)
+            {
+                vrDisplay.submitFrame();
+            }
+        }
+
+        var dotsTexture;
+        function loadTexture() {
+            try {
+                dotsTexture = gl.createTexture();
+
+                var width = 16, height = 16;
+                var dotsTextureSize = width * height * 4;    // r, g, b, a
+                var pixels = new Uint8Array( dotsTextureSize );
+                gl.readPixels( 0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels );
+
+                for( var i=0 ; i<dotsTextureSize ; i+=4 )
+                {
+                    var isWhite = (i % 7) == 0 ? 255 : 0;
+                    pixels[i] = isWhite;
+                    pixels[i+1] = isWhite;
+                    pixels[i+2] = isWhite;
+                    pixels[i+3] = 255;
+                }
+
+                gl.bindTexture(gl.TEXTURE_2D, dotsTexture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                gl.generateMipmap(gl.TEXTURE_2D);
+                gl.bindTexture(gl.TEXTURE_2D, null);
+
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        var screenQuadVBO = null;
+        function drawFullScreenQuad(shaderProgram, gl) {
+
+            if (!shaderProgram)
+            {
+                throw "Missing the shader program!";
+                return;
+            }
+
+            // Only created once
+            if (screenQuadVBO == null)
+            {
+                var verts = [
+                    // First triangle:
+                     1.0,  1.0,
+                    -1.0,  1.0,
+                    -1.0, -1.0,
+                    // Second triangle:
+                    -1.0, -1.0,
+                     1.0, -1.0,
+                     1.0,  1.0
+                ];
+                screenQuadVBO = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, screenQuadVBO);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
+            }
+
+            // Bind:
+            gl.bindBuffer(gl.ARRAY_BUFFER, screenQuadVBO);
+            gl.enableVertexAttribArray(0);
+            gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, dotsTexture);
+            gl.uniform1i(gl.getUniformLocation(shaderProgram, 'colorMap'), 0);
+
+            // Draw 6 vertexes => 2 triangles:
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+            // Cleanup:
+            gl.bindBuffer(gl.ARRAY_BUFFER, null);
+        }
+
+        // Loads a shader from a script tag
+        // [in] WebGL context
+        // [in] id of script element with the shader to load
+        function getShader(gl, id) {
+            var shaderScript = document.getElementById(id);
+            if (!shaderScript) {
+                return null;
+            }
+
+            var str = "";
+            var k = shaderScript.firstChild;
+            while (k) {
+                if (k.nodeType == 3)
+                    str += k.textContent;
+                k = k.nextSibling;
+            }
+
+            var shader;
+            if (shaderScript.type == "x-shader/x-fragment") {
+                shader = gl.createShader(gl.FRAGMENT_SHADER);
+            } else if (shaderScript.type == "x-shader/x-vertex") {
+                shader = gl.createShader(gl.VERTEX_SHADER);
+            } else {
+                return null;
+            }
+
+            gl.shaderSource(shader, str);
+            gl.compileShader(shader);
+
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                alert(gl.getShaderInfoLog(shader));
+                return null;
+            }
+
+            return shader;
+        }
+
+
+        function getProgram(gl, vertexshader, fragmentshader) {
+            var program = gl.createProgram();
+            gl.attachShader(program, vertexshader);
+            gl.attachShader(program, fragmentshader);
+
+            gl.linkProgram(program);
+
+            // Check the link status
+            var linked = gl.getProgramParameter(program, gl.LINK_STATUS);
+            if (!linked) {
+                // something went wrong with the link
+                var lastError = gl.getProgramInfoLog(program);
+                console.error("Error in program linking:" + lastError);
+
+                gl.deleteProgram(program);
+                return;
+            }
+
+            gl.useProgram(program);
+
+
+            return program;
+        };
+
+        function completeTest() {
+            vrDisplay.cancelAnimationFrame(id);
+                
+            vrDisplay.exitPresent().then(() => {
+                assert(true, "exitPresent resolved");
+
+                assert(true, "test finished");
+            }, () => {
+                assert(false, "exitPresent rejected");
+            });
+        }
+
+        // Helper used throughout the test to verify conditions and to output results to the log.
+        // If condition is not true, then an error will be thrown to stop script execution (after writing output).
+        function assert(condition, message) {
+            var div = document.createElement("div");
+            div.className = (condition ? "pass" : "fail");
+            div.innerHTML = (condition ? "PASS: " : "FAIL: ") + message + "\n";
+
+            output.appendChild(div);
+
+            if (!condition) {
+                if (vrDisplay) {
+                    if (vrDisplay.isPresenting) {
+                        vrDisplay.exitPresent();
+                    }
+                }
+                console.error(message);
+            }
+        }
+
+        startTest();
+    </script>
+</body>
+</html>
