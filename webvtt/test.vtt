@@ -12,21 +12,21 @@ id:tr
 width:50%
 viewportanchor:100%,0%
 regionanchor:100%,0%
-lines:1
+lines:2
 
 REGION
 id:br
 width:50%
 viewportanchor:100%,100%
 regionanchor:100%,100%
-lines:1
+lines:2
 
 REGION
 id:c
 width:50%
 viewportanchor:50%,50%
 regionanchor:50%,50%
-lines:3
+lines:4
 
 00:00:00.000 --> 00:01:00.000 region:tl align:left
 THIS TEXT IS TOP LEFT

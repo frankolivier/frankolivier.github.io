@@ -4,9 +4,23 @@
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     </head>
     <body>
-        <video controls autoplay>
+        <video controls autoplay oncanplay="test()">
             <source src="video.mp4" type="video/mp4">
             <track src="test.vtt" kind="captions" default>
         </video>
+        <div id='log'></div>
+        
+    <script>
+        function test()
+        {
+            var v = document.getElementsByTagName("video")[0];
+            for (var i = 0; i < v.textTracks[0].cues.length; i++)
+            {
+                document.getElementById('log').innerHTML += (v.textTracks[0].cues[i].region)
+            }
+        }
+    
+    </script>
+        
     </body>
 </html>
