@@ -1,18 +1,44 @@
-﻿WEBVTT
+WEBVTT
 
-1
-00:00:00.000 --> 00:00:01.000
-Lorem
+REGION
+id:tl
+width:50%
+viewportanchor:0%,0%
+regionanchor:0%,0%
+lines:1
 
-2
-00:00:01.000 --> 00:00:02.000
-ipsum
+REGION
+id:tr
+width:50%
+viewportanchor:100%,0%
+regionanchor:100%,0%
+lines:2
 
-3
-00:00:02.000 --> 00:00:03.000
-dolor
+REGION
+id:br
+width:50%
+viewportanchor:100%,100%
+regionanchor:100%,100%
+lines:2
 
-4
-00:00:03.000 --> 00:00:04.000
-sit
+REGION
+id:c
+width:50%
+viewportanchor:50%,50%
+regionanchor:50%,50%
+lines:4
 
+00:00:00.000 --> 00:01:00.000 region:tl align:left
+THIS TEXT IS TOP LEFT
+
+00:00:01.000 --> 00:01:00.000 region:tr align:left
+THIS TEXT IS TOP RIGHT
+
+00:00:02.000 --> 00:01:00.000 region:bl align:left
+THIS TEXT IS BOTTOM LEFT
+
+00:00:03.000 --> 00:01:00.000 region:br align:left
+THIS TEXT IS BOTTOM RIGHT
+
+00:00:04.000 --> 00:01:00.000 region:c align:left
+THIS TEXT IS CENTER
