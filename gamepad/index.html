@@ -20,12 +20,21 @@
           }
           else
           {
-              info = "buttons: pressed touched value <br />";
+              info = "";
+              info += gamepad.timestamp + "<br />";
+              info += "buttons: pressed touched value <br />";
+              
               for (var i = 0; i < gamepad.buttons.length; i++)
               {
                   var button = gamepad.buttons[i];
                   info += button.pressed + " " + button.touched + " " + button.value + "<br />";
               }
+              
+              for (var i = 0; i < gamepad.axes.length; i++)
+              {
+                  info += gamepad.axes[i] + "<br />";
+              }
+              
           }
           
           document.getElementById("info").innerHTML = info;
